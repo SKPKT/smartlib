@@ -1115,76 +1115,189 @@ async function hapusBuku(id){
 //  DAFTAR BUKU BARU
 // ═══════════════════════════════════════════════════
 function pgDaftarBuku(){
+  const noPerolMaks = CACHE.buku.length ? Math.max(...CACHE.buku.map(b=>parseInt(b.no_perolehan)||0)) + 1 : 1;
   document.getElementById('content').innerHTML=`
   <div class="g2">
     <div class="card">
       <div class="card-title">➕ Daftar Buku Baru</div>
-      <div class="fg-row c2">
-        <div class="fg"><label>No. Perolehan *</label><input id="db-noperol" type="text" placeholder="cth: 2055"></div>
-        <div class="fg"><label>No. Panggilan *</label><input id="db-nopan" type="text" placeholder="cth: 633.851 MAR c.1" oninput="autoDeweyHint('db-nopan','db-hint')"><small id="db-hint" style="color:var(--accent)"></small></div>
+
+      <!-- KATEGORI BUKU -->
+      <div class="fg">
+        <label>Kategori Buku *</label>
+        <div style="display:flex;gap:16px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text)">
+            <input type="radio" name="db-kategori" value="bukan" checked onchange="togKategori('bukan')" style="width:16px;height:16px;accent-color:var(--accent)">
+            📗 Bukan Fiksyen (DDC)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text)">
+            <input type="radio" name="db-kategori" value="fiksyen" onchange="togKategori('fiksyen')" style="width:16px;height:16px;accent-color:var(--accent)">
+            📘 Fiksyen
+          </label>
+        </div>
       </div>
-      <div class="fg"><label>Judul / Tajuk Buku *</label><input id="db-judul" type="text"></div>
+
+      <!-- BUKAN FIKSYEN — DDC -->
+      <div id="panel-bukan">
+        <div class="fg">
+          <label>Nombor Dewey (DDC) *</label>
+          <input id="db-ddc" type="text" placeholder="cth: 590, 005.1, 398.2" oninput="autoGenNP()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%">
+          <small style="color:var(--muted)">Klik kategori di bawah untuk pilih cepat</small>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+            ${Object.entries({0:'Komputer',1:'Falsafah',2:'Agama',3:'Sosial',4:'Bahasa',5:'Sains',6:'Teknologi',7:'Seni',8:'Sastera',9:'Sejarah'}).map(([k,v])=>`<div onclick="document.getElementById('db-ddc').value='${k}';autoGenNP()" style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;transition:.15s;font-weight:600" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><strong>${k}xx</strong> ${v}</div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- FIKSYEN — BAHASA -->
+      <div id="panel-fiksyen" style="display:none">
+        <div class="fg">
+          <label>Bahasa Buku *</label>
+          <select id="db-bahasa" onchange="autoGenNP()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%">
+            <option value="MS">🇲🇾 Melayu → FM</option>
+            <option value="EN">🇬🇧 Inggeris → FI</option>
+            <option value="ZH">🇨🇳 Cina → FC</option>
+            <option value="TA">🇮🇳 Tamil → FT</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- NO PANGGILAN AUTO -->
+      <div class="fg">
+        <label>No. Panggilan (Auto-generate) *</label>
+        <div style="display:flex;gap:6px">
+          <input id="db-nopan" type="text" placeholder="Auto-generate berdasarkan kategori" oninput="updLabelPrev()" style="flex:1;background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px">
+          <button class="btn btn-ghost btn-sm" onclick="autoGenNP()" title="Jana semula">🔄</button>
+        </div>
+        <small id="db-np-hint" style="color:var(--accent);font-weight:600"></small>
+      </div>
+
       <div class="fg-row c2">
-        <div class="fg"><label>Pengarang</label><input id="db-pengarang" type="text"></div>
-        <div class="fg"><label>Penerbit</label><input id="db-penerbit" type="text"></div>
+        <div class="fg"><label>No. Perolehan *</label><input id="db-noperol" type="text" placeholder="${noPerolMaks}" value="${noPerolMaks}" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        <div class="fg"><label>ISBN</label>
+          <input id="db-isbn" type="text" placeholder="978-xxx" oninput="debounceGoogleBooks()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%">
+          <small id="gb-status" style="display:none;font-size:10px"></small>
+        </div>
+      </div>
+      <div class="fg"><label>Judul / Tajuk Buku *</label><input id="db-judul" type="text" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+      <div class="fg-row c2">
+        <div class="fg"><label>Pengarang</label><input id="db-pengarang" type="text" oninput="autoGenNP()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        <div class="fg"><label>Penerbit</label><input id="db-penerbit" type="text" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
       </div>
       <div class="fg-row c3">
-        <div class="fg"><label>Tahun Terbit</label><input id="db-tahun" type="text" placeholder="2024"></div>
-        <div class="fg"><label>Tarikh Perolehan</label><input id="db-tarikh" type="date" value="${today()}"></div>
+        <div class="fg"><label>Tahun Terbit</label><input id="db-tahun" type="text" placeholder="2024" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        <div class="fg"><label>Tarikh Perolehan</label><input id="db-tperolehan" type="text" value="${today()}" placeholder="2025 atau 1.1.2025" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
         <div class="fg"><label>Punca</label>
-          <select id="db-punca"><option value="">–</option><option>sumbangan</option><option>pembelian</option><option>sumbangan ITBM</option><option>sumbangan SPRM</option><option>hadiah</option></select>
+          <select id="db-punca" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%">
+            <option value="">– Pilih –</option>
+            <option>PCG</option><option>BELI</option><option>sumbangan</option>
+            <option>sumbangan ITBM</option><option>SUMBANGAN</option><option>hadiah</option>
+          </select>
         </div>
       </div>
       <div class="fg-row c3">
-        <div class="fg"><label>ISBN</label><input id="db-isbn" type="text" placeholder="978-xxx"></div>
-        <div class="fg"><label>Harga (RM)</label><input id="db-hrm" type="number" step="0.01" min="0" value="0"></div>
-        <div class="fg"><label>No. Invois</label><input id="db-invois" type="text"></div>
+        <div class="fg"><label>Harga (RM)</label><input id="db-hargarm" type="number" step="0.01" min="0" value="0" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        <div class="fg"><label>No. Invois</label><input id="db-invois" type="text" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        <div class="fg"><label>Muka Surat</label><input id="db-mukasurat" type="text" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
       </div>
-      <div class="fg-row c2">
-        <div class="fg"><label>Muka Surat</label><input id="db-muka" type="text"></div>
-        <div class="fg"><label>Catatan</label><input id="db-catatan" type="text"></div>
+      <div class="fg"><label>Catatan</label><input id="db-catatan" type="text" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-success" onclick="simpanBukuBaru()" id="btn-simpan-buku">💾 Simpan ke Google Sheets</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetFormBuku()">🔄 Reset</button>
       </div>
-      <button class="btn btn-primary" onclick="simpanBukuBaru()" id="btn-simpan-buku">💾 Simpan ke Google Sheets</button>
       <div id="db-msg" style="margin-top:10px"></div>
     </div>
-    <div class="card">
-      <div class="card-title">📌 Rujukan Sistem Dewey</div>
-      <div>${Object.entries(DEWEY).map(([k,v])=>`<div class="dewey-chip" onclick="document.getElementById('db-nopan').value='${k==='F'?'F ':''+k}';autoDeweyHint('db-nopan','db-hint')"><strong>${k==='F'?'F':k+'xx'}</strong> ${v}</div>`).join('')}</div>
-      <div class="alert alert-info" style="margin-top:14px;font-size:11px">
-        <div><strong>Format No. Panggilan:</strong><br>
-        📗 Bukan Fiksyen: <code>[Dewey] [3 huruf] [c.salinan]</code><br>
-        &nbsp;&nbsp;Contoh: <code>633.851 MAR c.1</code><br><br>
-        📘 Fiksyen: <code>F [3 huruf pengarang]</code><br>
-        &nbsp;&nbsp;Contoh: <code>F ALI</code></div>
+
+    <!-- Preview & Panduan -->
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">👁️ Preview Label Tulang</div>
+        <div style="display:flex;justify-content:center;padding:10px">
+          <div id="lbl-prev-db" style="width:2.5cm;min-height:3.8cm;border:2px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;background:#fff;gap:1mm;font-family:'Courier New',monospace">
+            <div style="font-size:5pt;font-weight:700;text-align:center;color:#000;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="lp-db-sch">${CACHE.settings.sekolah||CACHE.appearance.nama_app||'SK PENDIDIKAN KHAS'}</div>
+            <div style="font-size:16pt;font-weight:900;text-align:center;line-height:1.1;color:#000" id="lp-db-l1">000</div>
+            <div style="font-size:13pt;font-weight:700;text-align:center;line-height:1.1;color:#000" id="lp-db-l2">XXX</div>
+          </div>
+        </div>
+        <div style="text-align:center;font-size:10px;color:var(--muted)">Saiz sebenar: 2.5cm × 3.8cm</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📌 Panduan No. Panggilan</div>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:11px;line-height:1.9">
+          <strong>📗 Bukan Fiksyen (DDC):</strong><br>
+          Format: <code style="background:var(--input-bg);padding:1px 5px;border-radius:3px">590 HAS</code><br>
+          Baris 1 = Nombor Dewey<br>
+          Baris 2 = 3 huruf pertama pengarang<br><br>
+          <strong>📘 Fiksyen:</strong><br>
+          Format: <code style="background:var(--input-bg);padding:1px 5px;border-radius:3px">FM RAM</code><br>
+          FM = Fiksyen Melayu · FI = Inggeris<br>
+          FC = Cina · FT = Tamil<br>
+          Baris 2 = 3 huruf pertama pengarang
+        </div>
       </div>
     </div>
   </div>`;
 }
 
-async function simpanBukuBaru(){
-  const noperol=document.getElementById('db-noperol').value.trim();
-  const nopan=document.getElementById('db-nopan').value.trim();
-  const judul=document.getElementById('db-judul').value.trim();
-  if(!noperol||!nopan||!judul){toast('Sila isi medan bertanda *','err');return}
-  const btn=document.getElementById('btn-simpan-buku');
-  btn.textContent='⏳ Menyimpan...';btn.disabled=true;
-  const data={id:newId(CACHE.buku),no_perolehan:noperol,no_panggilan:nopan,judul,pengarang:document.getElementById('db-pengarang').value.trim(),penerbit:document.getElementById('db-penerbit').value.trim(),tahun:document.getElementById('db-tahun').value.trim(),tarikh_perolehan:document.getElementById('db-tarikh').value,punca:document.getElementById('db-punca').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-invois').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-catatan').value.trim()};
-  try{
-    const res=await gsPost({action:'tambah',sheet:'buku',data});
-    if(!res.ok)throw new Error(res.error);
-    CACHE.buku.push(data);
-    toast('✅ Buku berjaya disimpan ke Google Sheets!','ok');
-    document.getElementById('db-msg').innerHTML=`<div class="alert alert-success">✅ <strong>${judul}</strong> (No. ${noperol}) berjaya disimpan.</div>`;
-    ['db-noperol','db-nopan','db-judul','db-pengarang','db-penerbit','db-tahun','db-isbn','db-invois','db-muka','db-catatan'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
-    document.getElementById('db-hrm').value=0;
-    document.getElementById('db-hint').textContent='';
-  }catch(e){toast('Gagal simpan: '+e.message,'err')}
-  finally{btn.textContent='💾 Simpan ke Google Sheets';btn.disabled=false}
+// Toggle panel Fiksyen/Bukan Fiksyen
+function togKategori(kat){
+  const panelB=document.getElementById('panel-bukan');
+  const panelF=document.getElementById('panel-fiksyen');
+  if(kat==='fiksyen'){if(panelB)panelB.style.display='none';if(panelF)panelF.style.display=''}
+  else{if(panelB)panelB.style.display='';if(panelF)panelF.style.display='none'}
+  autoGenNP();
 }
 
-// ═══════════════════════════════════════════════════
-//  PINJAMAN
-// ═══════════════════════════════════════════════════
+// Auto-generate No. Panggilan
+function autoGenNP(){
+  const kat=document.querySelector('input[name="db-kategori"]:checked')?.value||'bukan';
+  const ddc=(document.getElementById('db-ddc')?.value||'').trim();
+  const bahasa=document.getElementById('db-bahasa')?.value||'MS';
+  const pengarang=(document.getElementById('db-pengarang')?.value||'').trim();
+  const judul=(document.getElementById('db-judul')?.value||'').trim();
+
+  // Ambil 3 huruf pertama pengarang (buang gelaran seperti HJ, DR, PROF)
+  const namaBersih=pengarang.replace(/^(HJ\.?|DR\.?|PROF\.?|PN\.?|EN\.?|CIK\.?)\s+/i,'').trim();
+  const tiga=namaBersih?namaBersih.substring(0,3).toUpperCase():
+    (judul?judul.substring(0,3).toUpperCase():'XXX');
+
+  let np='';
+  const hint=document.getElementById('db-np-hint');
+
+  if(kat==='bukan'){
+    if(!ddc){if(hint)hint.textContent='⚠️ Masukkan nombor Dewey untuk auto-generate';return}
+    np=ddc+' '+tiga;
+    if(hint)hint.textContent='✅ DDC: '+ddc+' · Pengarang: '+tiga;
+  } else {
+    const kodBahasa={'MS':'FM','EN':'FI','ZH':'FC','TA':'FT'};
+    const kod=kodBahasa[bahasa]||'FM';
+    np=kod+'/'+tiga;
+    if(hint)hint.textContent='✅ '+kod+' ('+(['MS','EN','ZH','TA'].map((l,i)=>(['Melayu','Inggeris','Cina','Tamil'])[i])).find((_,i)=>['MS','EN','ZH','TA'][i]===bahasa)+') · Pengarang: '+tiga;
+  }
+
+  const el=document.getElementById('db-nopan');if(el)el.value=np;
+  updLabelPrev();
+}
+
+// Update preview label
+function updLabelPrev(){
+  const np=(document.getElementById('db-nopan')?.value||'').trim();
+  const parts=np.split(/[\s\/]+/).filter(p=>p);
+  const l1=parts[0]||'000',l2=parts.slice(1).join(' ')||'XXX';
+  const el1=document.getElementById('lp-db-l1'),el2=document.getElementById('lp-db-l2');
+  if(el1)el1.textContent=l1;if(el2)el2.textContent=l2;
+}
+
+function resetFormBuku(){
+  ['db-nopan','db-isbn','db-judul','db-pengarang','db-penerbit','db-tahun','db-invois','db-mukasurat','db-catatan'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+  const ddc=document.getElementById('db-ddc');if(ddc)ddc.value='';
+  const hrm=document.getElementById('db-hargarm');if(hrm)hrm.value='0';
+  const tper=document.getElementById('db-tperolehan');if(tper)tper.value=today();
+  const hint=document.getElementById('db-np-hint');if(hint)hint.textContent='';
+  updLabelPrev();
+}
+
+
 function pgPinjaman(){
   const buku=CACHE.buku||[];const murid=CACHE.murid||[];const guru=CACHE.guru||[];
   const pin=CACHE.pinjaman||[];const s=CACHE.settings;
@@ -1835,127 +1948,380 @@ function cetakSenLupus(){
 //  LABEL CETAK
 // ═══════════════════════════════════════════════════
 function pgLabel(){
-  const buku=CACHE.buku||[];const s=CACHE.settings;
+  const buku=CACHE.buku||[];
+  const s=CACHE.settings;
+  const sekolah=s.sekolah||CACHE.appearance.nama_app||'SK PENDIDIKAN KHAS TAIPING';
+
   document.getElementById('content').innerHTML=`
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-title">🏷️ Tetapan Label (6cm × 3cm)</div>
-    <div class="fg-row c3">
-      <div class="fg"><label>Nama pada Label</label><input id="lbl-sch" type="text" value="${s.sekolah||CACHE.appearance.nama_app||'SMARTLIB'}" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
-      <div class="fg"><label>Jenis Label</label>
-        <select id="lbl-jenis" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%">
-          <option value="tulang">Label Tulang (6cm × 3cm)</option>
-          <option value="barcode">Label Barcode ISBN</option>
-          <option value="kedua">Kedua-dua</option>
+  <div class="tabs" id="lbl-tabs">
+    <button class="tab on" onclick="lblTab('pilih',this)">☑️ Pilih Buku</button>
+    <button class="tab" onclick="lblTab('tetapan',this)">⚙️ Tetapan & Preview</button>
+    <button class="tab" onclick="lblTab('panduan',this)">📌 Panduan Print</button>
+  </div>
+
+  <!-- TAB 1: PILIH BUKU -->
+  <div id="lt-pilih">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input type="search" id="lbl-src" placeholder="🔍 Cari buku..." style="flex:1;min-width:180px;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--input-bg);color:var(--text)" oninput="filtLabelBuku()">
+        <select id="lbl-kat" onchange="filtLabelBuku()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--input-bg);color:var(--text)">
+          <option value="">Semua</option>
+          <option value="F">📘 Fiksyen</option>
+          ${Object.entries({0:'Komputer',1:'Falsafah',2:'Agama',3:'Sosial',4:'Bahasa',5:'Sains',6:'Teknologi',7:'Seni',8:'Sastera',9:'Sejarah'}).map(([k,v])=>`<option value="${k}">${k}xx ${v}</option>`).join('')}
         </select>
-      </div>
-      <div class="fg" style="display:flex;align-items:flex-end;gap:8px">
-        <button class="btn btn-success btn-sm" onclick="cetakLabel()">🖨️ Cetak Label Terpilih</button>
         <button class="btn btn-ghost btn-sm" onclick="document.querySelectorAll('.lbl-chk').forEach(c=>c.checked=true)">☑️ Semua</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.querySelectorAll('.lbl-chk').forEach(c=>c.checked=false)">☐ Kosong</button>
+        <button class="btn btn-success btn-sm" onclick="cetakLabelA4()">🖨️ Cetak Label Terpilih</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tw"><table>
+        <thead><tr>
+          <th><input type="checkbox" onchange="document.querySelectorAll('.lbl-chk').forEach(c=>c.checked=this.checked)"></th>
+          <th>No. Perol.</th><th>No. Panggilan</th><th>Judul</th><th>Pengarang</th><th>Kategori</th>
+        </tr></thead>
+        <tbody id="tbody-lbl-pilih">${rowsLabelPilih(buku)}</tbody>
+      </table></div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">${buku.length} buku jumlah</div>
+    </div>
+  </div>
+
+  <!-- TAB 2: TETAPAN -->
+  <div id="lt-tetapan" style="display:none">
+    <div class="g2" style="margin-bottom:14px">
+      <div class="card">
+        <div class="card-title">⚙️ Tetapan Label</div>
+        <div class="fg"><label>Nama Sekolah / PSS pada Label</label>
+          <input id="lbl-nama-sch" type="text" value="${sekolah}" oninput="updPrevLabel()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%">
+        </div>
+        <div class="fg"><label>Jenis Label</label>
+          <select id="lbl-jenis" onchange="updPrevLabel()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%">
+            <option value="tulang">🏷️ Label Tulang Sahaja</option>
+            <option value="barcode">📊 Label Barcode Sahaja</option>
+            <option value="kedua">🏷️📊 Kedua-dua (Tulang + Barcode)</option>
+          </select>
+        </div>
+        <div class="fg-row c2">
+          <div class="fg"><label>Lebar Label (cm)</label><input id="lbl-w" type="number" step="0.1" min="1" max="15" value="2.5" oninput="updPrevLabel()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+          <div class="fg"><label>Tinggi Label (cm)</label><input id="lbl-h" type="number" step="0.1" min="1" max="20" value="3.8" oninput="updPrevLabel()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        </div>
+        <div class="fg-row c2">
+          <div class="fg"><label>Fon Baris 1 (pt)</label><input id="lbl-f1" type="number" min="8" max="28" value="14" oninput="updPrevLabel()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+          <div class="fg"><label>Fon Baris 2 (pt)</label><input id="lbl-f2" type="number" min="8" max="24" value="12" oninput="updPrevLabel()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        </div>
+        <div class="fg-row c2">
+          <div class="fg"><label>Kolum per A4</label><input id="lbl-cols" type="number" min="1" max="10" value="4" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+          <div class="fg"><label>Margin A4 (mm)</label><input id="lbl-margin" type="number" min="0" max="30" value="8" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        </div>
+        <div class="fg-row c2">
+          <div class="fg"><label>Gap antara label (mm)</label><input id="lbl-gap" type="number" min="0" max="10" value="3" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+          <div class="fg"><label>Saiz Fon Nama Sekolah (pt)</label><input id="lbl-fsch" type="number" min="5" max="10" value="5.5" oninput="updPrevLabel()" style="background:var(--input-bg);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;width:100%"></div>
+        </div>
+        <button class="btn btn-success" onclick="cetakLabelA4()">🖨️ Cetak Label Terpilih</button>
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="card">
+        <div class="card-title">👁️ Preview Label</div>
+        <div style="display:flex;justify-content:center;align-items:center;padding:16px;flex-wrap:wrap;gap:10px">
+          <!-- Label Tulang -->
+          <div>
+            <div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:6px">Label Tulang</div>
+            <div id="lbl-prev-main" style="width:2.5cm;min-height:3.8cm;border:2px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;background:#fff;gap:1mm;font-family:'Courier New',monospace;transition:.3s">
+              <div style="font-size:5.5pt;font-weight:700;text-align:center;color:#000;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="lp-prev-sch">${sekolah}</div>
+              <div style="font-size:14pt;font-weight:900;text-align:center;line-height:1.1;color:#000" id="lp-prev-l1">590</div>
+              <div style="font-size:12pt;font-weight:700;text-align:center;line-height:1.1;color:#000" id="lp-prev-l2">HAS</div>
+            </div>
+          </div>
+          <!-- Label Barcode -->
+          <div>
+            <div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:6px">Label Barcode</div>
+            <div style="width:6cm;height:3.8cm;border:2px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;background:#fff;gap:1mm">
+              <div style="font-size:5.5pt;font-weight:700;text-align:center;color:#000;width:100%">${sekolah}</div>
+              <svg id="bc-prev" style="max-width:100%;height:40px"></svg>
+              <div style="font-size:7pt;font-weight:700;color:#000;font-family:'Courier New',monospace">No. 001</div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center;font-size:10px;color:var(--muted)">Preview berdasarkan tetapan di atas</div>
       </div>
     </div>
   </div>
-  <div class="g2" style="margin-bottom:14px">
+
+  <!-- TAB 3: PANDUAN -->
+  <div id="lt-panduan" style="display:none">
     <div class="card">
-      <div class="card-title">👁️ Preview Label Tulang</div>
-      <div style="display:flex;justify-content:center;padding:10px">
-        <div class="label-bone">
-          <div class="lb-sch">${s.sekolah||'SMARTLIB'}</div>
-          <div class="lb-call">633.851</div>
-          <div class="lb-author">MAR c.1</div>
-          <div class="lb-title">Mari Kenali Sawit</div>
-          <div class="lb-isbn">ISBN: 978-967-0743-87-5</div>
+      <div class="card-title">📌 Panduan Cetak Label A4</div>
+      <div class="g2">
+        <div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">📋 Langkah-langkah:</div>
+          <div style="font-size:12px;line-height:2;color:var(--text2)">
+            ① Pilih buku dalam tab <strong>☑️ Pilih Buku</strong><br>
+            ② Tetapkan saiz dan jenis label dalam tab <strong>⚙️ Tetapan</strong><br>
+            ③ Klik butang <strong>🖨️ Cetak Label Terpilih</strong><br>
+            ④ Browser akan buka dialog print<br>
+            ⑤ Pilih printer dan klik <strong>Print</strong>
+          </div>
+          <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:12px;font-size:11px;line-height:1.8">
+            <strong>💡 Tips Print:</strong><br>
+            • Matikan <em>Headers and Footers</em> dalam tetapan print<br>
+            • Set margin ke <em>None</em> atau <em>Minimum</em><br>
+            • Pilih <em>Actual Size</em> (bukan Fit to Page)<br>
+            • Guna kertas stiker A4 kosong<br>
+            • Compatible dengan MS Word, PDF, browser print
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">🏷️ Format Label:</div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+            <div style="text-align:center">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Bukan Fiksyen</div>
+              <div style="width:2.5cm;min-height:3.8cm;border:2px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;background:#fff;font-family:'Courier New',monospace;margin:0 auto">
+                <div style="font-size:5pt;color:#000;font-weight:700;text-align:center">PSS SK TAIPING</div>
+                <div style="font-size:16pt;font-weight:900;color:#000;text-align:center;line-height:1">590</div>
+                <div style="font-size:13pt;font-weight:700;color:#000;text-align:center;line-height:1">HAS</div>
+              </div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Fiksyen Melayu</div>
+              <div style="width:2.5cm;min-height:3.8cm;border:2px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;background:#fff;font-family:'Courier New',monospace;margin:0 auto">
+                <div style="font-size:5pt;color:#000;font-weight:700;text-align:center">PSS SK TAIPING</div>
+                <div style="font-size:16pt;font-weight:900;color:#000;text-align:center;line-height:1">FM</div>
+                <div style="font-size:13pt;font-weight:700;color:#000;text-align:center;line-height:1">RAM</div>
+              </div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Fiksyen Inggeris</div>
+              <div style="width:2.5cm;min-height:3.8cm;border:2px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;background:#fff;font-family:'Courier New',monospace;margin:0 auto">
+                <div style="font-size:5pt;color:#000;font-weight:700;text-align:center">PSS SK TAIPING</div>
+                <div style="font-size:16pt;font-weight:900;color:#000;text-align:center;line-height:1">FI</div>
+                <div style="font-size:13pt;font-weight:700;color:#000;text-align:center;line-height:1">ROW</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--muted);text-align:center">6cm × 3cm — potong dan tampal</div>
     </div>
-    <div class="card">
-      <div class="card-title">👁️ Preview Label Barcode</div>
-      <div style="display:flex;justify-content:center;padding:10px">
-        <div style="border:1px solid #000;padding:4px;width:180px;text-align:center;background:#fff">
-          <div style="font-size:7pt;font-weight:700;margin-bottom:2px">${s.sekolah||'SMARTLIB'}</div>
-          <svg id="prev-barcode"></svg>
-          <div style="font-size:7pt;margin-top:2px">633.851 MAR c.1</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <input type="search" id="lbl-src" placeholder="🔍 Cari buku..." style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--input-bg);color:var(--text)" oninput="filterLabel()">
-      <select id="lbl-kat" onchange="filterLabel()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--input-bg);color:var(--text)">
-        <option value="">Semua Kategori</option><option value="F">Fiksyen</option>
-        ${Object.entries(DEWEY).filter(([k])=>k!=='F').map(([k])=>`<option value="${k}">${k}xx</option>`).join('')}
-      </select>
-    </div>
-    <div class="tbl-wrap"><table>
-      <thead><tr><th><input type="checkbox" onchange="document.querySelectorAll('.lbl-chk').forEach(c=>c.checked=this.checked)"></th><th>No. Perol.</th><th>No. Panggilan</th><th>Judul</th><th>ISBN</th></tr></thead>
-      <tbody id="tbody-label">${rowsLabel(buku)}</tbody>
-    </table></div>
   </div>`;
-  setTimeout(()=>{try{JsBarcode('#prev-barcode','9789670743875',{format:'EAN13',width:1.2,height:40,displayValue:false,margin:0})}catch{}},100);
+
+  // Render barcode preview
+  setTimeout(()=>{
+    try{const sv=document.getElementById('bc-prev');if(sv)JsBarcode(sv,'0001234567890',{format:'CODE128',width:1.5,height:30,displayValue:false,margin:0})}catch{}
+    updPrevLabel();
+  },100);
 }
 
-function rowsLabel(buku){
-  return buku.map(b=>`<tr>
-    <td><input type="checkbox" class="lbl-chk" value="${b.id}"></td>
-    <td><span class="bdg bdg-blue">${b.no_perolehan||'–'}</span></td>
-    <td class="tbl-mono">${b.no_panggilan}</td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul}</td>
-    <td style="font-size:10px;font-family:monospace">${b.isbn||'–'}</td>
-  </tr>`).join('');
+// Tab switch
+function lblTab(t,btn){
+  ['pilih','tetapan','panduan'].forEach(id=>{const el=document.getElementById('lt-'+id);if(el)el.style.display=id===t?'':'none'});
+  document.querySelectorAll('#lbl-tabs .tab').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
 }
 
-function filterLabel(){
-  const q=(document.getElementById('lbl-src').value||'').toLowerCase();
-  const kat=document.getElementById('lbl-kat').value;
-  const f=(CACHE.buku||[]).filter(b=>{
-    const qm=!q||(b.judul+b.no_panggilan+(b.no_perolehan||'')).toLowerCase().includes(q);
+// Rows for label table
+function rowsLabelPilih(buku){
+  if(!buku.length)return`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Tiada buku</td></tr>`;
+  return buku.map(b=>{
     const np=String(b.no_panggilan||'').trim();
+    const isFik=np.toUpperCase().startsWith('F');
+    const kat=isFik?`<span class="bdg bdg-green">📘 Fiksyen</span>`:`<span class="bdg bdg-blue">${deweyKat(np)}</span>`;
+    return`<tr>
+      <td><input type="checkbox" class="lbl-chk" value="${b.id}"></td>
+      <td><span class="bdg bdg-blue">${b.no_perolehan||'–'}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent)">${b.no_panggilan||'–'}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${b.judul||'–'}</td>
+      <td style="font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.pengarang||'–'}</td>
+      <td>${kat}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Filter label buku
+function filtLabelBuku(){
+  const q=(document.getElementById('lbl-src')?.value||'').toLowerCase();
+  const kat=document.getElementById('lbl-kat')?.value||'';
+  const f=(CACHE.buku||[]).filter(b=>{
+    const qm=!q||(b.judul+b.no_panggilan+(b.no_perolehan||'')+(b.pengarang||'')).toLowerCase().includes(q);
+    const np=String(b.no_panggilan||'').trim().toUpperCase();
     const km=!kat||(kat==='F'?np.startsWith('F'):np.charAt(0)===kat);
     return qm&&km;
   });
-  document.getElementById('tbody-label').innerHTML=rowsLabel(f);
+  const t=document.getElementById('tbody-lbl-pilih');if(t)t.innerHTML=rowsLabelPilih(f);
 }
 
-function cetakLabel(){
+// Update preview
+function updPrevLabel(){
+  const w=parseFloat(document.getElementById('lbl-w')?.value||2.5);
+  const h=parseFloat(document.getElementById('lbl-h')?.value||3.8);
+  const f1=document.getElementById('lbl-f1')?.value||14;
+  const f2=document.getElementById('lbl-f2')?.value||12;
+  const fsch=document.getElementById('lbl-fsch')?.value||5.5;
+  const sch=document.getElementById('lbl-nama-sch')?.value||'SK PENDIDIKAN KHAS';
+  const box=document.getElementById('lbl-prev-main');
+  if(box){box.style.width=w+'cm';box.style.minHeight=h+'cm'}
+  const l1=document.getElementById('lp-prev-l1'),l2=document.getElementById('lp-prev-l2'),lsch=document.getElementById('lp-prev-sch');
+  if(l1)l1.style.fontSize=f1+'pt';if(l2)l2.style.fontSize=f2+'pt';if(lsch){lsch.style.fontSize=fsch+'pt';lsch.textContent=sch}
+}
+
+// ═══════════════════════════════════════════
+// CETAK LABEL A4 — SISTEM PENUH
+// ═══════════════════════════════════════════
+function cetakLabelA4(){
   const sel=[...document.querySelectorAll('.lbl-chk:checked')].map(c=>c.value);
-  if(!sel.length){toast('Pilih sekurang-kurangnya satu buku','err');return}
-  const buku=CACHE.buku||[];const sch=document.getElementById('lbl-sch').value||CACHE.settings.sekolah||'SMARTLIB';
-  const jenis=document.getElementById('lbl-jenis').value;
-  const toPrint=buku.filter(b=>sel.includes(String(b.id)));
-  const pz=document.getElementById('print-zone');
-  let html=`<style>
-  @media print{body *{visibility:hidden}#print-zone,#print-zone *{visibility:visible}#print-zone{position:fixed;top:0;left:0}}
-  .lg{display:grid;grid-template-columns:repeat(3,6cm);gap:0;padding:10mm}
-  .lb{width:6cm;height:3cm;border:1px solid #000;display:flex;flex-direction:column;justify-content:space-between;padding:1.5mm;background:#fff;break-inside:avoid;font-family:'Courier New',monospace}
-  .lb .s{font-size:5.5pt;font-weight:700}.lb .c{font-size:16pt;font-weight:900;text-align:center;border:2px solid #000;padding:.5mm 1mm;margin:.5mm 0;line-height:1.1}
-  .lb .a{font-size:6pt;font-weight:700}.lb .t{font-size:5.5pt;line-height:1.2}.lb .i{font-size:5pt;color:#555}
-  .lbc{width:6cm;height:3cm;border:1px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;padding:1mm;break-inside:avoid}
-  .lbc .bs{font-size:5.5pt;font-weight:700;margin-bottom:1mm}.lbc .bn{font-size:7pt;font-weight:700;margin-top:1mm;font-family:'Courier New',monospace}.lbc .bi{font-size:5pt;color:#555}
-  </style>`;
+  if(!sel.length){toast('Pilih sekurang-kurangnya satu buku','wa');return}
+
+  const sch=document.getElementById('lbl-nama-sch')?.value||
+            CACHE.settings?.sekolah||CACHE.appearance?.nama_app||'SK PENDIDIKAN KHAS TAIPING';
+  const jenis=document.getElementById('lbl-jenis')?.value||'tulang';
+  const w=parseFloat(document.getElementById('lbl-w')?.value||2.5);
+  const h=parseFloat(document.getElementById('lbl-h')?.value||3.8);
+  const f1=parseInt(document.getElementById('lbl-f1')?.value||14);
+  const f2=parseInt(document.getElementById('lbl-f2')?.value||12);
+  const fsch=parseFloat(document.getElementById('lbl-fsch')?.value||5.5);
+  const cols=parseInt(document.getElementById('lbl-cols')?.value||4);
+  const margin=parseInt(document.getElementById('lbl-margin')?.value||8);
+  const gap=parseInt(document.getElementById('lbl-gap')?.value||3);
+
+  const toPrint=(CACHE.buku||[]).filter(b=>sel.includes(String(b.id)));
+
+  // Generate label HTML untuk tulang
+  function genTulang(b){
+    const np=String(b.no_panggilan||'–').trim();
+    const parts=np.split(/[\s\/]+/).filter(p=>p);
+    const l1=parts[0]||'–';
+    const l2=parts.slice(1).join(' ')||'';
+    return`<div class="lbl-t">
+      <div class="lbl-sch">${sch}</div>
+      <div class="lbl-l1">${l1}</div>
+      ${l2?`<div class="lbl-l2">${l2}</div>`:''}
+    </div>`;
+  }
+
+  // Generate label HTML untuk barcode
+  function genBarcode(b){
+    const np=String(b.no_perolehan||'0').trim();
+    const barcodeVal=np.padStart(10,'0');
+    return`<div class="lbl-bc">
+      <div class="lbl-bc-sch">${sch}</div>
+      <svg class="bc-svg" data-val="${barcodeVal}" style="max-width:100%;height:40px"></svg>
+      <div class="lbl-bc-np">${np}</div>
+      ${b.no_panggilan?`<div class="lbl-bc-cat">${b.no_panggilan}</div>`:''}
+    </div>`;
+  }
+
+  const pz=document.getElementById('pz');
+  pz.innerHTML=`
+<style>
+@media print{
+  body *{visibility:hidden}
+  #pz,#pz *{visibility:visible}
+  #pz{position:fixed;top:0;left:0;width:100%;margin:0;padding:0}
+  @page{margin:${margin}mm}
+}
+.lbl-grid{
+  display:grid;
+  grid-template-columns:repeat(${cols},${w}cm);
+  gap:${gap}mm;
+  padding:${margin}mm;
+  background:#fff;
+}
+.lbl-t{
+  width:${w}cm;
+  min-height:${h}cm;
+  border:1.5px solid #000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:1.5mm;
+  background:#fff;
+  break-inside:avoid;
+  font-family:'Courier New',Courier,monospace;
+  gap:0.5mm;
+  box-sizing:border-box;
+}
+.lbl-sch{
+  font-size:${fsch}pt;
+  font-weight:700;
+  text-align:center;
+  color:#000;
+  width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.lbl-l1{
+  font-size:${f1}pt;
+  font-weight:900;
+  text-align:center;
+  color:#000;
+  line-height:1.1;
+}
+.lbl-l2{
+  font-size:${f2}pt;
+  font-weight:700;
+  text-align:center;
+  color:#000;
+  line-height:1.1;
+}
+.lbl-bc{
+  width:${Math.max(w*1.8,5)}cm;
+  min-height:${h}cm;
+  border:1.5px solid #000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:1.5mm;
+  background:#fff;
+  break-inside:avoid;
+  box-sizing:border-box;
+  gap:0.5mm;
+}
+.lbl-bc-sch{
+  font-size:${fsch}pt;
+  font-weight:700;
+  text-align:center;
+  color:#000;
+  font-family:'Courier New',monospace;
+}
+.lbl-bc-np{
+  font-size:8pt;
+  font-weight:700;
+  font-family:'Courier New',monospace;
+  color:#000;
+  text-align:center;
+}
+.lbl-bc-cat{
+  font-size:6pt;
+  color:#333;
+  font-family:'Courier New',monospace;
+  text-align:center;
+}
+</style>`;
+
   if(jenis==='tulang'||jenis==='kedua'){
-    html+=`<div class="lg">${toPrint.map(b=>{
-      const p=b.no_panggilan.split(' ');const cm=p[0];const cs=p.slice(1).join(' ');
-      return`<div class="lb"><div class="s">${sch}</div><div class="c">${cm}</div>${cs?`<div class="a">${cs}</div>`:''}<div class="t">${(b.judul||'').substring(0,45)}</div><div class="i">ISBN:${b.isbn||'–'}</div></div>`;
-    }).join('')}</div>`;
+    pz.innerHTML+=`<div class="lbl-grid">${toPrint.map(genTulang).join('')}</div>`;
   }
   if(jenis==='barcode'||jenis==='kedua'){
-    html+=`<div class="lg" ${jenis==='kedua'?'style="page-break-before:always"':''}>${toPrint.map(b=>{
-      const hasIsbn=b.isbn&&b.isbn.replace(/-/g,'').length>=8;
-      return`<div class="lbc"><div class="bs">${sch}</div>${hasIsbn?`<svg class="isbn-bc" data-isbn="${b.isbn.replace(/-/g,'').substring(0,13)}" style="max-width:100%;height:40px"></svg>`:`<div style="font-size:8pt;color:#888">Tiada ISBN</div>`}<div class="bn">${b.no_panggilan}</div><div class="bi">${b.isbn||'–'}</div></div>`;
-    }).join('')}</div>`;
+    pz.innerHTML+=`<div class="lbl-grid" style="${jenis==='kedua'?'page-break-before:always':''}">${toPrint.map(genBarcode).join('')}</div>`;
   }
-  pz.innerHTML=html;
+
+  // Render all barcodes
   setTimeout(()=>{
-    document.querySelectorAll('.isbn-bc').forEach(svg=>{try{JsBarcode(svg,svg.dataset.isbn,{format:'EAN13',width:1,height:36,displayValue:false,margin:0})}catch{try{JsBarcode(svg,svg.dataset.isbn,{format:'CODE128',width:1,height:36,displayValue:false,margin:0})}catch{}}});
-    setTimeout(()=>window.print(),300);
-  },100);
-  toast(`Mencetak ${toPrint.length} label...`,'ok');
+    document.querySelectorAll('.bc-svg').forEach(svg=>{
+      try{
+        const val=svg.dataset.val||'0000000001';
+        JsBarcode(svg,val,{format:'CODE128',width:1.5,height:36,displayValue:false,margin:0,background:'#ffffff',lineColor:'#000000'});
+      }catch(e){console.log('Barcode error:',e)}
+    });
+    setTimeout(()=>{window.print();toast('✅ Dialog cetak dibuka!','ok')},400);
+  },200);
+
+  toast('🖨️ Menyediakan '+toPrint.length+' label...','ok');
 }
 
-// ═══════════════════════════════════════════════════
-//  SCANNER
-// ═══════════════════════════════════════════════════
+
 function pgScanner(){
   document.getElementById('content').innerHTML=`
   <div class="card" style="margin-bottom:14px">
