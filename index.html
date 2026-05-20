@@ -106,7 +106,7 @@ function toast(msg,type=''){const el=document.createElement('div');el.className=
 function esc(s){return safe(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function normalize(s){return safe(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 async function api(action,payload={},isPublic=false){
-  if(!CFG.url||CFG.url.includes('PASTE_WEB_APP_URL')) throw new Error('Sila masukkan URL Apps Script dalam CFG.url dahulu.');
+  if(!CFG.url||CFG.url.includes('https://script.google.com/macros/s/AKfycbwEZSaFth3JwN9AbciWvHSwvCiSa4nMMyD5FxuVKwIAh7YytJBN-1uBjjd6qoNakIMP/exec')) throw new Error('Sila masukkan URL Apps Script dalam CFG.url dahulu.');
   const body={action,...payload};
   if(!isPublic && state.sessionToken) body.sessionToken=state.sessionToken;
   const r=await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
