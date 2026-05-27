@@ -524,46 +524,101 @@ async function saveSetting(k,v){try{await api({action:'kemaskiniSetting',kunci:k
 // ═══════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════
-function showLogin(){document.getElementById('lw').style.display='';document.getElementById('lp').value='';document.getElementById('la-err').style.display='none'}
-function swL(j,btn){document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');['la','lb','lc2'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});const m={admin:'la',ahli:'lb',opac:'lc2'};const el=document.getElementById(m[j]);if(el)el.style.display=''}
+function showLogin(){
+  const lw=document.getElementById('lw'); if(lw) lw.style.display='';
+  const pass=document.getElementById('lp'); if(pass) pass.value='';
+  ['l-err-a','l-err-b'].forEach(id=>{const el=document.getElementById(id); if(el){el.textContent=''; el.style.display='none';}});
+  const btn=document.getElementById('l-btn-a'); if(btn){btn.textContent='✨ Log Masuk'; btn.disabled=false;}
+}
+
+function swLogin(j,btn){
+  document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  ['l-admin','l-ahli','l-opac'].forEach(id=>{const el=document.getElementById(id); if(el) el.style.display='none';});
+  const map={admin:'l-admin',ahli:'l-ahli',opac:'l-opac'};
+  const target=document.getElementById(map[j]||'l-admin');
+  if(target) target.style.display='';
+}
+// Alias untuk compatibility dengan kod lama
+function swL(j,btn){ return swLogin(j,btn); }
 
 async function doLogin(jenis){
   if(jenis==='admin'){
-    const u=document.getElementById('lu').value.trim(),p=document.getElementById('lp').value;
-    const err=document.getElementById('la-err');err.style.display='none';
-    if(!u||!p){err.textContent='Sila isi semua medan.';err.style.display='block';return}
-    const btn=document.getElementById('la-btn');btn.textContent='⏳ Log Masuk...';btn.disabled=true;
+    const u=(document.getElementById('lu')?.value||'').trim();
+    const p=document.getElementById('lp')?.value||'';
+    const err=document.getElementById('l-err-a');
+    const btn=document.getElementById('l-btn-a');
+    if(err){err.textContent='';err.style.display='none';}
+    if(!u||!p){ if(err){err.textContent='Sila isi semua medan.';err.style.display='block';} return; }
+    if(btn){btn.textContent='⏳ Log Masuk...';btn.disabled=true;}
     try{
       const res=await api({action:'login',username:u,password:p});
-      if(!res?.ok){err.textContent=res?.error||'Login gagal.';err.style.display='block';btn.textContent='✨ Log Masuk';btn.disabled=false;return}
-      _tok=res.data.sessionToken;_me=res.data.user;_mR=_me.peranan||'admin';
+      if(!res||!res.ok){ if(err){err.textContent=res?.error||'Login gagal.';err.style.display='block';} return; }
+      const data=res.data||res;
+      const user=data.user||res.user||null;
+      const token=data.sessionToken||res.sessionToken||data.token||res.token||null;
+      if(!user || typeof user!=='object') throw new Error('Respons login tiada data user daripada backend.');
+      _tok=token||_tok||null;
+      _me=user;
+      _mR=user.peranan||'admin';
       masuklah();
-    }catch(e){err.textContent='Gagal sambung: '+e.message;err.style.display='block';btn.textContent='✨ Log Masuk';btn.disabled=false}
-  } else {
-    const nokad=document.getElementById('l-nokad').value.trim();
-    const err=document.getElementById('lb-err');err.style.display='none';
-    if(!nokad){err.textContent='Sila masukkan No. K/P.';err.style.display='block';return}
-    const ahli=[...(D.murid||[]),...(D.guru||[])].find(x=>x.nokad===nokad&&x.aktif!==false&&x.aktif!=='FALSE');
-    if(!ahli){err.textContent='Ahli tidak dijumpai dalam sistem.';err.style.display='block';return}
-    _me={...ahli,username:ahli.nokad,peranan:'ahli'};_mR='ahli';
+    }catch(e){ if(err){err.textContent='Gagal sambung: '+(e?.message||e);err.style.display='block';} }
+    finally{ if(btn){btn.textContent='✨ Log Masuk';btn.disabled=false;} }
+    return;
+  }
+
+  if(jenis==='ahli'){
+    const nokad=(document.getElementById('l-nokad')?.value||'').trim();
+    const pass=(document.getElementById('l-ahli-p')?.value||'').trim();
+    const err=document.getElementById('l-err-b');
+    if(err){err.textContent='';err.style.display='none';}
+    if(!nokad){ if(err){err.textContent='Sila masukkan No. K/P.';err.style.display='block';} return; }
+    const ahli=[...(D.murid||[]),...(D.guru||[])].find(x=>{
+      const nok=String(x.nokad||'').trim();
+      const id=String(x.id||'').trim();
+      const aktif=String(x.aktif).toLowerCase();
+      const passOk=!pass || pass===id || pass===nok;
+      return nok===nokad && aktif!=='false' && aktif!=='0' && passOk;
+    });
+    if(!ahli){ if(err){err.textContent='Ahli tidak dijumpai atau kata laluan salah.';err.style.display='block';} return; }
+    _me={...ahli,username:ahli.nokad,peranan:'ahli'};
+    _mR='ahli';
     masuklah();
+    return;
   }
 }
-function masukOpac(){document.getElementById('lw').style.display='none';_me={nama:'Awam',peranan:'opac'};_mR='opac';nav('opac')}
+
+function masukOpac(){
+  const lw=document.getElementById('lw'); if(lw) lw.style.display='none';
+  _me={nama:'Awam',username:'opac',peranan:'opac'}; _mR='opac';
+  applyAP(); nav('opac');
+}
+function masukOPAC(){ return masukOpac(); }
 function masuklah(){
-  document.getElementById('lw').style.display='none';
+  if(!_me || typeof _me!=='object'){
+    const err=document.getElementById('l-err-a');
+    if(err){err.textContent='Gagal login: data pengguna tidak lengkap.';err.style.display='block';}
+    return;
+  }
+  _me.nama=_me.nama||_me.username||'Pengguna';
+  _me.peranan=_me.peranan||_mR||'admin';
+  _mR=_mR||_me.peranan;
+  const lw=document.getElementById('lw'); if(lw) lw.style.display='none';
   const i=ini(_me.nama);
   ['tb-av','sb-av'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=i});
-  document.getElementById('sb-unm').textContent=_me.nama;
-  document.getElementById('sb-rol').textContent=_mR==='ahli'?'Ahli PSS':(_me.peranan||'admin');
-  applyAP();mulaRF();nav('dash');toast('Selamat datang, '+_me.nama+'! 👋','ok');
+  const unm=document.getElementById('sb-unm'); if(unm) unm.textContent=_me.nama;
+  const rol=document.getElementById('sb-rol'); if(rol) rol.textContent=_mR==='ahli'?'Ahli PSS':(_mR==='opac'?'OPAC Awam':(_me.peranan||'admin'));
+  applyAP();
+  if(_mR==='opac') { nav('opac'); return; }
+  if(_mR==='ahli') { mulaRF(); nav('pinjam'); toast('Selamat datang, '+_me.nama+'! 👋','ok'); return; }
+  mulaRF(); nav('dash'); toast('Selamat datang, '+_me.nama+'! 👋','ok');
 }
 async function doLogout(){
   if(!confirm('Log keluar dari SMARTLIB?'))return;
   if(_rfT)clearInterval(_rfT);if(_sq){try{_sq.stop().catch(()=>{})}catch{}}_sq=null;
   if(_tok){try{await api({action:'logout'})}catch{}}_tok=null;_me=null;_mR='';killCh();showLogin();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('lw')?.style.display!=='none'){doLogin(document.getElementById('la').style.display!=='none'?'admin':'ahli')}if(e.key==='Escape')document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'))});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('lw')?.style.display!=='none'){const j=document.getElementById('l-admin')?.style.display!=='none'?'admin':'ahli';doLogin(j)}if(e.key==='Escape')document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'))});
 
 // ═══════════════════════════════════════════════
 // NAVIGASI
@@ -617,7 +672,25 @@ function bukaPW(title,body,css=''){
 .pc{margin-top:42px;padding:${css||'8mm'}}@media print{.ptb{display:none}.pc{margin-top:0;padding:${css||'8mm'}}@page{margin:${css||'8mm'}}}</style></head><body>
 <div class="ptb"><span>🖨️ SMARTLIB — ${title}</span><button class="pbtn p-g" onclick="window.print()">🖨️ Cetak</button><button class="pbtn p-gr" onclick="window.close()">✕ Tutup</button></div>
 <div class="pc">${body}</div>
-<script>window.onload=function(){setTimeout(function(){document.querySelectorAll('[data-bc]').forEach(function(s){try{JsBarcode(s,s.dataset.bc,{format:'CODE128',width:1.5,height:34,displayValue:false,margin:0})}catch(e){}})},300)}<\/script></body></html>`);
+<script>window.onload=function(){setTimeout(function(){document.querySelectorAll('[data-bc]').forEach(function(s){try{JsBarcode(s,s.dataset.bc,{format:'CODE128',width:1.5,height:34,displayValue:false,margin:0})}catch(e){}})},300)}<\/script>
+
+<!-- SMARTLIB HOTFIX: Admin + Ahli + OPAC + Copyright -->
+<div id="smartlib-copyright" style="position:fixed;right:12px;bottom:6px;z-index:10000;font-size:10px;color:rgba(255,255,255,.35);pointer-events:none;font-family:var(--fn),sans-serif;">© 2026 SMARTLIB | Developed by Syahida Suffian</div>
+<script>
+(function(){
+  const allowedAhli = new Set(['pinjam','pulang','denda','tempahan','opac','scan']);
+  const originalNav = window.nav;
+  window.nav = function(p){
+    if(window._mR==='ahli' && !allowedAhli.has(p)){
+      if(typeof toast==='function') toast('Akses Ahli PSS dihadkan kepada modul Sirkulasi sahaja.','wa');
+      p='pinjam';
+    }
+    return originalNav(p);
+  };
+})();
+</script>
+
+</body></html>`);
   pw.document.close();return pw;
 }
 </script>
@@ -1183,14 +1256,104 @@ async function padamPg(id,j){const p=(D[j]||[]).find(x=>String(x.id)===String(id
 </script>
 
 <script>
-// SMARTLIB emergency performance/boot patch
-let _tempahan = window._tempahan || [];
-let _scanQ = null;
-let _charts = (typeof _ch !== 'undefined') ? _ch : {};
-const GAS_URL = GAS;
+// ─── Alias kerana script ini bergabung dengan core ───
+const GAS_URL = GAS;  // GAS diisytihar dalam script core
 const CFG = {url: GAS, token: 'SISPUSAT2025SEKOLAHKU', refresh: 30000};
-function pgKad(){ return pgKadAhli(); }
-function bukaTVMode(){ return pgTV(); }
+// ─────────────────────────────────────────────────────
+
+// ════════════════════════════════════════════════════
+// FUNGSI TERAS & UTILITI
+// ════════════════════════════════════════════════════
+
+
+
+
+
+
+
+
+
+
+function isFik(np){const s=String(np||'').trim().toUpperCase();return/^(FM|FI|FC|FT|F[\/ ])/.test(s)||['FM','FI','FC','FT'].includes(s)}
+function ddcKat(np){const s=String(np||'').trim();return isFik(s)?'Fiksyen':(DDC[s.charAt(0)]||'Lain-lain')}
+function warnaNP(np){const s=String(np||'').trim().toUpperCase();if(isFik(s))return'#10b981';const m={'0':'#3b82f6','1':'#8b5cf6','2':'#10b981','3':'#f59e0b','4':'#06b6d4','5':'#ec4899','6':'#ef4444','7':'#f97316','8':'#6366f1','9':'#14b8a6'};return m[s.charAt(0)]||'#64748b'}
+function genNP(kat,ddc,bhs,pgr,jdl){const t3=((pgr||jdl||'').replace(/^(HJ\.?|DR\.?|PROF\.?)\s+/i,'').trim().substring(0,3)||'XXX').toUpperCase();return kat==='fiksyen'?((FIK[bhs]||'FM')+'/'+t3):((ddc||'000')+' '+t3)}
+
+async function gsPost(payload){const r=await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,token:CFG.token})});if(!r.ok)throw new Error('HTTP '+r.status);const t=await r.text();try{return JSON.parse(t)}catch{throw new Error('Respons tidak sah')}}
+async function gsGet(p,retry=1){const u=new URL(CFG.url);Object.entries({...p,token:CFG.token}).forEach(([k,v])=>u.searchParams.set(k,v));const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),12000);try{const r=await fetch(u.toString(),{signal:ctrl.signal});clearTimeout(to);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){clearTimeout(to);if(retry>0&&(e.name==='AbortError'||e.message.includes('fetch'))){const s=document.getElementById('lo-sub');if(s)s.textContent='Cuba semula... ('+retry+'x)';await delay(3000);return gsGet(p,retry-1)}throw e}}
+
+
+dt.setDate(dt.getDate()+n);return dt.toISOString().split('T')[0]};
+
+
+
+try{const s=String(d).trim();if(/^\d{4}$/.test(s))return s;const dt=new Date(s.includes('T')?s:s.replace(/[.\/]/g,'-')+'T00:00:00');if(isNaN(dt))return s;return dt.toLocaleDateString('ms-MY',{day:'2-digit',month:'2-digit',year:'numeric'})}catch{return String(d)}};
+
+
+
+
+_charts={}};
+
+
+
+
+document.addEventListener('click',e=>{if(!e.target.closest('#notif-dd')&&!e.target.closest('#bell-btn'))document.getElementById('notif-dd').classList.remove('open');if(!e.target.closest('#src-dd')&&!e.target.closest('#tb-src')){const d=document.getElementById('src-dd');if(d)d.style.display='none'}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'))});
+
+
+
+async 
+
+
+
+async 
+
+
+
+// AUTH
+function swLogin(j,btn){
+  document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');
+  ['l-admin','l-ahli','l-opac'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
+  const m={'admin':'l-admin','ahli':'l-ahli','opac':'l-opac'};
+  const el=document.getElementById(m[j]);if(el)el.style.display='';
+}
+async 
+function masukOPAC(){document.getElementById('lw').style.display='none';_me={nama:'Awam',peranan:'opac'};nav('opac')}
+
+async 
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('lw').style.display!=='none'){const j=document.getElementById('l-admin').style.display!=='none'?'admin':'ahli';doLogin(j)}});
+
+// NAV
+
+
+
+
+function bukaPrintWin(title,body,css=''){
+  const pw=window.open('','_blank','width=960,height=700,scrollbars=yes');
+  if(!pw){alert('⚠️ Popup disekat! Benarkan popup untuk laman ini kemudian cuba lagi.');return null}
+  pw.document.open();
+  pw.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Plus Jakarta Sans',Arial,sans-serif;background:#f5f5f5}.ptb{position:fixed;top:0;left:0;right:0;background:#064e3b;color:#fff;padding:7px 14px;display:flex;align-items:center;gap:9px;z-index:999;font-size:12px}.pbtn{padding:5px 13px;border:none;border-radius:5px;cursor:pointer;font-size:11.5px;font-weight:700}.p-em{background:#10b981;color:#fff}.p-gr{background:rgba(255,255,255,.15);color:#fff}.pc{margin-top:38px;padding:${css||'8mm'}}@media print{.ptb{display:none}.pc{margin-top:0;padding:${css||'8mm'}}@page{margin:${css||'8mm'}}}</style></head><body><div class="ptb"><span>🖨️ SMARTLIB — ${title}</span><button class="pbtn p-em" onclick="window.print()">🖨️ Cetak</button><button class="pbtn p-gr" onclick="window.close()">✕ Tutup</button></div><div class="pc">${body}</div><script>window.onload=function(){setTimeout(function(){document.querySelectorAll('[data-bc]').forEach(function(s){try{JsBarcode(s,s.dataset.bc,{format:'CODE128',width:1.5,height:34,displayValue:false,margin:0})}catch(e){}})},300)};<\/script>
+
+<!-- SMARTLIB HOTFIX: Admin + Ahli + OPAC + Copyright -->
+<div id="smartlib-copyright" style="position:fixed;right:12px;bottom:6px;z-index:10000;font-size:10px;color:rgba(255,255,255,.35);pointer-events:none;font-family:var(--fn),sans-serif;">© 2026 SMARTLIB | Developed by Syahida Suffian</div>
+<script>
+(function(){
+  const allowedAhli = new Set(['pinjam','pulang','denda','tempahan','opac','scan']);
+  const originalNav = window.nav;
+  window.nav = function(p){
+    if(window._mR==='ahli' && !allowedAhli.has(p)){
+      if(typeof toast==='function') toast('Akses Ahli PSS dihadkan kepada modul Sirkulasi sahaja.','wa');
+      p='pinjam';
+    }
+    return originalNav(p);
+  };
+})();
+</script>
+
+</body></html>`);
+  pw.document.close();return pw;
+}
+
 // ════════════════════════════════════════════════════
 // KAD AHLI
 // ════════════════════════════════════════════════════
@@ -1521,143 +1684,25 @@ async function boot(){
   safeHide();
 }
 document.addEventListener('DOMContentLoaded',()=>boot());
-
-// ═════════════════════════════════════════════════════
-// SMARTLIB HOTFIX: instant login + safe background data
-// ═════════════════════════════════════════════════════
-
-async function api(payload,retry=2){
-  const body={...payload, token: CFG.token};
-  if(_tok) body.sessionToken=_tok;
-  try{
-    const ctrl=new AbortController();
-    const to=setTimeout(()=>ctrl.abort(),15000);
-    const r=await fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),signal:ctrl.signal});
-    clearTimeout(to);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const txt=await r.text();
-    let j; try{j=JSON.parse(txt)}catch(e){throw new Error('Backend bukan JSON: '+txt.slice(0,80));}
-    return j;
-  }catch(e){
-    if(retry>0){await delay(1200);return api(payload,retry-1)}
-    throw e;
-  }
-}
-
-function showLogin(){
-  const lw=document.getElementById('lw');
-  if(lw)lw.style.display='';
-  const p=document.getElementById('lp'); if(p)p.value='';
-  ['l-err-a','l-err-b'].forEach(id=>{const el=document.getElementById(id); if(el)el.style.display='none';});
-}
-
-function setLoginError(id,msg){
-  const el=document.getElementById(id);
-  if(el){el.textContent=msg;el.style.display='block';}
-}
-
-function setLoginButton(loading){
-  const btn=document.getElementById('l-btn-a');
-  if(btn){btn.disabled=!!loading;btn.textContent=loading?'⏳ Log Masuk...':'✨ Log Masuk';}
-}
-
-async function doLogin(jenis){
-  if(jenis==='admin'){
-    const u=(document.getElementById('lu')?.value||'').trim();
-    const p=document.getElementById('lp')?.value||'';
-    const err=document.getElementById('l-err-a');
-    if(err)err.style.display='none';
-    if(!u||!p){setLoginError('l-err-a','Sila isi nama pengguna dan kata laluan.');return;}
-    setLoginButton(true);
-    try{
-      const res=await api({action:'login',username:u,password:p},0);
-      if(!res?.ok){setLoginError('l-err-a',res?.error||'Login gagal. Semak username/password.');setLoginButton(false);return;}
-      _tok=res.data?.sessionToken||null;
-      _me=res.data?.user||{nama:u,peranan:'admin'};
-      _mR=_me.peranan||'admin';
-      masuklah();
-      // Load data selepas login supaya muka login tidak tersekat.
-      muatSemua(true).then(()=>{ if(_pg==='dash') { killCh(); pgDash(); } }).catch(e=>toast('Data lambat dimuat: '+e.message,'wa'));
-    }catch(e){
-      setLoginError('l-err-a','Gagal sambung ke backend: '+e.message);
-      setLoginButton(false);
-    }
-    return;
-  }
-
-  if(jenis==='ahli'){
-    const nokad=(document.getElementById('l-nokad')?.value||'').trim();
-    if(!nokad){setLoginError('l-err-b','Sila masukkan No. K/P.');return;}
-    // Cuba guna data sedia ada; kalau kosong, muat di latar terlebih dahulu tetapi jangan sekat terlalu lama.
-    try{
-      if(!(D.murid?.length||D.guru?.length)) await muatSemua(true);
-      const ahli=[...(D.murid||[]),...(D.guru||[])].find(x=>x.nokad===nokad&&x.aktif!==false&&x.aktif!=='FALSE'&&x.aktif!=='false');
-      if(!ahli){setLoginError('l-err-b','Ahli tidak dijumpai dalam sistem.');return;}
-      _me={...ahli,username:ahli.nokad,peranan:'ahli'};_mR='ahli';masuklah();
-    }catch(e){setLoginError('l-err-b','Data ahli belum siap dimuat. Cuba semula sebentar lagi.');}
-  }
-}
-
-function masukOPAC(){
-  const lw=document.getElementById('lw'); if(lw)lw.style.display='none';
-  _me={nama:'Awam',peranan:'opac'};_mR='opac';
-  if(!(D.buku||[]).length) muatSemua(true).then(()=>{ if(_pg==='opac') pgOpac(); }).catch(()=>{});
-  nav('opac');
-}
-
-function masuklah(){
-  const lw=document.getElementById('lw'); if(lw)lw.style.display='none';
-  setLoginButton(false);
-  const i=ini(_me?.nama||'?');
-  ['tb-av','sb-av'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=i});
-  const unm=document.getElementById('sb-unm'); if(unm)unm.textContent=_me?.nama||'-';
-  const rol=document.getElementById('sb-rol'); if(rol)rol.textContent=_mR==='ahli'?'Ahli PSS':(_me?.peranan||'admin');
-  applyAP(); mulaRF(); nav('dash'); toast('Selamat datang, '+(_me?.nama||'Admin')+'! 👋','ok');
-}
-
-async function boot(){
-  const lo=document.getElementById('lo');
-  const sub=document.getElementById('lo-sub');
-  if(sub)sub.textContent='Membuka SMARTLIB...';
-  applyAP();
-
-  // Jangan tunggu Google Sheet pada muka login.
-  setTimeout(()=>{ if(lo) lo.style.display='none'; }, 450);
-
-  // Muat cache ringan sahaja di latar belakang. Jika gagal, login tetap boleh digunakan.
-  try{
-    const cached=sessionStorage.getItem('SMARTLIB_BOOT_CACHE_V4');
-    if(cached){
-      prosesD(JSON.parse(cached));
-      applyAP();
-    }
-  }catch(e){}
-
-  setTimeout(async()=>{
-    try{
-      const ctrl=new AbortController();
-      const t=setTimeout(()=>ctrl.abort(),4500);
-      const u=new URL(GAS);
-      u.searchParams.set('action','bootstrap');
-      u.searchParams.set('token',CFG.token);
-      const r=await fetch(u.toString(),{signal:ctrl.signal});
-      clearTimeout(t);
-      if(r.ok){
-        const j=await r.json();
-        if(j?.ok&&j.data){
-          prosesD(j.data);
-          sessionStorage.setItem('SMARTLIB_BOOT_CACHE_V4',JSON.stringify(j.data));
-          applyAP();
-        }
-      }
-    }catch(e){
-      console.warn('SMARTLIB bootstrap skipped:',e.message);
-    }
-  },700);
-}
-
-document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 </script>
+
+
+<!-- SMARTLIB HOTFIX: Admin + Ahli + OPAC + Copyright -->
+<div id="smartlib-copyright" style="position:fixed;right:12px;bottom:6px;z-index:10000;font-size:10px;color:rgba(255,255,255,.35);pointer-events:none;font-family:var(--fn),sans-serif;">© 2026 SMARTLIB | Developed by Syahida Suffian</div>
+<script>
+(function(){
+  const allowedAhli = new Set(['pinjam','pulang','denda','tempahan','opac','scan']);
+  const originalNav = window.nav;
+  window.nav = function(p){
+    if(window._mR==='ahli' && !allowedAhli.has(p)){
+      if(typeof toast==='function') toast('Akses Ahli PSS dihadkan kepada modul Sirkulasi sahaja.','wa');
+      p='pinjam';
+    }
+    return originalNav(p);
+  };
+})();
+</script>
+
 </body>
 </html>
 
