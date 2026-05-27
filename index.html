@@ -278,17 +278,24 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 @media print{#sb,#tb,#lo,#tbox,.np{display:none!important}body{background:#fff}#content{padding:0}#pz{display:block!important}}
 #pz{display:none}
 
-
-/* SMARTLIB COPYRIGHT */
-.smartlib-copy{position:fixed;right:12px;bottom:8px;z-index:1000;font-size:10px;color:rgba(100,116,139,.72);background:rgba(255,255,255,.52);border:1px solid rgba(226,232,240,.65);border-radius:999px;padding:4px 9px;backdrop-filter:blur(8px);pointer-events:none}
-body.dk .smartlib-copy{color:rgba(209,250,229,.65);background:rgba(10,26,16,.55);border-color:rgba(45,90,58,.55)}
-@media(max-width:640px){.smartlib-copy{font-size:8.5px;right:8px;bottom:5px;padding:3px 7px}}
-
 /* RESPONSIVE */
 @media(max-width:1100px){.sg{grid-template-columns:repeat(3,1fr)}.pnt-g{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.fr.c2,.fr.c3{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}}
 </style>
+
+<style id="smartlib-hotfix-style">
+#smartlib-copy{
+  position:fixed;right:10px;bottom:6px;z-index:50;
+  font-size:10px;color:rgba(100,116,139,.72);
+  background:rgba(255,255,255,.65);backdrop-filter:blur(4px);
+  border:1px solid rgba(226,232,240,.7);border-radius:999px;
+  padding:3px 8px;pointer-events:none;
+}
+body.dk #smartlib-copy{background:rgba(10,26,16,.65);color:rgba(209,250,229,.55);border-color:rgba(45,90,58,.6)}
+.smartlib-hidden-by-role{display:none!important}
+</style>
+
 </head>
 <body>
 
@@ -415,7 +422,6 @@ body.dk .smartlib-copy{color:rgba(209,250,229,.65);background:rgba(10,26,16,.55)
 
 <div id="tbox"></div>
 <div id="pz"></div>
-<div class="smartlib-copy">© 2026 SMARTLIB | Developed by Syahida Suffian</div>
 
 <script>
 // ═══════════════════════════════════════════════
@@ -625,7 +631,370 @@ function bukaPW(title,body,css=''){
 .pc{margin-top:42px;padding:${css||'8mm'}}@media print{.ptb{display:none}.pc{margin-top:0;padding:${css||'8mm'}}@page{margin:${css||'8mm'}}}</style></head><body>
 <div class="ptb"><span>🖨️ SMARTLIB — ${title}</span><button class="pbtn p-g" onclick="window.print()">🖨️ Cetak</button><button class="pbtn p-gr" onclick="window.close()">✕ Tutup</button></div>
 <div class="pc">${body}</div>
-<script>window.onload=function(){setTimeout(function(){document.querySelectorAll('[data-bc]').forEach(function(s){try{JsBarcode(s,s.dataset.bc,{format:'CODE128',width:1.5,height:34,displayValue:false,margin:0})}catch(e){}})},300)}<\/script></body></html>`);
+<script>window.onload=function(){setTimeout(function(){document.querySelectorAll('[data-bc]').forEach(function(s){try{JsBarcode(s,s.dataset.bc,{format:'CODE128',width:1.5,height:34,displayValue:false,margin:0})}catch(e){}})},300)}<\/script>
+<script id="smartlib-critical-fix">
+/* SMARTLIB CRITICAL FIX — Scan Camera + Ahli Login + OPAC Login + Copyright
+   Patch tambahan sahaja, tidak mengubah UI asal. */
+(function(){
+  const allowedAhli = new Set(['pinjam','pulang','denda','opac','scan']);
+  const allowedOpac = new Set(['opac']);
+
+  function $(id){ return document.getElementById(id); }
+  function msgBox(id,msg){
+    const el=$(id);
+    if(el){ el.textContent=msg||''; el.style.display=msg?'block':'none'; }
+  }
+
+  async function ensureDataLoaded(){
+    if(window.D && D.ok && Array.isArray(D.buku) && (D.buku.length || D.murid?.length || D.guru?.length)) return true;
+    try{
+      const sub=$('lo-sub'), lo=$('lo');
+      if(lo) lo.style.display='flex';
+      if(sub) sub.textContent='Memuatkan data SMARTLIB...';
+      let res=null;
+      if(typeof api === 'function') res = await api({action:'baca_semua'},0);
+      if((!res || !res.ok) && typeof gsGet === 'function') res = await gsGet({action:'baca_semua'},0);
+      if(res && res.ok && res.data && typeof prosesD === 'function'){
+        prosesD(res.data);
+        if(typeof applyAP === 'function') applyAP();
+        if(typeof updLwBdg === 'function') updLwBdg();
+      }
+      if(lo) lo.style.display='none';
+      return !!(res && res.ok);
+    }catch(e){
+      const lo=$('lo'); if(lo) lo.style.display='none';
+      if(typeof toast === 'function') toast('Gagal memuatkan data: '+e.message,'er');
+      return false;
+    }
+  }
+
+  // Override boot: jangan tunggu Google Sheet pada muka login.
+  window.boot = async function(){
+    try{ if(typeof applyAP === 'function') applyAP(); }catch(e){}
+    const lo=$('lo'); if(lo) lo.style.display='none';
+  };
+
+  // Betulkan tab login — HTML guna l-admin/l-ahli/l-opac, bukan la/lb/lc2.
+  window.swLogin = function(j,btn){
+    document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('on'));
+    if(btn) btn.classList.add('on');
+    ['l-admin','l-ahli','l-opac'].forEach(id=>{ const el=$(id); if(el) el.style.display='none'; });
+    const map={admin:'l-admin',ahli:'l-ahli',opac:'l-opac'};
+    const panel=$(map[j]||'l-admin');
+    if(panel) panel.style.display='';
+    msgBox('l-err-a',''); msgBox('l-err-b','');
+  };
+
+  function setLoginButton(disabled,text){
+    const btn=$('l-btn-a');
+    if(btn){ btn.disabled=!!disabled; if(text) btn.textContent=text; }
+  }
+
+  // Override login supaya tidak guna ID lama la-err/lb-err/la-btn.
+  window.doLogin = async function(jenis){
+    if(jenis==='admin'){
+      const u=($('lu')?.value||'').trim();
+      const p=$('lp')?.value||'';
+      msgBox('l-err-a','');
+      if(!u || !p){ msgBox('l-err-a','Sila isi nama pengguna dan kata laluan.'); return; }
+      setLoginButton(true,'⏳ Log Masuk...');
+      try{
+        const res = await api({action:'login',username:u,password:p},0);
+        if(!res || !res.ok){
+          msgBox('l-err-a',(res && (res.error||res.message)) || 'Nama pengguna atau kata laluan salah.');
+          setLoginButton(false,'✨ Log Masuk');
+          return;
+        }
+        window._tok=res.data?.sessionToken || res.sessionToken || null;
+        window._me=res.data?.user || res.user || {nama:u,peranan:'admin'};
+        window._mR=_me.peranan || 'admin';
+        await ensureDataLoaded();
+        if(typeof masuklah === 'function') masuklah();
+        applyRoleAccess();
+      }catch(e){
+        msgBox('l-err-a','Gagal sambung: '+e.message);
+        setLoginButton(false,'✨ Log Masuk');
+      }
+      return;
+    }
+
+    // Login Ahli PSS
+    const nokad=($('l-nokad')?.value||'').replace(/\s+/g,'').trim();
+    const pass=($('l-ahli-p')?.value||'').replace(/\s+/g,'').trim();
+    msgBox('l-err-b','');
+    if(!nokad){ msgBox('l-err-b','Sila masukkan No. Kad Pengenalan.'); return; }
+    await ensureDataLoaded();
+    const semua=[...(D.murid||[]).map(x=>({...x,jenis:'murid'})), ...(D.guru||[]).map(x=>({...x,jenis:'guru'}))];
+    const clean=v=>String(v||'').replace(/\s+/g,'').replace(/-/g,'').trim();
+    const ahli=semua.find(x=>{
+      const aktif = x.aktif!==false && String(x.aktif).toUpperCase()!=='FALSE' && String(x.aktif).toUpperCase()!=='TIDAK AKTIF';
+      const idMatch = clean(x.nokad)===clean(nokad) || clean(x.no_kp)===clean(nokad) || clean(x.ic)===clean(nokad);
+      return aktif && idMatch;
+    });
+    if(!ahli){ msgBox('l-err-b','Ahli PSS tidak dijumpai atau tidak aktif.'); return; }
+
+    // Jika medan password diisi, terima no ahli/id/no kad sebagai kata laluan asas.
+    if(pass){
+      const allowed=[ahli.no_ahli, ahli.memberId, ahli.id, ahli.nokad, ahli.no_kp, ahli.ic].map(clean);
+      if(!allowed.includes(clean(pass))){
+        msgBox('l-err-b','No. ahli / kata laluan tidak sepadan.');
+        return;
+      }
+    }
+
+    window._me={...ahli, nama:ahli.nama||ahli.name||'Ahli PSS', peranan:'ahli'};
+    window._mR='ahli';
+    const lw=$('lw'); if(lw) lw.style.display='none';
+    try{
+      const i=typeof ini==='function'?ini(_me.nama):(_me.nama||'?').substring(0,2).toUpperCase();
+      ['tb-av','sb-av'].forEach(id=>{ const el=$(id); if(el) el.textContent=i; });
+      if($('sb-unm')) $('sb-unm').textContent=_me.nama;
+      if($('sb-rol')) $('sb-rol').textContent='Ahli PSS';
+      if(typeof applyAP==='function') applyAP();
+      if(typeof mulaRF==='function') mulaRF();
+    }catch(e){}
+    applyRoleAccess();
+    if(typeof nav==='function') nav('pinjam');
+    if(typeof toast==='function') toast('Selamat datang, '+_me.nama+'!','ok');
+  };
+
+  window.masukOPAC = async function(){
+    const lw=$('lw'); if(lw) lw.style.display='none';
+    window._me={nama:'Awam',peranan:'opac'};
+    window._mR='opac';
+    await ensureDataLoaded();
+    applyRoleAccess();
+    if(typeof nav==='function') nav('opac');
+  };
+  window.masukOpac = window.masukOPAC;
+
+  function parseNavName(el){
+    const s=el.getAttribute('onclick')||'';
+    const m=s.match(/nav\(['"]([^'"]+)['"]\)/);
+    return m?m[1]:'';
+  }
+
+  window.applyRoleAccess = function(){
+    const role=(window._mR || window._me?.peranan || '').toLowerCase();
+    document.querySelectorAll('#sb .sbi').forEach(el=>{
+      const p=parseNavName(el);
+      el.classList.remove('smartlib-hidden-by-role');
+      if(role==='ahli' && p && !allowedAhli.has(p)) el.classList.add('smartlib-hidden-by-role');
+      if(role==='opac' && p && !allowedOpac.has(p)) el.classList.add('smartlib-hidden-by-role');
+    });
+    document.querySelectorAll('#sb .sbg').forEach(g=>{
+      if(role==='ahli' || role==='opac'){
+        const next=[];
+        let n=g.nextElementSibling;
+        while(n && !n.classList.contains('sbg')){ next.push(n); n=n.nextElementSibling; }
+        const visible=next.some(x=>!x.classList.contains('smartlib-hidden-by-role') && !x.matches('div[style*="margin"]'));
+        g.style.display=visible?'':'none';
+      }else{
+        g.style.display='';
+      }
+    });
+  };
+
+  // Guard nav tanpa ubah UI asal.
+  if(typeof window.nav === 'function' && !window.__navGuarded){
+    const oldNav=window.nav;
+    window.nav=function(p){
+      const role=(window._mR || window._me?.peranan || '').toLowerCase();
+      if(role==='ahli' && !allowedAhli.has(p)){
+        if(typeof toast==='function') toast('Akses Ahli PSS dihadkan kepada Sirkulasi sahaja.','wa');
+        p='pinjam';
+      }
+      if(role==='opac' && !allowedOpac.has(p)) p='opac';
+      return oldNav(p);
+    };
+    window.__navGuarded=true;
+  }
+
+  // OPAC ringan yang berfungsi walaupun script asal selepas error tidak dijalankan.
+  window.pgOpac = function(){
+    const content=$('content');
+    if(!content) return;
+    const count=(D.buku||[]).length;
+    content.innerHTML = `
+      <div class="card" style="background:linear-gradient(135deg,var(--eml),var(--cyl));border:1.5px solid rgba(16,185,129,.3);margin-bottom:12px">
+        <div style="text-align:center;padding:8px 0">
+          <div style="font-size:20px;font-weight:800;background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:7px">🔍 OPAC — Katalog Bahan Awam</div>
+          <div style="font-size:11px;color:var(--mu);margin-bottom:13px">Cari dalam ${count} bahan</div>
+          <div style="display:flex;gap:7px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center">
+            <input class="opac-in" id="opac-q" type="search" placeholder="Judul, pengarang, ISBN, no. panggilan..." style="flex:1;min-width:200px" oninput="runOpac()">
+            <button class="btn b-em" onclick="runOpac()">Cari</button>
+          </div>
+          <div class="opac-cats" style="justify-content:center;margin-top:8px">
+            <span class="ocat on" onclick="togOCat(this,'')">Semua</span>
+            <span class="ocat" onclick="togOCat(this,'F')">Fiksyen</span>
+            <span class="ocat" onclick="togOCat(this,'B')">Bukan Fiksyen</span>
+          </div>
+        </div>
+      </div>
+      <div id="opac-result" style="color:var(--mu);text-align:center;padding:24px">${count?'Taip untuk mencari...':'Data buku belum dimuatkan.'}</div>`;
+  };
+  window._opacCF = '';
+  window.togOCat = function(el,k){
+    document.querySelectorAll('.ocat').forEach(c=>c.classList.remove('on'));
+    if(el) el.classList.add('on');
+    window._opacCF=k;
+    window.runOpac();
+  };
+  window.runOpac = function(){
+    const q=($('opac-q')?.value||'').toLowerCase().trim();
+    const div=$('opac-result'); if(!div) return;
+    if(!q && !window._opacCF){ div.textContent='Taip untuk mencari...'; return; }
+    const isF = (np)=>{
+      const s=String(np||'').trim().toUpperCase();
+      return /^(FM|FI|FC|FT|F[\/\s])/.test(s) || ['FM','FI','FC','FT'].includes(s);
+    };
+    const f=(D.buku||[]).filter(b=>{
+      const hay=[b.judul,b.title,b.pengarang,b.author,b.isbn,b.no_panggilan,b.callNo,b.no_perolehan].join(' ').toLowerCase();
+      const qm=!q || hay.includes(q);
+      const fik=isF(b.no_panggilan||b.callNo);
+      let km=true;
+      if(window._opacCF==='F') km=fik;
+      else if(window._opacCF==='B') km=!fik;
+      return qm && km;
+    }).slice(0,80);
+    if(!f.length){ div.innerHTML='<div class="al a-wa">❌ Tiada bahan dijumpai.</div>'; return; }
+    div.innerHTML=`<div style="margin-bottom:9px;font-size:12px;color:var(--mu)">${f.length} bahan dijumpai</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px">
+      ${f.map(b=>{
+        const id=b.id;
+        const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(id)&&p.status==='pinjam');
+        return `<div class="card" style="padding:12px">
+          <div style="font-weight:700;font-size:12px;margin-bottom:3px;line-height:1.3">${b.judul||b.title||'–'}</div>
+          <div style="font-size:11px;color:var(--mu);margin-bottom:2px">${b.pengarang||b.author||'–'}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px">
+            <code style="font-size:10px">${b.no_panggilan||b.callNo||'–'}</code>
+            <span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Di Rak'}</span>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+  };
+
+  async function loadScannerLib(){
+    if(window.Html5Qrcode) return true;
+    await new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      s.onload=resolve; s.onerror=()=>reject(new Error('Library scanner gagal dimuatkan.'));
+      document.head.appendChild(s);
+    });
+    return !!window.Html5Qrcode;
+  }
+
+  window.pgScan = function(){
+    const content=$('content');
+    if(!content) return;
+    content.innerHTML=`<div class="g2">
+      <div class="card">
+        <div class="ct">📷 Scan Barcode / ISBN</div>
+        <div class="al a-in">Benarkan akses kamera. Pada telefon/tablet, sistem akan cuba guna kamera belakang.</div>
+        <div id="scan-rd" style="border-radius:var(--r);overflow:hidden;min-height:220px;background:#000;margin-bottom:10px"></div>
+        <div id="scan-st" style="display:none;text-align:center;padding:5px;font-size:12px;color:var(--em);font-weight:600">🔍 Mengimbas...</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button class="btn b-em b-sm" onclick="mulaScanner()" id="btn-sc">📷 Mula Scan</button>
+          <button class="btn b-gh b-sm" onclick="hentiScanner()">⏹ Henti</button>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:12px">
+          <div class="ct" style="margin-bottom:7px">⌨️ Input Manual</div>
+          <div style="display:flex;gap:7px">
+            <input type="text" id="scan-man" placeholder="ISBN / No. Panggilan / No. Perolehan..." style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--inp);color:var(--tx)" onkeydown="if(event.key==='Enter')cariScan()">
+            <button class="btn b-em" onclick="cariScan()">🔍 Cari</button>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div class="ct">📋 Hasil</div>
+        <div id="scan-result" style="color:var(--mu);font-size:12px;text-align:center;padding:18px"><div style="font-size:28px;margin-bottom:7px">📚</div>Imbas barcode atau taip ISBN...</div>
+      </div>
+    </div>`;
+  };
+
+  window.mulaScanner = async function(){
+    try{
+      await loadScannerLib();
+      const st=$('scan-st'), btn=$('btn-sc');
+      if(st) st.style.display='block';
+      if(btn){ btn.textContent='🔄 Mengimbas...'; btn.disabled=true; }
+      window._scanQ = new Html5Qrcode('scan-rd');
+      const cams = await Html5Qrcode.getCameras();
+      if(!cams || !cams.length) throw new Error('Tiada kamera dikesan.');
+      const back = cams.find(c=>/back|rear|environment|belakang/i.test(c.label)) || cams[cams.length-1] || cams[0];
+      await _scanQ.start(
+        back.id,
+        { fps:10, qrbox:{width:260,height:110}, aspectRatio:1.777 },
+        decoded => {
+          const inp=$('scan-man'); if(inp) inp.value=decoded;
+          window.hentiScanner();
+          setTimeout(()=>window.cariScanWith(decoded),200);
+        },
+        () => {}
+      );
+    }catch(e){
+      if(typeof toast==='function') toast('Scanner gagal: '+e.message,'er');
+      window.hentiScanner();
+    }finally{
+      const btn=$('btn-sc'); if(btn){ btn.disabled=false; btn.textContent='📷 Mula Scan'; }
+    }
+  };
+  window.hentiScanner = function(){
+    const st=$('scan-st'), btn=$('btn-sc');
+    if(st) st.style.display='none';
+    if(btn){ btn.disabled=false; btn.textContent='📷 Mula Scan'; }
+    if(window._scanQ){
+      try{ _scanQ.stop().catch(()=>{}).finally(()=>{try{_scanQ.clear()}catch(e){}}); }catch(e){}
+      window._scanQ=null;
+    }
+  };
+  window.cariScan = function(){
+    const q=($('scan-man')?.value||'').trim();
+    if(q) window.cariScanWith(q);
+  };
+  window.cariScanWith = function(q){
+    const clean=v=>String(v||'').replace(/-/g,'').trim().toLowerCase();
+    const b=(D.buku||[]).find(x =>
+      clean(x.isbn)===clean(q) || clean(x.no_panggilan)===clean(q) ||
+      clean(x.callNo)===clean(q) || clean(x.no_perolehan)===clean(q) ||
+      clean(x.accessionNo)===clean(q)
+    );
+    const div=$('scan-result'); if(!div) return;
+    if(!b){
+      div.innerHTML=`<div class="al a-wa">⚠️ Kod <strong>${q}</strong> tidak dijumpai.</div><button class="btn b-em" onclick="nav('daftar')">➕ Daftar Bahan Baru</button>`;
+      if(typeof toast==='function') toast('Tidak dijumpai','wa');
+      return;
+    }
+    const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');
+    div.innerHTML=`<div class="al a-ok">✅ Bahan dijumpai!</div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <tr><td style="color:var(--mu);padding:4px 0;width:38%">No. Perolehan</td><td><span class="bdg bg-cy">${b.no_perolehan||b.accessionNo||'–'}</span></td></tr>
+        <tr><td style="color:var(--mu);padding:4px 0">No. Panggilan</td><td><span class="mono">${b.no_panggilan||b.callNo||'–'}</span></td></tr>
+        <tr><td style="color:var(--mu);padding:4px 0">Judul</td><td><strong>${b.judul||b.title||'–'}</strong></td></tr>
+        <tr><td style="color:var(--mu);padding:4px 0">Pengarang</td><td>${b.pengarang||b.author||'–'}</td></tr>
+        <tr><td style="color:var(--mu);padding:4px 0">Status</td><td><span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Di Rak'}</span></td></tr>
+      </table>
+      <div style="display:flex;gap:7px;margin-top:10px"><button class="btn b-em b-sm" onclick="nav('pinjam')">📤 Pinjaman</button><button class="btn b-gh b-sm" onclick="nav('pulang')">↩️ Pemulangan</button></div>`;
+    if(typeof toast==='function') toast('Bahan dijumpai!','ok');
+  };
+
+  // Alias supaya nav lama yang panggil pgKad tidak error.
+  if(typeof window.pgKad !== 'function' && typeof window.pgKadAhli === 'function') window.pgKad = window.pgKadAhli;
+
+  // Copyright bawah kanan.
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(!$('smartlib-copy')){
+      const c=document.createElement('div');
+      c.id='smartlib-copy';
+      c.textContent='© 2026 SMARTLIB | Developed by Syahida Suffian';
+      document.body.appendChild(c);
+    }
+    setTimeout(()=>{ try{ applyRoleAccess(); }catch(e){} },500);
+  });
+})();
+</script>
+
+</body></html>`);
   pw.document.close();return pw;
 }
 </script>
@@ -1191,14 +1560,86 @@ async function padamPg(id,j){const p=(D[j]||[]).find(x=>String(x.id)===String(id
 </script>
 
 <script>
-// SMARTLIB emergency performance/boot patch
-let _tempahan = window._tempahan || [];
-let _scanQ = null;
-let _charts = (typeof _ch !== 'undefined') ? _ch : {};
-const GAS_URL = GAS;
+// ─── Alias kerana script ini bergabung dengan core ───
+const GAS_URL = GAS;  // GAS diisytihar dalam script core
 const CFG = {url: GAS, token: 'SISPUSAT2025SEKOLAHKU', refresh: 30000};
-function pgKad(){ return pgKadAhli(); }
-function bukaTVMode(){ return pgTV(); }
+// ─────────────────────────────────────────────────────
+
+// ════════════════════════════════════════════════════
+// FUNGSI TERAS & UTILITI
+// ════════════════════════════════════════════════════
+
+
+
+
+
+
+
+
+
+
+function isFik(np){const s=String(np||'').trim().toUpperCase();return/^(FM|FI|FC|FT|F[\/ ])/.test(s)||['FM','FI','FC','FT'].includes(s)}
+function ddcKat(np){const s=String(np||'').trim();return isFik(s)?'Fiksyen':(DDC[s.charAt(0)]||'Lain-lain')}
+function warnaNP(np){const s=String(np||'').trim().toUpperCase();if(isFik(s))return'#10b981';const m={'0':'#3b82f6','1':'#8b5cf6','2':'#10b981','3':'#f59e0b','4':'#06b6d4','5':'#ec4899','6':'#ef4444','7':'#f97316','8':'#6366f1','9':'#14b8a6'};return m[s.charAt(0)]||'#64748b'}
+function genNP(kat,ddc,bhs,pgr,jdl){const t3=((pgr||jdl||'').replace(/^(HJ\.?|DR\.?|PROF\.?)\s+/i,'').trim().substring(0,3)||'XXX').toUpperCase();return kat==='fiksyen'?((FIK[bhs]||'FM')+'/'+t3):((ddc||'000')+' '+t3)}
+
+async function gsPost(payload){const r=await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,token:CFG.token})});if(!r.ok)throw new Error('HTTP '+r.status);const t=await r.text();try{return JSON.parse(t)}catch{throw new Error('Respons tidak sah')}}
+async function gsGet(p,retry=1){const u=new URL(CFG.url);Object.entries({...p,token:CFG.token}).forEach(([k,v])=>u.searchParams.set(k,v));const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),12000);try{const r=await fetch(u.toString(),{signal:ctrl.signal});clearTimeout(to);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){clearTimeout(to);if(retry>0&&(e.name==='AbortError'||e.message.includes('fetch'))){const s=document.getElementById('lo-sub');if(s)s.textContent='Cuba semula... ('+retry+'x)';await delay(3000);return gsGet(p,retry-1)}throw e}}
+
+
+dt.setDate(dt.getDate()+n);return dt.toISOString().split('T')[0]};
+
+
+
+try{const s=String(d).trim();if(/^\d{4}$/.test(s))return s;const dt=new Date(s.includes('T')?s:s.replace(/[.\/]/g,'-')+'T00:00:00');if(isNaN(dt))return s;return dt.toLocaleDateString('ms-MY',{day:'2-digit',month:'2-digit',year:'numeric'})}catch{return String(d)}};
+
+
+
+
+_charts={}};
+
+
+
+
+document.addEventListener('click',e=>{if(!e.target.closest('#notif-dd')&&!e.target.closest('#bell-btn'))document.getElementById('notif-dd').classList.remove('open');if(!e.target.closest('#src-dd')&&!e.target.closest('#tb-src')){const d=document.getElementById('src-dd');if(d)d.style.display='none'}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'))});
+
+
+
+async 
+
+
+
+async 
+
+
+
+// AUTH
+function swLogin(j,btn){
+  document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');
+  ['l-admin','l-ahli','l-opac'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
+  const m={'admin':'l-admin','ahli':'l-ahli','opac':'l-opac'};
+  const el=document.getElementById(m[j]);if(el)el.style.display='';
+}
+async 
+function masukOPAC(){document.getElementById('lw').style.display='none';_me={nama:'Awam',peranan:'opac'};nav('opac')}
+
+async 
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('lw').style.display!=='none'){const j=document.getElementById('l-admin').style.display!=='none'?'admin':'ahli';doLogin(j)}});
+
+// NAV
+
+
+
+
+function bukaPrintWin(title,body,css=''){
+  const pw=window.open('','_blank','width=960,height=700,scrollbars=yes');
+  if(!pw){alert('⚠️ Popup disekat! Benarkan popup untuk laman ini kemudian cuba lagi.');return null}
+  pw.document.open();
+  pw.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Plus Jakarta Sans',Arial,sans-serif;background:#f5f5f5}.ptb{position:fixed;top:0;left:0;right:0;background:#064e3b;color:#fff;padding:7px 14px;display:flex;align-items:center;gap:9px;z-index:999;font-size:12px}.pbtn{padding:5px 13px;border:none;border-radius:5px;cursor:pointer;font-size:11.5px;font-weight:700}.p-em{background:#10b981;color:#fff}.p-gr{background:rgba(255,255,255,.15);color:#fff}.pc{margin-top:38px;padding:${css||'8mm'}}@media print{.ptb{display:none}.pc{margin-top:0;padding:${css||'8mm'}}@page{margin:${css||'8mm'}}}</style></head><body><div class="ptb"><span>🖨️ SMARTLIB — ${title}</span><button class="pbtn p-em" onclick="window.print()">🖨️ Cetak</button><button class="pbtn p-gr" onclick="window.close()">✕ Tutup</button></div><div class="pc">${body}</div><script>window.onload=function(){setTimeout(function(){document.querySelectorAll('[data-bc]').forEach(function(s){try{JsBarcode(s,s.dataset.bc,{format:'CODE128',width:1.5,height:34,displayValue:false,margin:0})}catch(e){}})},300)};<\/script></body></html>`);
+  pw.document.close();return pw;
+}
+
 // ════════════════════════════════════════════════════
 // KAD AHLI
 // ════════════════════════════════════════════════════
@@ -1529,310 +1970,7 @@ async function boot(){
   safeHide();
 }
 document.addEventListener('DOMContentLoaded',()=>boot());
-
-// ═════════════════════════════════════════════════════
-// SMARTLIB HOTFIX: instant login + safe background data
-// ═════════════════════════════════════════════════════
-
-async function api(payload,retry=2){
-  const body={...payload, token: CFG.token};
-  if(_tok) body.sessionToken=_tok;
-  try{
-    const ctrl=new AbortController();
-    const to=setTimeout(()=>ctrl.abort(),15000);
-    const r=await fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),signal:ctrl.signal});
-    clearTimeout(to);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const txt=await r.text();
-    let j; try{j=JSON.parse(txt)}catch(e){throw new Error('Backend bukan JSON: '+txt.slice(0,80));}
-    return j;
-  }catch(e){
-    if(retry>0){await delay(1200);return api(payload,retry-1)}
-    throw e;
-  }
-}
-
-function showLogin(){
-  const lw=document.getElementById('lw');
-  if(lw)lw.style.display='';
-  const p=document.getElementById('lp'); if(p)p.value='';
-  ['l-err-a','l-err-b'].forEach(id=>{const el=document.getElementById(id); if(el)el.style.display='none';});
-}
-
-function setLoginError(id,msg){
-  const el=document.getElementById(id);
-  if(el){el.textContent=msg;el.style.display='block';}
-}
-
-function setLoginButton(loading){
-  const btn=document.getElementById('l-btn-a');
-  if(btn){btn.disabled=!!loading;btn.textContent=loading?'⏳ Log Masuk...':'✨ Log Masuk';}
-}
-
-async function doLogin(jenis){
-  if(jenis==='admin'){
-    const u=(document.getElementById('lu')?.value||'').trim();
-    const p=document.getElementById('lp')?.value||'';
-    const err=document.getElementById('l-err-a');
-    if(err)err.style.display='none';
-    if(!u||!p){setLoginError('l-err-a','Sila isi nama pengguna dan kata laluan.');return;}
-    setLoginButton(true);
-    try{
-      const res=await api({action:'login',username:u,password:p},0);
-      if(!res?.ok){setLoginError('l-err-a',res?.error||'Login gagal. Semak username/password.');setLoginButton(false);return;}
-      _tok=res.data?.sessionToken||null;
-      _me=res.data?.user||{nama:u,peranan:'admin'};
-      _mR=_me.peranan||'admin';
-      masuklah();
-      // Load data selepas login supaya muka login tidak tersekat.
-      muatSemua(true).then(()=>{ if(_pg==='dash') { killCh(); pgDash(); } }).catch(e=>toast('Data lambat dimuat: '+e.message,'wa'));
-    }catch(e){
-      setLoginError('l-err-a','Gagal sambung ke backend: '+e.message);
-      setLoginButton(false);
-    }
-    return;
-  }
-
-  if(jenis==='ahli'){
-    const nokad=(document.getElementById('l-nokad')?.value||'').trim();
-    if(!nokad){setLoginError('l-err-b','Sila masukkan No. K/P.');return;}
-    // Cuba guna data sedia ada; kalau kosong, muat di latar terlebih dahulu tetapi jangan sekat terlalu lama.
-    try{
-      if(!(D.murid?.length||D.guru?.length)) await muatSemua(true);
-      const ahli=[...(D.murid||[]),...(D.guru||[])].find(x=>x.nokad===nokad&&x.aktif!==false&&x.aktif!=='FALSE'&&x.aktif!=='false');
-      if(!ahli){setLoginError('l-err-b','Ahli tidak dijumpai dalam sistem.');return;}
-      _me={...ahli,username:ahli.nokad,peranan:'ahli'};_mR='ahli';masuklah();
-    }catch(e){setLoginError('l-err-b','Data ahli belum siap dimuat. Cuba semula sebentar lagi.');}
-  }
-}
-
-function masukOPAC(){
-  const lw=document.getElementById('lw'); if(lw)lw.style.display='none';
-  _me={nama:'Awam',peranan:'opac'};_mR='opac';
-  if(!(D.buku||[]).length) muatSemua(true).then(()=>{ if(_pg==='opac') pgOpac(); }).catch(()=>{});
-  nav('opac');
-}
-
-function masuklah(){
-  const lw=document.getElementById('lw'); if(lw)lw.style.display='none';
-  setLoginButton(false);
-  const i=ini(_me?.nama||'?');
-  ['tb-av','sb-av'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=i});
-  const unm=document.getElementById('sb-unm'); if(unm)unm.textContent=_me?.nama||'-';
-  const rol=document.getElementById('sb-rol'); if(rol)rol.textContent=_mR==='ahli'?'Ahli PSS':(_me?.peranan||'admin');
-  applyAP(); mulaRF(); nav('dash'); toast('Selamat datang, '+(_me?.nama||'Admin')+'! 👋','ok');
-}
-
-async function boot(){
-  const lo=document.getElementById('lo');
-  const sub=document.getElementById('lo-sub');
-  if(sub)sub.textContent='Membuka SMARTLIB...';
-  applyAP();
-
-  // Jangan tunggu Google Sheet pada muka login.
-  setTimeout(()=>{ if(lo) lo.style.display='none'; }, 450);
-
-  // Muat cache ringan sahaja di latar belakang. Jika gagal, login tetap boleh digunakan.
-  try{
-    const cached=sessionStorage.getItem('SMARTLIB_BOOT_CACHE_V4');
-    if(cached){
-      prosesD(JSON.parse(cached));
-      applyAP();
-    }
-  }catch(e){}
-
-  setTimeout(async()=>{
-    try{
-      const ctrl=new AbortController();
-      const t=setTimeout(()=>ctrl.abort(),4500);
-      const u=new URL(GAS);
-      u.searchParams.set('action','bootstrap');
-      u.searchParams.set('token',CFG.token);
-      const r=await fetch(u.toString(),{signal:ctrl.signal});
-      clearTimeout(t);
-      if(r.ok){
-        const j=await r.json();
-        if(j?.ok&&j.data){
-          prosesD(j.data);
-          sessionStorage.setItem('SMARTLIB_BOOT_CACHE_V4',JSON.stringify(j.data));
-          applyAP();
-        }
-      }
-    }catch(e){
-      console.warn('SMARTLIB bootstrap skipped:',e.message);
-    }
-  },700);
-}
-
-document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 </script>
-
-<script id="smartlib-safe-upgrade">
-/* SMARTLIB SAFE UPGRADE PATCH: scan camera, ahli PSS, OPAC login, copyright */
-(function(){
-  const PUBLIC_TOKEN = 'SISPUSAT2025SEKOLAHKU';
-  let __opacLoginReady = false;
-  let __scanner = null;
-  let __opacTimer = null;
-  function $(id){ return document.getElementById(id); }
-  function clean(v){ return String(v || '').trim(); }
-  function lower(v){ return clean(v).toLowerCase(); }
-  function showErr(id,msg){ const e=$(id); if(e){ e.textContent=msg; e.style.display='block'; } }
-  function hideErr(id){ const e=$(id); if(e){ e.textContent=''; e.style.display='none'; } }
-  function setBtn(id,txt,disabled){ const b=$(id); if(b){ b.textContent=txt; b.disabled=!!disabled; } }
-  function notify(msg,type){ if(typeof toast==='function') toast(msg,type||''); else alert(msg); }
-  function getGasUrl(){ return (typeof GAS !== 'undefined' && GAS) ? GAS : (window.CFG && CFG.url ? CFG.url : ''); }
-  function getToken(){ return (window.CFG && CFG.token) ? CFG.token : PUBLIC_TOKEN; }
-  function safeDisplay(id,show){ const el=$(id); if(el) el.style.display = show ? '' : 'none'; }
-  function esc(v){ return String(v ?? '').replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s])); }
-
-  async function fetchJSON(action, params={}, method='GET'){
-    const gas=getGasUrl(); if(!gas) throw new Error('URL Apps Script tidak ditemui.');
-    const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),15000);
-    try{
-      if(method==='POST'){
-        const r=await fetch(gas,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:getToken(),...params}),signal:ctrl.signal});
-        const text=await r.text(); try{return JSON.parse(text)}catch{throw new Error('Respons backend bukan JSON.')}
-      }
-      const u=new URL(gas); Object.entries({action,token:getToken(),...params}).forEach(([k,v])=>u.searchParams.set(k,v));
-      const r=await fetch(u.toString(),{signal:ctrl.signal}); const text=await r.text(); try{return JSON.parse(text)}catch{throw new Error('Respons backend bukan JSON.')}
-    }finally{ clearTimeout(to); }
-  }
-
-  async function ensureData(){
-    if(window.D && D.ok && Array.isArray(D.buku) && (D.buku.length || D.murid?.length || D.guru?.length)) return true;
-    try{
-      const j=await fetchJSON('baca_semua',{},'GET');
-      if(j?.ok && j.data && typeof prosesD==='function'){
-        prosesD(j.data); if(typeof applyAP==='function') applyAP(); return true;
-      }
-    }catch(e){ console.warn('ensureData:',e.message); }
-    return false;
-  }
-  window.SMARTLIB_ensureData = ensureData;
-
-  window.swLogin = function(j,btn){
-    document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('on'));
-    if(btn) btn.classList.add('on');
-    ['l-admin','l-ahli','l-opac'].forEach(id=>safeDisplay(id,false));
-    safeDisplay(({admin:'l-admin',ahli:'l-ahli',opac:'l-opac'}[j] || 'l-admin'), true);
-    if(j==='opac') setupLoginOPAC();
-  };
-
-  window.doLogin = async function(jenis){
-    if(jenis==='admin'){
-      const u=clean($('lu')?.value), p=$('lp')?.value || '';
-      hideErr('l-err-a');
-      if(!u||!p){ showErr('l-err-a','Sila isi nama pengguna dan kata laluan.'); return; }
-      setBtn('l-btn-a','⏳ Log Masuk...',true);
-      try{
-        const res=await fetchJSON('login',{username:u,password:p},'POST');
-        if(!res?.ok){ showErr('l-err-a',res?.error || 'Nama pengguna atau kata laluan salah.'); return; }
-        window._tok=res.data.sessionToken; window._me=res.data.user; window._mR=_me.peranan || 'admin';
-        if(typeof masuklah==='function') masuklah(); applyRoleAccess();
-      }catch(e){ showErr('l-err-a','Gagal sambung: '+e.message); }
-      finally{ setBtn('l-btn-a','✨ Log Masuk',false); }
-      return;
-    }
-    hideErr('l-err-b');
-    const nokad=clean($('l-nokad')?.value), pass=clean($('l-ahli-p')?.value);
-    if(!nokad){ showErr('l-err-b','Sila masukkan No. Kad Pengenalan.'); return; }
-    await ensureData();
-    const semua=[...(D.murid||[]).map(x=>({...x,jenis:'murid'})),...(D.guru||[]).map(x=>({...x,jenis:'guru'}))];
-    const ahli=semua.find(x=>clean(x.nokad)===nokad && String(x.aktif).toLowerCase()!=='false' && String(x.aktif)!=='0');
-    if(!ahli){ showErr('l-err-b','Ahli tidak dijumpai atau belum aktif.'); return; }
-    const valid=[ahli.id, ahli.no_ahli, ahli.nokad].map(clean).filter(Boolean);
-    if(pass && !valid.includes(pass)){ showErr('l-err-b','Kata laluan ahli tidak sepadan. Cuba No. Ahli atau No. Kad Pengenalan.'); return; }
-    window._me={...ahli,username:ahli.nokad,peranan:'ahli'}; window._mR='ahli';
-    if(typeof masuklah==='function') masuklah(); applyRoleAccess(); setTimeout(()=>window.nav('pinjam'),100);
-  };
-
-  const allowedAhli=new Set(['dash','pinjam','pulang','denda','tempahan','scan','opac']);
-  const originalNav=window.nav;
-  window.nav=function(p){
-    if(window._mR==='ahli' && !allowedAhli.has(p)){ notify('Akses ahli PSS dihadkan kepada modul Sirkulasi sahaja.','wa'); p='pinjam'; }
-    if(typeof originalNav==='function') originalNav(p); applyRoleAccess();
-  };
-  window.applyRoleAccess=function(){
-    const isAhli=window._mR==='ahli';
-    document.querySelectorAll('.sbi[onclick^="nav("]').forEach(el=>{
-      const m=(el.getAttribute('onclick')||'').match(/nav\('([^']+)'\)/); const key=m?m[1]:'';
-      el.style.display=(isAhli && key && !allowedAhli.has(key))?'none':'flex';
-    });
-  };
-
-  function setupLoginOPAC(){
-    const box=$('l-opac'); if(!box || __opacLoginReady) return; __opacLoginReady=true;
-    box.innerHTML='<div style="text-align:center;padding:8px 0"><div style="font-size:28px;margin-bottom:8px">🔍</div><div style="color:rgba(255,255,255,.5);font-size:11px;margin-bottom:12px;line-height:1.7">OPAC tersedia tanpa login.<br>Cari dan lihat katalog buku.</div><div style="display:flex;gap:6px;margin-bottom:8px"><input id="login-opac-q" type="search" placeholder="Cari judul / pengarang / ISBN" style="flex:1;padding:9px 12px;border:1.5px solid rgba(16,185,129,.25);border-radius:9px;background:rgba(255,255,255,.06);color:#fff;outline:none"><button class="l-btn cy" style="width:auto;padding:9px 14px" onclick="runLoginOPAC()">Cari</button></div><div id="login-opac-result" style="max-height:170px;overflow:auto;text-align:left;font-size:10.5px;color:rgba(255,255,255,.65);margin-bottom:9px"></div><button class="l-btn cy" onclick="masukOPAC()">🚀 Buka OPAC Awam</button></div>';
-    const input=$('login-opac-q'); if(input) input.addEventListener('input',()=>{clearTimeout(__opacTimer);__opacTimer=setTimeout(()=>window.runLoginOPAC(),350);});
-  }
-  window.runLoginOPAC=async function(){
-    const q=lower($('login-opac-q')?.value), out=$('login-opac-result'); if(!out) return;
-    if(q.length<2){ out.innerHTML='<div style="text-align:center;opacity:.55;padding:8px">Taip sekurang-kurangnya 2 huruf...</div>'; return; }
-    out.innerHTML='<div style="text-align:center;opacity:.55;padding:8px">Memuatkan OPAC...</div>'; await ensureData();
-    const rows=(D.buku||[]).filter(b=>lower((b.judul||'')+' '+(b.pengarang||'')+' '+(b.isbn||'')+' '+(b.no_panggilan||'')).includes(q)).slice(0,8);
-    if(!rows.length){ out.innerHTML='<div style="text-align:center;color:#fca5a5;padding:8px">Tiada buku dijumpai.</div>'; return; }
-    out.innerHTML=rows.map(b=>{const pinjam=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return '<div style="padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:#fff">'+esc(b.judul||'-')+'</b><br><span>'+esc(b.pengarang||'-')+' · '+esc(b.no_panggilan||'-')+'</span><span style="float:right;color:'+(pinjam?'#fbbf24':'#6ee7b7')+'">'+(pinjam?'Dipinjam':'Di Rak')+'</span></div>';}).join('');
-  };
-  window.masukOPAC=async function(){ safeDisplay('lw',false); window._me={nama:'Awam',peranan:'opac'}; window._mR='opac'; await ensureData(); window.nav('opac'); };
-
-  window.pgOpac=function(){
-    const total=(D.buku||[]).length;
-    $('content').innerHTML='<div class="card" style="background:linear-gradient(135deg,var(--eml),var(--cyl));border:1.5px solid rgba(16,185,129,.3);margin-bottom:12px"><div style="text-align:center;padding:8px 0"><div style="font-size:20px;font-weight:800;background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:7px">🔍 OPAC — Katalog Bahan Awam</div><div style="font-size:11px;color:var(--mu);margin-bottom:13px">Cari dalam '+total+' bahan</div><div style="display:flex;gap:7px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center"><input class="opac-in" id="opac-q" type="search" placeholder="Judul, pengarang, ISBN, kata kunci..." style="flex:1;min-width:200px"><button class="btn b-em" onclick="runOpac()">Cari</button></div><div class="opac-cats" style="justify-content:center;margin-top:8px"><span class="ocat on" onclick="togOCat(this,\'\')">Semua</span><span class="ocat" onclick="togOCat(this,\'F\')">Fiksyen</span><span class="ocat" onclick="togOCat(this,\'B\')">Bukan Fiksyen</span>'+Object.entries(DDC).map(([k,v])=>'<span class="ocat" onclick="togOCat(this,\''+k+'\')">'+v+'</span>').join('')+'</div></div></div><div id="opac-result" style="color:var(--mu);text-align:center;padding:24px">Taip untuk mencari...</div>';
-    const inp=$('opac-q'); if(inp) inp.addEventListener('input',()=>{clearTimeout(__opacTimer);__opacTimer=setTimeout(()=>window.runOpac(),300);});
-  };
-  window._opacCF=window._opacCF||'';
-  window.togOCat=function(el,k){ document.querySelectorAll('.ocat').forEach(c=>c.classList.remove('on')); if(el)el.classList.add('on'); window._opacCF=k; window.runOpac(); };
-  window.runOpac=function(){
-    const q=lower($('opac-q')?.value), div=$('opac-result'); if(!div) return;
-    if(!q&&!window._opacCF){ div.textContent='Taip untuk mencari...'; return; }
-    const f=(D.buku||[]).filter(b=>{const qm=!q||lower((b.judul||'')+' '+(b.pengarang||'')+' '+(b.isbn||'')+' '+(b.no_panggilan||'')).includes(q); const np=clean(b.no_panggilan).toUpperCase(); let km=true; if(window._opacCF==='F') km=(typeof isFik==='function')?isFik(np):np.startsWith('F'); else if(window._opacCF==='B') km=(typeof isFik==='function')?!isFik(np):!np.startsWith('F'); else if(window._opacCF) km=np.charAt(0)===window._opacCF; return qm&&km;}).slice(0,80);
-    if(!f.length){ div.innerHTML='<div class="al a-wa">❌ Tiada bahan dijumpai.</div>'; return; }
-    div.innerHTML='<div style="margin-bottom:9px;font-size:12px;color:var(--mu)">'+f.length+' bahan dijumpai</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px">'+f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam'); return '<div class="card" style="padding:12px;content-visibility:auto"><div style="font-weight:700;font-size:12px;margin-bottom:3px;line-height:1.3">'+esc(b.judul||'–')+'</div><div style="font-size:11px;color:var(--mu);margin-bottom:2px">'+esc(b.pengarang||'–')+'</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px"><code style="font-size:10px">'+esc(b.no_panggilan||'–')+'</code><span class="bdg '+(sp?'bg-am':'bg-em')+'">'+(sp?'Dipinjam':'Di Rak')+'</span></div></div>';}).join('')+'</div>';
-  };
-
-  async function loadScannerLib(){
-    if(window.Html5Qrcode) return true;
-    await new Promise((resolve,reject)=>{const sc=document.createElement('script'); sc.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'; sc.onload=resolve; sc.onerror=()=>reject(new Error('Gagal memuatkan library scanner.')); document.head.appendChild(sc);});
-    return !!window.Html5Qrcode;
-  }
-  window.pgScan=function(){
-    $('content').innerHTML='<div class="g2"><div class="card"><div class="ct">📷 Scan Barcode / ISBN</div><div class="al a-in">Arahkan kamera handphone/tablet ke barcode ISBN. Pastikan laman dibuka melalui HTTPS.</div><div id="scan-rd" style="border-radius:var(--r);overflow:hidden;min-height:240px;background:#000;margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#6ee7b7;font-size:12px">Kamera belum dimulakan</div><div id="scan-st" style="display:none;text-align:center;padding:5px;font-size:12px;color:var(--em);font-weight:600">🔍 Mengimbas...</div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn b-em b-sm" onclick="mulaScanner()" id="btn-sc">📷 Mula Scan Kamera</button><button class="btn b-gh b-sm" onclick="hentiScanner()">⏹ Henti</button></div><div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:12px"><div class="ct" style="margin-bottom:7px">⌨️ Input Manual</div><div style="display:flex;gap:7px"><input type="text" id="scan-man" placeholder="ISBN / No. Panggilan / No. Perolehan..." style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--inp);color:var(--tx)" onkeydown="if(event.key===\'Enter\')cariScan()"><button class="btn b-em" onclick="cariScan()">🔍 Cari</button></div></div></div><div class="card"><div class="ct">📋 Hasil</div><div id="scan-result" style="color:var(--mu);font-size:12px;text-align:center;padding:18px"><div style="font-size:28px;margin-bottom:7px">📚</div>Imbas barcode atau taip ISBN...</div></div></div>';
-  };
-  window.mulaScanner=async function(){
-    const st=$('scan-st'), btn=$('btn-sc'), view=$('scan-rd');
-    if(!window.isSecureContext && !location.hostname.includes('localhost')){ notify('Kamera hanya berfungsi pada HTTPS. Guna link GitHub Pages https://','er'); return; }
-    if(st) st.style.display='block'; if(btn){btn.textContent='🔄 Meminta izin kamera...';btn.disabled=true;} if(view) view.textContent='Meminta izin kamera...';
-    try{
-      await loadScannerLib(); await window.hentiScanner(false); __scanner=new Html5Qrcode('scan-rd',{verbose:false});
-      const config={fps:10,qrbox:(w,h)=>({width:Math.min(320,Math.floor(w*0.82)),height:Math.min(170,Math.floor(h*0.38))}),aspectRatio:1.777,rememberLastUsedCamera:true};
-      if(window.Html5QrcodeSupportedFormats) config.formatsToSupport=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.QR_CODE];
-      const ok=(decodedText)=>{const inp=$('scan-man'); if(inp) inp.value=decodedText; window.hentiScanner(false); setTimeout(()=>window.cariScanWith(decodedText),150);};
-      try{ await __scanner.start({facingMode:{exact:'environment'}},config,ok,()=>{}); }
-      catch(e1){ try{ await __scanner.start({facingMode:'environment'},config,ok,()=>{}); } catch(e2){ const cams=await Html5Qrcode.getCameras(); if(!cams?.length) throw new Error('Tiada kamera dikesan pada peranti ini.'); const cam=cams.find(c=>/back|rear|environment|belakang/i.test(c.label))||cams[cams.length-1]||cams[0]; await __scanner.start(cam.id,config,ok,()=>{}); } }
-      if(btn){btn.textContent='✅ Kamera aktif';btn.disabled=false;} notify('Kamera scanner aktif.','ok');
-    }catch(e){ if(view)view.textContent='Kamera gagal dimulakan'; notify('Kamera tidak dapat dibuka: '+(e.message||e),'er'); if(btn){btn.textContent='📷 Mula Scan Kamera';btn.disabled=false;} if(st)st.style.display='none'; }
-  };
-  window.hentiScanner=async function(showToast=true){
-    try{ if(__scanner){ if(__scanner.isScanning) await __scanner.stop(); try{await __scanner.clear();}catch(e){} } }catch(e){console.warn('hentiScanner:',e.message)}
-    __scanner=null; window._scanQ=null; const st=$('scan-st'), btn=$('btn-sc'), view=$('scan-rd'); if(st)st.style.display='none'; if(btn){btn.textContent='📷 Mula Scan Kamera';btn.disabled=false;} if(view&&!view.querySelector('video')) view.textContent='Kamera dihentikan'; if(showToast)notify('Scanner dihentikan.','ok');
-  };
-  window.cariScan=function(){ const q=clean($('scan-man')?.value); if(!q){notify('Masukkan ISBN / No. Panggilan dahulu.','wa'); return;} window.cariScanWith(q); };
-  window.cariScanWith=function(q){
-    const key=clean(q).replace(/[-\s]/g,'').toLowerCase();
-    const b=(D.buku||[]).find(x=>[x.isbn,String(x.isbn||'').replace(/[-\s]/g,''),x.no_panggilan,x.no_perolehan,String(x.no_perolehan||'').padStart(10,'0')].map(v=>clean(v).replace(/[-\s]/g,'').toLowerCase()).includes(key));
-    const div=$('scan-result'); if(!div)return;
-    if(b){const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam'); div.innerHTML='<div class="al a-ok">✅ Bahan dijumpai!</div><table style="width:100%;font-size:12px;border-collapse:collapse"><tr><td style="color:var(--mu);padding:4px 0;width:38%;font-size:11px">No. Perolehan</td><td><span class="bdg bg-cy">'+esc(b.no_perolehan||'–')+'</span></td></tr><tr><td style="color:var(--mu);padding:4px 0;font-size:11px">No. Panggilan</td><td><span class="mono">'+esc(b.no_panggilan||'–')+'</span></td></tr><tr><td style="color:var(--mu);padding:4px 0;font-size:11px">Judul</td><td><strong>'+esc(b.judul||'–')+'</strong></td></tr><tr><td style="color:var(--mu);padding:4px 0;font-size:11px">Pengarang</td><td>'+esc(b.pengarang||'–')+'</td></tr><tr><td style="color:var(--mu);padding:4px 0;font-size:11px">Status</td><td><span class="bdg '+(sp?'bg-am':'bg-em')+'">'+(sp?'Dipinjam':'Di Rak')+'</span></td></tr></table><div style="display:flex;gap:7px;margin-top:10px"><button class="btn b-em b-sm" onclick="nav(\'pinjam\')">📤 Pinjaman</button><button class="btn b-gh b-sm" onclick="nav(\'pulang\')">↩️ Pemulangan</button></div>'; notify('Bahan dijumpai.','ok');}
-    else{ div.innerHTML='<div class="al a-wa">⚠️ Barcode / ISBN <strong>'+esc(q)+'</strong> tidak dijumpai.</div><button class="btn b-em" onclick="nav(\'daftar\')">➕ Daftar Bahan Baru</button>'; notify('Tidak dijumpai.','wa');}
-  };
-
-  if(typeof window.pgKad!=='function' && typeof window.pgKadAhli==='function') window.pgKad=window.pgKadAhli;
-  window.boot=async function(){ const lo=$('lo'), sub=$('lo-sub'); if(sub)sub.textContent='Memuatkan paparan login...'; if(typeof applyAP==='function')applyAP(); if(lo)lo.style.display='none'; setTimeout(()=>ensureData(),200); setTimeout(()=>setupLoginOPAC(),400); };
-  function initPatch(){ setupLoginOPAC(); applyRoleAccess(); if($('lo')) window.boot(); if(!document.querySelector('.smartlib-copy')){ const c=document.createElement('div'); c.className='smartlib-copy'; c.textContent='© 2026 SMARTLIB | Developed by Syahida Suffian'; document.body.appendChild(c);} }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initPatch); else initPatch();
-})();
-</script>
-
 </body>
 </html>
 
