@@ -273,6 +273,10 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 /* LABEL PREVIEW */
 .lbl-preview{width:2.5cm;min-height:3.8cm;border:2px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;background:#fff;font-family:'Courier New',monospace;gap:.5mm}
 
+.smartlib-copyright{position:fixed;right:14px;bottom:8px;z-index:40;font-size:10px;font-weight:600;color:rgba(100,116,139,.65);pointer-events:none}
+body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
+#sb-overlay{display:none}
+@media(max-width:640px){#sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:90;display:none}#sb-overlay.show{display:block}#sb{z-index:100}.smartlib-copyright{left:0;right:0;text-align:center;bottom:6px;font-size:9px}}
 /* PRINT */
 @media print{#sb,#tb,#lo,#tbox,.np{display:none!important}body{background:#fff}#content{padding:0}#pz{display:block!important}}
 #pz{display:none}
@@ -284,6 +288,7 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 </style>
 </head>
 <body>
+<div id="sb-overlay" onclick="closeSidebar()"></div>
 
 <!-- LOADING -->
 <div id="lo"><div class="lo-ring"></div><div class="lo-nm">📚 SMARTLIB</div><div class="lo-sub" id="lo-sub">Menyambung ke Google Sheets...</div></div>
@@ -302,10 +307,10 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
     </div>
     <div id="l-admin">
       <div class="l-err" id="l-err-a"></div>
-      <div class="lfg"><label>Nama Pengguna</label><input id="lu" type="text" placeholder="admin" autocomplete="username"></div>
+      <div class="lfg"><label>Nama Pengguna</label><input id="lu" type="text" placeholder="Nama pengguna" autocomplete="username"></div>
       <div class="lfg"><label>Kata Laluan</label><input id="lp" type="password" placeholder="••••••"></div>
       <button class="l-btn" onclick="doLogin('admin')" id="l-btn-a">✨ Log Masuk</button>
-      <div class="l-hint">Login pertama: admin / admin12345</div>
+      <div class="l-hint">Sila log masuk menggunakan akaun yang diberikan oleh pentadbir.</div>
     </div>
     <div id="l-ahli" style="display:none">
       <div class="l-err" id="l-err-b"></div>
@@ -354,7 +359,7 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
       <div class="sb-ic" id="sb-ic"><span id="sb-em">📚</span><img id="sb-img" src="" style="display:none"></div>
       <div style="min-width:0"><div class="sb-nm" id="sb-nm">SMARTLIB</div><div class="sb-sch" id="sb-sch">Pusat Sumber Sekolah</div></div>
     </div>
-    <div class="sb-tag" id="sb-tag">✦ SISTEM PENGURUSAN PSS ✦</div>
+    <div class="sb-tag" id="sb-tag">✦ SISTEM PENGURUSAN PUSAT SUMBER SEKOLAH ✦</div>
   </div>
   <nav class="sb-nav">
     <div class="sbg">Utama</div>
@@ -391,7 +396,7 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 <div id="main">
   <div id="tb">
     <div class="tb-l">
-      <button id="burger" onclick="document.getElementById('sb').classList.toggle('open')">☰</button>
+      <button id="burger" onclick="toggleSidebar()">☰</button>
       <span class="tb-ic" id="tb-ic">🏠</span>
       <div><div class="tb-ttl" id="tb-ttl">Dashboard</div><div class="tb-sub" id="tb-sub"></div></div>
     </div>
@@ -407,6 +412,7 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 </div>
 
 <div id="tbox"></div>
+<div class="smartlib-copyright">© 2026 SMARTLIB |Syahida Suffian</div>
 <div id="pz"></div>
 
 <script>
@@ -570,13 +576,27 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementB
 // ═══════════════════════════════════════════════
 const PG_IC={dash:'🏠',perolehan:'📖',daftar:'➕',lupus:'🗑️',pinjam:'📤',pulang:'📥',denda:'⚠️',murid:'🎓',guru:'👩‍🏫',kad:'🪪',nilam:'📝',label:'🏷️',scan:'📷',opac:'🔍',laporan:'📊',admin:'⚙️',tempahan:'🔖'};
 const PG_NM={dash:'Dashboard',perolehan:'Rekod Perolehan',daftar:'Daftar Bahan Baru',lupus:'Pelupusan',pinjam:'Pinjaman',pulang:'Pemulangan',denda:'Denda & Lewat',murid:'Murid',guru:'Guru & Staf',kad:'Kad Ahli',nilam:'NILAM',label:'Cetak Label',scan:'Scan Barcode',opac:'OPAC Katalog',laporan:'Laporan',admin:'Tetapan Admin',tempahan:'Tempahan'};
+function openSidebar(){
+  const sb=document.getElementById('sb'),ov=document.getElementById('sb-overlay');
+  if(sb)sb.classList.add('open');
+  if(ov)ov.classList.add('show');
+}
+function closeSidebar(){
+  const sb=document.getElementById('sb'),ov=document.getElementById('sb-overlay');
+  if(sb)sb.classList.remove('open');
+  if(ov)ov.classList.remove('show');
+}
+function toggleSidebar(){
+  const sb=document.getElementById('sb');
+  if(sb&&sb.classList.contains('open'))closeSidebar();else openSidebar();
+}
 function nav(p){
   _pg=p;killCh();if(p!=='scan'&&_sq){try{_sq.stop().catch(()=>{})}catch{}}_sq=null;
   document.querySelectorAll('.sbi').forEach(el=>el.classList.toggle('on',el.getAttribute('onclick')===`nav('${p}')`));
   document.getElementById('tb-ttl').textContent=PG_NM[p]||p;
   document.getElementById('tb-ic').textContent=PG_IC[p]||'📄';
   document.getElementById('tb-sub').textContent=new Date().toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  if(window.innerWidth<=620)document.getElementById('sb').classList.remove('open');
+  if(window.innerWidth<=640)closeSidebar();
   document.getElementById('content').innerHTML='';togNotif();
   const fn={dash:pgDash,tv:bukaTVMode,perolehan:pgPerolehan,daftar:pgDaftar,lupus:pgLupus,pinjam:pgPinjam,pulang:pgPulang,denda:pgDenda,murid:()=>pgPg('murid'),guru:()=>pgPg('guru'),kad:pgKad,nilam:pgNilam,label:pgLabel,scan:pgScan,opac:pgOpac,laporan:pgLaporan,admin:pgAdmin,tempahan:pgTempahan};
   if(fn[p])fn[p]();
@@ -604,22 +624,44 @@ function cariPantas(){
 }
 
 // PRINT HELPER
-function bukaPW(title,body,css=''){
-  const pw=window.open('','_blank','width=960,height=700,scrollbars=yes,resizable=yes');
-  if(!pw){alert('⚠️ Popup disekat!\n\nSila benarkan popup untuk laman ini:\n🔒 bar alamat → Benarkan popup → Cuba lagi');return null}
-  pw.document.open();
-  pw.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;background:#f5f5f5}
-.ptb{position:fixed;top:0;left:0;right:0;background:#064e3b;color:#fff;padding:8px 16px;display:flex;align-items:center;gap:10px;z-index:999;font-size:12px}
-.pbtn{padding:5px 14px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700}
-.p-g{background:#10b981;color:#fff}.p-gr{background:rgba(255,255,255,.15);color:#fff}
-.pc{margin-top:42px;padding:${css||'8mm'}}@media print{.ptb{display:none}.pc{margin-top:0;padding:${css||'8mm'}}@page{margin:${css||'8mm'}}}</style></head><body>
-<div class="ptb"><span>🖨️ SMARTLIB — ${title}</span><button class="pbtn p-g" onclick="window.print()">🖨️ Cetak</button><button class="pbtn p-gr" onclick="window.close()">✕ Tutup</button></div>
-<div class="pc">${body}</div>
-<script>window.onload=function(){setTimeout(function(){document.querySelectorAll('[data-bc]').forEach(function(s){try{JsBarcode(s,s.dataset.bc,{format:'CODE128',width:1.5,height:34,displayValue:false,margin:0})}catch(e){}})},300)}<\/script></body></html>`);
-  pw.document.close();return pw;
+function normalizePrintCss(extraCss=''){
+  const raw=String(extraCss||'');
+  const isCss=/[{}:;]/.test(raw);
+  return {css:isCss?raw:'',pad:(!isCss&&raw)?raw:'8mm'};
 }
+function printUsingIframe(title,bodyHtml,extraCss=''){
+  const old=document.getElementById('smartlib-print-frame');if(old)old.remove();
+  const cfg=normalizePrintCss(extraCss);
+  const iframe=document.createElement('iframe');
+  iframe.id='smartlib-print-frame';
+  iframe.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(iframe);
+  const doc=iframe.contentWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>
+<style>*{box-sizing:border-box}body{margin:0;background:#fff;font-family:Arial,sans-serif}@page{size:A4;margin:${cfg.pad}}${cfg.css||''}</style></head><body>${bodyHtml}
+<script>window.addEventListener('load',function(){setTimeout(function(){document.querySelectorAll('[data-bc],[data-barcode]').forEach(function(el){try{var code=el.getAttribute('data-barcode')||el.getAttribute('data-bc');JsBarcode(el,code,{format:'CODE128',width:1.4,height:34,displayValue:false,margin:0})}catch(e){console.error(e)}});setTimeout(function(){window.focus();window.print()},700)},500)});<\/script>
+</body></html>`);
+  doc.close();
+}
+function openPrintWindow(title,bodyHtml,extraCss=''){
+  const cfg=normalizePrintCss(extraCss);
+  const printWindow=window.open('','_blank','width=900,height=700,scrollbars=yes,resizable=yes');
+  if(!printWindow){printUsingIframe(title,bodyHtml,extraCss);return null;}
+  printWindow.document.open();
+  printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>
+<style>*{box-sizing:border-box}body{margin:0;background:#fff;font-family:Arial,sans-serif}.ptb{position:fixed;top:0;left:0;right:0;background:#064e3b;color:#fff;padding:8px 14px;z-index:9999;font-size:12px}.pbtn{margin-left:8px;padding:5px 12px;border:0;border-radius:6px;color:#fff;font-weight:bold;cursor:pointer}.p-g{background:#10b981}.p-gr{background:#334155}.pc{padding:${cfg.pad};padding-top:42px}@page{size:A4;margin:${cfg.pad}}@media print{.ptb{display:none!important}.pc{padding:${cfg.pad};padding-top:0}body{background:#fff}}${cfg.css||''}</style></head><body>
+<div class="ptb"><span>SMARTLIB Print Preview</span><button class="pbtn p-g" onclick="window.print()">Print</button><button class="pbtn p-gr" onclick="window.close()">Tutup</button></div>
+<main class="pc">${bodyHtml}</main>
+<script>window.addEventListener('load',function(){setTimeout(function(){document.querySelectorAll('[data-bc],[data-barcode]').forEach(function(el){try{var code=el.getAttribute('data-barcode')||el.getAttribute('data-bc');JsBarcode(el,code,{format:'CODE128',width:1.4,height:34,displayValue:false,margin:0})}catch(e){console.error(e)}});setTimeout(function(){window.focus();window.print()},700)},500)});<\/script>
+</body></html>`);
+  printWindow.document.close();
+  return printWindow;
+}
+const bukaPrintWin=openPrintWindow;
+function bukaPW(title,body,css=''){return openPrintWindow(title,body,css)}
 </script>
 
 <script>
@@ -702,7 +744,7 @@ function pgDash(){
     <div class="card"><div class="ct">📊 Koleksi Mengikut Kategori</div><canvas id="ch-ddc" height="180"></canvas></div>
     <div class="card"><div class="ct">📦 Punca Perolehan</div><canvas id="ch-pnc" height="180"></canvas></div>
   </div>
-  <div style="position:relative;padding:6px 0;opacity:.4;pointer-events:none;font-size:10px;color:var(--mu);min-height:22px"><div style="text-align:center">📚 SMARTLIB v4 — Pusat Sumber Sekolah Digital</div><div style="position:absolute;right:0;top:6px;text-align:right;white-space:nowrap">&copy; 2026 SMARTLIB | Developed by Syahida Suffian</div></div>`;
+  `;
 
   setTimeout(()=>{
     const dk=Object.keys(dSt).sort();
@@ -1099,7 +1141,7 @@ function updPvLbl(){
 
 function cetakLabelA4(){
   const sel=[...document.querySelectorAll('.lbl-chk:checked')].map(c=>c.value);
-  if(!sel.length){toast('Pilih sekurang-kurangnya satu bahan','wa');return}
+  if(!sel.length){toast('Sila pilih sekurang-kurangnya satu bahan untuk dicetak.','wa');return}
   const sch=document.getElementById('lbl-sch')?.value||AP.sch||AP.nm||'PSS';
   const j=document.getElementById('lbl-j')?.value||'tulang';
   const w=parseFloat(document.getElementById('lbl-w')?.value||2.5);
@@ -1128,7 +1170,7 @@ function cetakLabelA4(){
   if(j==='tulang'||j==='kedua')bodyHTML+=`<div style="${gridStyle}">${toPrint.map(genTulang).join('')}</div>`;
   if(j==='barcode'||j==='kedua')bodyHTML+=`<div style="${gridStyle};${j==='kedua'?'page-break-before:always':''}">${toPrint.map(genBarcode).join('')}</div>`;
 
-  bukaPW('Label Cetak — SMARTLIB ('+toPrint.length+' label)',bodyHTML,'@page{margin:${mrg}mm;size:A4}');
+  bukaPW('Label Cetak — SMARTLIB ('+toPrint.length+' label)',bodyHTML,`@page{margin:${mrg}mm;size:A4}`);
   toast('🖨️ Tetingkap cetak dibuka — '+toPrint.length+' label siap!','ok');
 }
 </script>
@@ -1262,7 +1304,18 @@ function genKadHTML(a,jenis,sch,sah){
     <div style="text-align:right"><div style="font-size:7px;opacity:.45">Sah Hingga</div><div style="font-size:8.5px;font-weight:600">${sah}</div></div>
   </div></div>`;
 }
-function prevKad(){
+function memberCardPrintCss(){return `
+.member-card-print-grid{display:grid;grid-template-columns:repeat(2,86mm);gap:6mm;padding:8mm}
+.member-card-print{width:86mm;height:54mm;border:1.5px solid #064e3b;border-radius:4mm;overflow:hidden;background:linear-gradient(135deg,#ecfdf5,#ffffff);padding:4mm;position:relative;break-inside:avoid;font-family:Arial,sans-serif;color:#0f172a}
+.member-card-header{display:flex;align-items:center;gap:3mm;border-bottom:1px solid #d1fae5;padding-bottom:2mm;margin-bottom:3mm}
+.member-card-logo{width:10mm;height:10mm;border-radius:3mm;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:14pt}
+.member-card-title{font-size:9pt;font-weight:800;color:#064e3b}.member-card-school{font-size:6pt;color:#334155}.member-card-name{font-size:10pt;font-weight:800;color:#0f172a;margin-bottom:1mm}.member-card-info{font-size:7pt;color:#334155;line-height:1.5}.member-card-barcode{position:absolute;left:4mm;right:4mm;bottom:7mm;text-align:center}.member-card-copy{position:absolute;bottom:2mm;left:4mm;right:4mm;text-align:center;font-size:5.5pt;color:#64748b}`}
+function genKadPrintHTML(a,jenis,sch,sah){
+  const no=(jenis==='murid'?'M':'G')+'-'+String(a.id||'').padStart(4,'0');
+  const kelas=jenis==='murid'?(a.tingkatan||'–'):(a.jawatan||'–');
+  const code=String(a.no_ahli||a.id||a.nokad||no).replace(/\s+/g,'');
+  return `<div class="member-card-print"><div class="member-card-header"><div class="member-card-logo">📚</div><div><div class="member-card-title">SMARTLIB</div><div class="member-card-school">${sch||'Pusat Sumber Sekolah'}</div></div></div><div class="member-card-name">${a.nama||'Nama Ahli'}</div><div class="member-card-info"><div><strong>ID:</strong> ${no}</div><div><strong>No. Kad/Ahli:</strong> ${a.nokad||code||'–'}</div><div><strong>${jenis==='murid'?'Kelas':'Jawatan'}:</strong> ${kelas}</div><div><strong>Sah Hingga:</strong> ${sah||'–'}</div></div><div class="member-card-barcode"><svg data-bc="${code||no}" style="width:58mm;height:12mm"></svg></div><div class="member-card-copy">© 2026 SMARTLIB |Syahida Suffian</div></div>`;
+}function prevKad(){
   const sel=document.getElementById('kad-sel')?.value||'';
   const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
   const sah=document.getElementById('kad-sah')?.value||'';
@@ -1272,39 +1325,38 @@ function prevKad(){
   if(!a)return;wrap.innerHTML=genKadHTML(a,j,sch,sah);
 }
 function cetakSatuKad(){
-  const sel=document.getElementById('kad-sel')?.value||'';if(!sel){toast('Sila pilih ahli','wa');return}
+  const sel=document.getElementById('kad-sel')?.value||'';if(!sel){toast('Sila pilih ahli untuk dicetak.','wa');return}
   const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
   const sah=document.getElementById('kad-sah')?.value||'';
   const[j,id]=sel.split('-');const list=j==='murid'?D.murid:D.guru;const a=list?.find(x=>String(x.id)===id);
   if(!a){toast('Ahli tidak dijumpai','er');return}
-  bukaPrintWin('Kad Ahli — '+a.nama,`<div style="display:flex;justify-content:center;align-items:center;min-height:200px;padding:20mm">${genKadHTML(a,j,sch,sah)}</div>`,'20mm');
+  openPrintWindow('Kad Ahli — '+a.nama,`<div class="member-card-print-grid">${genKadPrintHTML(a,j,sch,sah)}</div>`,memberCardPrintCss());
   toast('🪪 Tetingkap cetak dibuka!','ok');
 }
 function cetakSemuaKad(){
   const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
   const sah=document.getElementById('kad-sah')?.value||'';
   const semua=[...(D.murid||[]).map(m=>({...m,jenis:'murid'})),...(D.guru||[]).map(g=>({...g,jenis:'guru'}))];
-  if(!semua.length){toast('Tiada ahli','wa');return}
-  bukaPrintWin('Kad Ahli Semua',`<div style="display:flex;flex-wrap:wrap;gap:5mm;padding:10mm">${semua.map(a=>genKadHTML(a,a.jenis,sch,sah)).join('')}</div>`,'10mm');
+  if(!semua.length){toast('Tiada ahli untuk dicetak.','wa');return}
+  openPrintWindow('Kad Ahli Semua',`<div class="member-card-print-grid">${semua.map(a=>genKadPrintHTML(a,a.jenis,sch,sah)).join('')}</div>`,memberCardPrintCss());
   toast(`🖨️ ${semua.length} kad siap dicetak!`,'ok');
 }
 function cetakBatchKad(){
   const sel=[...document.querySelectorAll('.kad-chk:checked')].map(c=>c.value);
-  if(!sel.length){toast('Tandakan ahli dahulu','wa');return}
+  if(!sel.length){toast('Sila pilih ahli untuk dicetak.','wa');return}
   const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
   const sah=document.getElementById('kad-sah')?.value||'';
-  const kads=sel.map(s=>{const[j,id]=s.split('-');const list=j==='murid'?D.murid:D.guru;const a=list?.find(x=>String(x.id)===id);return a?genKadHTML(a,j,sch,sah):''}).join('');
-  bukaPrintWin(`Kad Ahli (${sel.length})`,`<div style="display:flex;flex-wrap:wrap;gap:5mm;padding:10mm">${kads}</div>`,'10mm');
+  const kads=sel.map(s=>{const[j,id]=s.split('-');const list=j==='murid'?D.murid:D.guru;const a=list?.find(x=>String(x.id)===id);return a?genKadPrintHTML(a,j,sch,sah):''}).join('');
+  openPrintWindow(`Kad Ahli (${sel.length})`,`<div class="member-card-print-grid">${kads}</div>`,memberCardPrintCss());
   toast(`🖨️ ${sel.length} kad dicetak!`,'ok');
 }
 function cetakKadTerus(jenis,id){
   const list=jenis==='murid'?D.murid:D.guru;const a=list?.find(x=>String(x.id)===String(id));
   if(!a){toast('Ahli tidak dijumpai','er');return}
   const sch=AP.sekolah||AP.nama||'PSS';const sah='31 Dis '+new Date().getFullYear();
-  bukaPrintWin('Kad — '+a.nama,`<div style="display:flex;justify-content:center;padding:20mm">${genKadHTML(a,jenis,sch,sah)}</div>`,'20mm');
+  openPrintWindow('Kad — '+a.nama,`<div class="member-card-print-grid">${genKadPrintHTML(a,jenis,sch,sah)}</div>`,memberCardPrintCss());
   toast('🪪 Kad '+a.nama,'ok');
 }
-
 // ════════════════════════════════════════════════════
 // TEMPAHAN
 // ════════════════════════════════════════════════════
