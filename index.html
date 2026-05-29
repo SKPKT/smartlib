@@ -1859,6 +1859,127 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 })();
 </script>
 
+<script>
+(function(){
+  const OPAC_ONLY_MSG='OPAC Awam hanya untuk carian buku sahaja.';
+
+  window.applyRoleUI=function(){
+    const isOpac=window._mR==='opac';
+    document.querySelectorAll('.sbi').forEach(item=>{
+      const oc=item.getAttribute('onclick')||'';
+      item.style.display=(isOpac&&!oc.includes("nav('opac')"))?'none':'';
+    });
+    const searchWrap=document.querySelector('.srch');
+    const globalSearch=document.getElementById('tb-src');
+    if(searchWrap)searchWrap.style.display=isOpac?'none':'';
+    if(globalSearch&&isOpac)globalSearch.placeholder='Cari buku dalam OPAC...';
+    const sbUnm=document.getElementById('sb-unm');
+    const sbRol=document.getElementById('sb-rol');
+    const tbAv=document.getElementById('tb-av');
+    const sbAv=document.getElementById('sb-av');
+    if(isOpac){
+      if(sbUnm)sbUnm.textContent='OPAC Awam';
+      if(sbRol)sbRol.textContent='Carian Buku Sahaja';
+      if(tbAv)tbAv.textContent='OP';
+      if(sbAv)sbAv.textContent='OP';
+    }
+  };
+
+  window.requireAdmin=function(){
+    if(window._mR==='opac'){
+      toast('Akses tidak dibenarkan untuk OPAC Awam.','er');
+      window.nav('opac');
+      return false;
+    }
+    return true;
+  };
+
+  const oldMuatSemua=window.muatSemua;
+  if(typeof oldMuatSemua==='function'){
+    window.muatSemua=async function(senyap=false){
+      if(window._mR==='opac'){
+        window.applyRoleUI();
+        return null;
+      }
+      return oldMuatSemua.call(this,senyap);
+    };
+  }
+
+  const oldMulaRF=window.mulaRF;
+  if(typeof oldMulaRF==='function'){
+    window.mulaRF=function(){
+      if(window._mR==='opac')return;
+      return oldMulaRF.apply(this,arguments);
+    };
+  }
+
+  const oldNav=window.nav;
+  window.nav=function(p){
+    if(window._mR==='opac'&&p!=='opac'){
+      toast(OPAC_ONLY_MSG,'wa');
+      p='opac';
+    }
+    const out=oldNav.call(this,p);
+    window.applyRoleUI();
+    return out;
+  };
+
+  window.masukOpac=function(){
+    window._tok=null;
+    window._me={id:'public-opac',username:'opac',nama:'OPAC Awam',peranan:'opac'};
+    window._mR='opac';
+    const lw=document.getElementById('lw');if(lw)lw.style.display='none';
+    window.applyRoleUI();
+    window.nav('opac');
+  };
+  window.masukOPAC=window.masukOpac;
+
+  const oldMasuklah=window.masuklah;
+  if(typeof oldMasuklah==='function'){
+    window.masuklah=function(){
+      const out=oldMasuklah.apply(this,arguments);
+      window.applyRoleUI();
+      return out;
+    };
+  }
+
+  window.pgOpac=function(){
+    const isPublic=window._mR==='opac';
+    document.getElementById('content').innerHTML=`<div class="card" style="background:linear-gradient(135deg,var(--eml),var(--cyl));border:1.5px solid rgba(16,185,129,.3);margin-bottom:12px"><div style="text-align:center;padding:8px 0"><div style="font-size:20px;font-weight:800;background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:7px">${isPublic?'🔍 OPAC Awam SMARTLIB':'🔍 OPAC — Katalog Bahan Awam'}</div><div style="font-size:11px;color:var(--mu);margin-bottom:13px">${isPublic?'Cari bahan bacaan di Pusat Sumber Sekolah':'Cari dalam '+((D.buku||[]).length)+' bahan'}</div><div style="display:flex;gap:7px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center"><input class="opac-in" id="opac-q" type="search" placeholder="Judul, pengarang, ISBN, kata kunci..." style="flex:1;min-width:200px" oninput="runOpac()"><button class="btn b-em" onclick="runOpac()">Cari</button></div><div class="opac-cats" style="justify-content:center;margin-top:8px"><span class="ocat on" onclick="togOCat(this,'')">Semua</span><span class="ocat" onclick="togOCat(this,'F')">Fiksyen</span><span class="ocat" onclick="togOCat(this,'B')">Bukan Fiksyen</span>${Object.entries(DDC).map(([k,v])=>`<span class="ocat" onclick="togOCat(this,'${k}')">${v}</span>`).join('')}</div></div></div><div id="opac-result" style="color:var(--mu);text-align:center;padding:24px">Taip untuk mencari...</div>`;
+    window.applyRoleUI();
+  };
+
+  window.renderOpacResults=function(rows){
+    const div=document.getElementById('opac-result');if(!div)return;
+    if(!rows.length){div.innerHTML='<div class="al a-wa">❌ Tiada bahan dijumpai.</div>';return}
+    div.innerHTML=`<div style="margin-bottom:9px;font-size:12px;color:var(--mu)">${rows.length} bahan dijumpai</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px">${rows.map(b=>{const st=String(b.status||'').toLowerCase();const sp=st==='pinjam'||st==='dipinjam';return`<div class="card" style="padding:12px"><div style="font-weight:700;font-size:12px;margin-bottom:3px;line-height:1.3">${b.judul||'–'}</div><div style="font-size:11px;color:var(--mu);margin-bottom:2px">${b.pengarang||'–'}</div><div style="font-size:10.5px;color:var(--mu);line-height:1.5">${b.penerbit?`<div>${b.penerbit}</div>`:''}${b.tahun?`<div>${b.tahun}</div>`:''}${b.isbn?`<div>ISBN: ${b.isbn}</div>`:''}</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px"><code style="font-size:10px">${b.no_panggilan||'–'}</code><span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Tersedia'}</span></div></div>`}).join('')}</div>`;
+  };
+
+  window.runOpac=async function(){
+    const q=(document.getElementById('opac-q')?.value||'').toLowerCase();
+    const div=document.getElementById('opac-result');if(!div)return;
+    if(!q&&!window._opacCF){div.textContent='Taip untuk mencari...';return}
+    if(window._mR==='opac'){
+      div.innerHTML='<div style="font-size:12px;color:var(--mu)">Mencari...</div>';
+      try{
+        const res=await apiGet({action:'opac_search',q:q});
+        if(!res?.ok)throw new Error(res?.error||'Carian gagal');
+        let rows=Array.isArray(res.data)?res.data:[];
+        if(window._opacCF){
+          rows=rows.filter(b=>{const np=String(b.no_panggilan||'').trim().toUpperCase();if(window._opacCF==='F')return isFik(np);if(window._opacCF==='B')return !isFik(np);return np.charAt(0)===window._opacCF});
+        }
+        renderOpacResults(rows);
+      }catch(e){div.innerHTML=`<div class="al a-er">Carian OPAC gagal: ${e.message}</div>`}
+      return;
+    }
+    const f=(D.buku||[]).filter(b=>{const qm=!q||(b.judul+b.pengarang+(b.isbn||'')+(b.no_panggilan||'')).toLowerCase().includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(window._opacCF==='F')km=isFik(np);else if(window._opacCF==='B')km=!isFik(np);else if(window._opacCF)km=np.charAt(0)===window._opacCF;return qm&&km});
+    renderOpacResults(f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return{no_panggilan:b.no_panggilan,judul:b.judul,pengarang:b.pengarang,penerbit:b.penerbit,tahun:b.tahun,isbn:b.isbn,status:sp?'dipinjam':(b.status||'')}}));
+  };
+
+  window.togOCat=function(el,k){document.querySelectorAll('.ocat').forEach(c=>c.classList.remove('on'));el.classList.add('on');window._opacCF=k;runOpac()};
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(window.applyRoleUI,0),{once:true});
+})();
+</script>
 </body>
 </html>
 
