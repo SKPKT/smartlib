@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{--em:#10b981;--emh:#059669;--eml:#d1fae5;--emd:#064e3b;--cy:#06b6d4;--cyl:#cffafe;--bg:#f0fdf4;--bg2:#ecfdf5;--card:#fff;--card2:#f0fdf4;--sb:#0c1a14;--tx:#0f172a;--tx2:#334155;--mu:#64748b;--bd:#e2e8f0;--bd2:#cbd5e1;--th:#f8fafc;--tri:#f0fdf4;--inp:#fff;--red:#ef4444;--redl:#fee2e2;--am:#f59e0b;--aml:#fef3c7;--pu:#8b5cf6;--pul:#ede9fe;--bl:#3b82f6;--bll:#dbeafe;--r:14px;--rs:9px;--rxs:5px;--fn:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'JetBrains Mono','Courier New',monospace;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);--shl:0 8px 32px rgba(0,0,0,.1)}
 body.dk{--bg:#030f09;--bg2:#071410;--card:#0a1a10;--card2:#0f2318;--sb:#040d07;--tx:#f0fdf4;--tx2:#d1fae5;--mu:#6ee7b7;--bd:#1a3a24;--bd2:#2d5a3a;--th:#0a1a10;--tri:#0f2318;--inp:#0a1a10;--redl:#3b0a0a;--aml:#3d1a00;--pul:#2e1065;--bll:#1e3a5f}
@@ -227,6 +228,14 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 .bkv{width:88px;height:120px;border-radius:7px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd)}
 .bkt{font-size:9px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:var(--tx2)}
 .bkn{font-size:8px;color:var(--mu);margin-top:1px;font-family:var(--mono)}
+.book-cover-img{width:88px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--bd);background:var(--bg2);box-shadow:0 4px 12px rgba(0,0,0,.08);flex-shrink:0}
+.book-cover-fallback{width:88px;height:120px;border-radius:8px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font-size:9px;font-weight:700;background:linear-gradient(135deg,#d1fae5,#cffafe);color:#064e3b;flex-shrink:0}
+.new-book-card{flex-shrink:0;width:96px;cursor:pointer;transition:transform .2s}
+.new-book-card:hover{transform:translateY(-2px)}
+.new-book-title{font-size:9px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:var(--tx2);margin-top:4px}
+.new-book-callno{font-size:8px;color:var(--mu);margin-top:1px;font-family:var(--mono)}
+.book-cover-upload-box{width:100px;height:138px;border:1.5px dashed var(--bd2);border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;color:var(--mu);font-size:10px;font-weight:600;flex-shrink:0}
+.book-cover-upload-box img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* KALENDAR */
 .kal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
@@ -284,7 +293,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 /* RESPONSIVE */
 @media(max-width:1100px){.sg{grid-template-columns:repeat(3,1fr)}.pnt-g{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.fr.c2,.fr.c3{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader{min-height:260px;width:100%}.book-cover-upload-box{width:92px;height:128px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}}
 </style>
 </head>
 <body>
@@ -591,7 +600,7 @@ function toggleSidebar(){
   if(sb&&sb.classList.contains('open'))closeSidebar();else openSidebar();
 }
 function nav(p){
-  _pg=p;killCh();if(p!=='scan'&&_sq){try{_sq.stop().catch(()=>{})}catch{}}_sq=null;
+  _pg=p;killCh();if(p!=='scan'&&_sq){try{_sq.stop().catch(()=>{})}catch{}}_sq=null;if(p!=='scan'&&typeof stopBarcodeScanner==='function')stopBarcodeScanner();
   document.querySelectorAll('.sbi').forEach(el=>el.classList.toggle('on',el.getAttribute('onclick')===`nav('${p}')`));
   document.getElementById('tb-ttl').textContent=PG_NM[p]||p;
   document.getElementById('tb-ic').textContent=PG_IC[p]||'📄';
@@ -1228,9 +1237,60 @@ async function padamPg(id,j){const p=(D[j]||[]).find(x=>String(x.id)===String(id
 // SMARTLIB emergency performance/boot patch
 let _tempahan = window._tempahan || [];
 let _scanQ = null;
+let smartlibScanner = null;
+let smartlibScannerRunning = false;
+let currentBookCoverBase64 = '';
+let currentBookCoverMime = '';
+let currentBookCoverName = '';
+let currentBookCoverUrl = '';
+let currentBookCoverFileId = '';
 let _charts = (typeof _ch !== 'undefined') ? _ch : {};
 const GAS_URL = GAS;
 const CFG = {url: GAS, token: 'SISPUSAT2025SEKOLAHKU', refresh: 30000};
+function isScannerReady(){return typeof Html5Qrcode!=='undefined'}
+function cleanBarcode(code){return String(code||'').replace(/[^0-9Xx]/g,'').trim()}
+function isISBN(code){const c=cleanBarcode(code);return c.length===10||c.length===13}
+async function startBarcodeScanner(targetId,onSuccess){
+  const st=document.getElementById('scan-st'),btn=document.getElementById('btn-sc');
+  try{
+    if(!isScannerReady()){toast('Scanner belum dimuatkan. Sila refresh halaman atau semak sambungan internet.','er');return}
+    if(location.protocol!=='https:'&&location.protocol!=='file:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){toast('Kamera hanya boleh digunakan melalui HTTPS.','er');return}
+    if(smartlibScannerRunning&&smartlibScanner)await stopBarcodeScanner();
+    const target=document.getElementById(targetId);
+    if(!target){toast('Ruang kamera tidak dijumpai.','er');return}
+    target.innerHTML='';
+    smartlibScanner=new Html5Qrcode(targetId);
+    const fmt=typeof Html5QrcodeSupportedFormats!=='undefined'?Html5QrcodeSupportedFormats:null;
+    const config={fps:10,qrbox:function(w,h){const m=Math.min(w,h);return{width:Math.floor(m*.82),height:Math.floor(m*.42)}},aspectRatio:1.777,rememberLastUsedCamera:true};
+    if(fmt)config.formatsToSupport=[fmt.EAN_13,fmt.EAN_8,fmt.UPC_A,fmt.UPC_E,fmt.CODE_128,fmt.CODE_39,fmt.QR_CODE].filter(Boolean);
+    await smartlibScanner.start({facingMode:'environment'},config,async function(decodedText){
+      if(!decodedText)return;
+      try{await stopBarcodeScanner()}catch(e){}
+      if(typeof onSuccess==='function')onSuccess(String(decodedText).trim());
+    },function(){});
+    smartlibScannerRunning=true;
+    if(st)st.style.display='block';
+    if(btn)btn.textContent='Mengimbas...';
+    toast('Scanner kamera aktif.','ok');
+  }catch(err){
+    console.error(err);smartlibScannerRunning=false;
+    if(st)st.style.display='none';
+    if(btn)btn.textContent='Mula Scan';
+    let msg='Kamera tidak dapat dimulakan.';
+    const e=String(err).toLowerCase();
+    if(e.includes('permission')||e.includes('notallowed'))msg='Sila benarkan akses kamera pada browser.';
+    else if(e.includes('notfound'))msg='Kamera tidak dijumpai pada peranti ini.';
+    else if(e.includes('notreadable'))msg='Kamera sedang digunakan oleh aplikasi lain.';
+    toast(msg,'er');
+  }
+}
+async function stopBarcodeScanner(){
+  try{if(smartlibScanner&&smartlibScannerRunning){await smartlibScanner.stop();await smartlibScanner.clear()}}catch(err){console.warn('Scanner stop warning:',err)}
+  smartlibScannerRunning=false;
+  const st=document.getElementById('scan-st'),btn=document.getElementById('btn-sc');
+  if(st)st.style.display='none';
+  if(btn)btn.textContent='Mula Scan';
+}
 function pgKad(){ return pgKadAhli(); }
 function bukaTVMode(){ return pgTV(); }
 // ════════════════════════════════════════════════════
@@ -1978,6 +2038,144 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 
   window.togOCat=function(el,k){document.querySelectorAll('.ocat').forEach(c=>c.classList.remove('on'));el.classList.add('on');window._opacCF=k;runOpac()};
   document.addEventListener('DOMContentLoaded',()=>setTimeout(window.applyRoleUI,0),{once:true});
+})();
+</script>
+<script>
+// SMARTLIB scanner + cover patch
+(function(){
+  const oldPgScan=window.pgScan;
+  window.pgScan=function(){
+    document.getElementById('content').innerHTML=`<div class="g2"><div class="card"><div class="ct">Scan Barcode / ISBN</div><div class="al a-in">Arahkan kamera ke barcode ISBN buku.</div><div id="scan-reader" style="border-radius:var(--r);overflow:hidden;min-height:220px;background:#000;margin-bottom:10px"></div><div id="scan-st" style="display:none;text-align:center;padding:5px;font-size:12px;color:var(--em);font-weight:600">Mengimbas...</div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn b-em b-sm" onclick="mulaScanISBN()" id="btn-sc">Mula Scan</button><button class="btn b-gh b-sm" onclick="hentiScanISBN()">Henti</button></div><div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:12px"><div class="ct" style="margin-bottom:7px">Input Manual</div><div style="display:flex;gap:7px"><input type="text" id="scan-manual-input" placeholder="ISBN / No. Panggilan..." style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--inp);color:var(--tx)" onkeydown="if(event.key==='Enter')cariScan()"><button class="btn b-em" onclick="cariScan()">Cari</button></div></div></div><div class="card"><div class="ct">Hasil</div><div id="scan-result" style="color:var(--mu);font-size:12px;text-align:center;padding:18px"><div style="font-size:28px;margin-bottom:7px">Buku</div>Imbas barcode atau taip ISBN...</div></div></div>`;
+  };
+
+  window.mulaScanISBN=function(){startBarcodeScanner('scan-reader',function(code){const clean=cleanBarcode(code);const input=document.getElementById('scan-manual-input');if(input)input.value=clean;prosesISBNAtauBarcode(clean||code)})};
+  window.hentiScanISBN=function(){stopBarcodeScanner()};
+  window.mulaScanner=window.mulaScanISBN;
+  window.hentiScanner=window.hentiScanISBN;
+  window.cariScan=function(){const q=(document.getElementById('scan-manual-input')?.value||document.getElementById('scan-man')?.value||'').trim();if(!q){toast('Barcode tidak sah.','er');return}prosesISBNAtauBarcode(q)};
+  window.cariScanWith=function(q){prosesISBNAtauBarcode(q)};
+
+  window.prosesISBNAtauBarcode=async function(code){
+    const clean=cleanBarcode(code);
+    if(!clean&&!String(code||'').trim()){toast('Barcode tidak sah.','er');return}
+    const hasil=document.getElementById('scan-result');
+    if(hasil)hasil.innerHTML='<div class="al a-in">Mencari maklumat...</div>';
+    const qRaw=String(code||'').trim();
+    const bukuLocal=(D.buku||[]).find(b=>String(b.isbn||'').replace(/[^0-9Xx]/g,'')===clean||String(b.no_perolehan||'')===clean||String(b.no_panggilan||'').toLowerCase()===qRaw.toLowerCase());
+    if(bukuLocal){renderScanBookResult(bukuLocal);return}
+    if(isISBN(clean)){
+      try{
+        const res=await api({action:'isbn_lookup',isbn:clean});
+        if(res&&res.ok&&res.data&&res.data.jumpa)renderISBNLookupResult(res.data);
+        else if(hasil)hasil.innerHTML=`<div class="al a-wa">ISBN tidak dijumpai. Anda boleh daftar secara manual.</div><button class="btn b-em" onclick="nav('daftar')">Daftar Bahan Baru</button>`;
+      }catch(err){if(hasil)hasil.innerHTML='<div class="al a-er">Gagal lookup ISBN: '+err.message+'</div>'}
+    }else if(hasil)hasil.innerHTML='<div class="al a-wa">Rekod tidak dijumpai.</div>';
+  };
+
+  window.renderScanBookResult=function(b){
+    const div=document.getElementById('scan-result');if(!div)return;
+    const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');
+    div.innerHTML=`<div class="al a-ok">Bahan dijumpai!</div><table style="width:100%;font-size:12px;border-collapse:collapse">${[['No. Perolehan',`<span class="bdg bg-cy">${b.no_perolehan||'-'}</span>`],['No. Panggilan',`<span class="mono">${b.no_panggilan||'-'}</span>`],['Judul',`<strong>${b.judul||'-'}</strong>`],['Pengarang',b.pengarang||'-'],['Penerbit',b.penerbit||'-'],['Tahun',b.tahun||'-'],['ISBN',b.isbn||'-'],['Status',`<span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Di Rak'}</span>`]].map(([k,v])=>`<tr><td style="color:var(--mu);padding:4px 0;width:38%;font-size:11px">${k}</td><td>${v}</td></tr>`).join('')}</table>`;
+    toast('Bahan dijumpai!','ok');
+  };
+
+  window.renderISBNLookupResult=function(b){
+    window._scanISBNBook=b;
+    const div=document.getElementById('scan-result');if(!div)return;
+    const cover=b.cover_url||b.thumbnail||'';
+    div.innerHTML=`<div class="al a-ok">Maklumat ISBN dijumpai.</div><div style="display:flex;gap:10px;text-align:left;align-items:flex-start">${cover?`<img src="${cover}" class="book-cover-img" style="width:68px;height:96px">`:''}<div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--tx)">${b.judul||'-'}</div><div style="font-size:11px;color:var(--mu);line-height:1.6">${b.pengarang||'-'}<br>${b.penerbit||'-'} · ${b.tahun||'-'}<br>ISBN: ${b.isbn||'-'}</div><button class="btn b-em b-sm" style="margin-top:8px" onclick="isiDaftarISBNLookup()">Daftar Buku Ini</button></div></div>`;
+  };
+
+  window.isiDaftarISBNLookup=function(){
+    const b=window._scanISBNBook;if(!b)return;
+    nav('daftar');
+    setTimeout(()=>{if(document.getElementById('db-isbn'))document.getElementById('db-isbn').value=b.isbn||'';if(b.judul)document.getElementById('db-jdl').value=b.judul;if(b.pengarang)document.getElementById('db-pgr').value=b.pengarang;if(b.penerbit)document.getElementById('db-pnb').value=b.penerbit;if(b.tahun)document.getElementById('db-thn').value=b.tahun;if(b.muka_surat)document.getElementById('db-muka').value=b.muka_surat;if(b.cover_url||b.thumbnail){currentBookCoverUrl=b.cover_url||b.thumbnail;currentBookCoverBase64='';currentBookCoverFileId='';previewBookCover(currentBookCoverUrl)}autoNP()},80);
+  };
+
+  window.previewBookCover=function(src){
+    const img=document.getElementById('db-cover-preview'),empty=document.getElementById('db-cover-empty');
+    if(img){img.src=src||'';img.style.display=src?'block':'none'}
+    if(empty)empty.style.display=src?'none':'block';
+  };
+  window.clearBookCover=function(){
+    currentBookCoverBase64='';currentBookCoverMime='';currentBookCoverName='';currentBookCoverUrl='';currentBookCoverFileId='';
+    previewBookCover('');
+    const file=document.getElementById('db-cover-file'),cam=document.getElementById('db-cover-camera');
+    if(file)file.value='';if(cam)cam.value='';
+    const st=document.getElementById('db-cover-status');if(st)st.textContent='Cover belum dipilih.';
+  };
+  window.compressImageToBase64=function(file,maxWidth=900,quality=.75){
+    return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{let width=img.width,height=img.height;if(width>maxWidth){height=Math.round(height*(maxWidth/width));width=maxWidth}const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);const dataUrl=canvas.toDataURL('image/jpeg',quality);resolve({dataUrl,base64:dataUrl.split(',')[1],mimeType:'image/jpeg'})};img.onerror=reject;img.src=e.target.result};reader.onerror=reject;reader.readAsDataURL(file)});
+  };
+  window.handleBookCoverFile=function(file){
+    if(!file)return;
+    if(!file.type.startsWith('image/')){toast('Sila pilih fail gambar sahaja.','er');return}
+    compressImageToBase64(file,900,.75).then(result=>{currentBookCoverBase64=result.base64;currentBookCoverMime=result.mimeType;currentBookCoverName=file.name||('cover_'+Date.now()+'.jpg');currentBookCoverUrl=result.dataUrl;currentBookCoverFileId='';previewBookCover(result.dataUrl);const st=document.getElementById('db-cover-status');if(st)st.textContent='Cover siap dipilih. Akan diupload semasa simpan buku.';toast('Cover buku dipilih.','ok')}).catch(err=>{console.error(err);toast('Gagal proses gambar cover.','er')});
+  };
+
+  function injectRegisterTools(){
+    const isbn=document.getElementById('db-isbn');
+    if(isbn&&!document.getElementById('btn-scan-isbn-register')){
+      const wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:6px';
+      isbn.parentNode.insertBefore(wrap,isbn);wrap.appendChild(isbn);isbn.style.flex='1';
+      const btn=document.createElement('button');btn.type='button';btn.id='btn-scan-isbn-register';btn.className='btn b-cy b-sm';btn.textContent='Scan ISBN';btn.onclick=window.openISBNScannerForRegister;wrap.appendChild(btn);
+    }
+    const cat=document.getElementById('db-cat')?.closest('.fg');
+    if(cat&&!document.getElementById('db-cover-box'))cat.insertAdjacentHTML('afterend',`<div class="card" style="margin-top:12px;margin-bottom:12px"><div class="ct">Cover Buku</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div id="db-cover-box" class="book-cover-upload-box"><img id="db-cover-preview" src="" alt="Cover Buku" style="display:none"><div id="db-cover-empty">Cover belum dipilih</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn b-gh b-sm" onclick="document.getElementById('db-cover-file').click()">Upload</button><button type="button" class="btn b-cy b-sm" onclick="document.getElementById('db-cover-camera').click()">Ambil Gambar</button><button type="button" class="btn b-re b-sm" onclick="clearBookCover()">Buang</button></div></div><input type="file" id="db-cover-file" accept="image/*" style="display:none" onchange="handleBookCoverFile(this.files[0])"><input type="file" id="db-cover-camera" accept="image/*" capture="environment" style="display:none" onchange="handleBookCoverFile(this.files[0])"><small id="db-cover-status">Cover belum dipilih.</small></div>`);
+    if(!document.getElementById('m-scan-isbn'))document.getElementById('content').insertAdjacentHTML('beforeend',`<div class="mbg" id="m-scan-isbn"><div class="modal"><div class="m-hdr"><h3>Scan ISBN Buku</h3><button class="m-x" onclick="closeISBNScannerForRegister()">Tutup</button></div><div class="al a-in">Arahkan kamera ke barcode ISBN pada belakang buku.</div><div id="register-isbn-reader" style="width:100%;min-height:260px;background:#000;border-radius:14px;overflow:hidden"></div><div class="m-ft"><button class="btn b-gh" onclick="closeISBNScannerForRegister()">Henti</button></div></div></div>`);
+    if(currentBookCoverUrl)previewBookCover(currentBookCoverUrl);
+  }
+
+  const oldPgDaftar=window.pgDaftar;
+  window.pgDaftar=function(){oldPgDaftar.apply(this,arguments);injectRegisterTools()};
+  window.openISBNScannerForRegister=function(){openM('m-scan-isbn');setTimeout(()=>{startBarcodeScanner('register-isbn-reader',function(code){const clean=cleanBarcode(code);const input=document.getElementById('db-isbn');if(input)input.value=clean;closeISBNScannerForRegister();if(typeof debGB==='function')debGB();else if(typeof cariGB==='function')cariGB();toast('ISBN berjaya diimbas: '+clean,'ok')})},300)};
+  window.closeISBNScannerForRegister=async function(){await stopBarcodeScanner();closeM('m-scan-isbn')};
+
+  const oldCariGB=window.cariGB;
+  window.cariGB=async function(){
+    await oldCariGB.apply(this,arguments);
+    const isbn=(document.getElementById('db-isbn')?.value||'').replace(/-/g,'').trim();
+    if(isbn.length<10)return;
+    try{
+      const res=await api({action:'isbn_lookup',isbn});
+      const b=res&&res.ok?res.data:null;
+      if(b&&(b.cover_url||b.thumbnail)){currentBookCoverUrl=b.cover_url||b.thumbnail;currentBookCoverBase64='';currentBookCoverFileId='';previewBookCover(currentBookCoverUrl);const st=document.getElementById('db-cover-status');if(st)st.textContent='Cover diambil daripada Google Books. Anda boleh tukar jika mahu.'}
+    }catch(e){}
+  };
+
+  window.simpanBB=async function(){
+    const nop=document.getElementById('db-nop').value.trim(),npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
+    if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}
+    const btn=document.getElementById('btn-db');btn.textContent='Menyimpan...';btn.disabled=true;
+    let finalCoverUrl=currentBookCoverUrl||'',finalCoverFileId=currentBookCoverFileId||'';
+    if(currentBookCoverBase64){
+      try{
+        const up=await api({action:'upload_cover_buku',fileName:currentBookCoverName,mimeType:currentBookCoverMime,base64:currentBookCoverBase64});
+        if(up&&up.ok&&up.data){finalCoverUrl=up.data.cover_url||'';finalCoverFileId=up.data.file_id||''}else toast('Cover gagal diupload. Buku tetap akan disimpan tanpa cover.','wa');
+      }catch(e){toast('Cover gagal diupload. Buku tetap akan disimpan tanpa cover.','wa')}
+    }
+    const data={id:nxId(D.buku),no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim(),cover_url:finalCoverUrl,cover_file_id:finalCoverFileId};
+    try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);D.buku.push(data);toast('Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok"><strong>${jdl}</strong> (No.${nop}) disimpan.</div>`;resetDB();clearBookCover()}
+    catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='Simpan ke Sheets';btn.disabled=false}
+  };
+
+  const oldResetDB=window.resetDB;
+  window.resetDB=function(){oldResetDB.apply(this,arguments);clearBookCover()};
+
+  window.renderBookCover=function(b){
+    const cover=String(b.cover_url||b.thumbnail||'').replace(/"/g,'&quot;');
+    const w=wNP(b.no_panggilan);
+    const p=String(b.no_panggilan||'').trim().split(/[\s\/]+/);
+    const l1=p[0]||'BUKU',l2=p.slice(1).join(' ');
+    return `<div class="new-book-card" onclick="nav('perolehan')"><div style="position:relative;width:88px;height:120px">${cover?`<img src="${cover}" class="book-cover-img" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`:''}<div class="book-cover-fallback" style="display:${cover?'none':'flex'};background:linear-gradient(135deg,${w}22,${w}44);color:${w}"><div><div style="font-size:13px;font-weight:900;font-family:var(--mono)">${l1}</div>${l2?`<div style="font-size:10px;font-weight:700;font-family:var(--mono)">${l2}</div>`:''}<div style="width:60%;height:1px;background:${w};opacity:.35;margin:5px auto"></div><div style="font-size:7px;opacity:.7;line-height:1.2">${String(b.judul||'').substring(0,28)}</div></div></div><span style="position:absolute;top:4px;right:4px;background:#10b981;color:white;font-size:7px;font-weight:800;border-radius:99px;padding:1px 5px">BARU</span></div><div class="new-book-title">${b.judul||'-'}</div><div class="new-book-callno">${b.no_panggilan||'-'}</div></div>`;
+  };
+  const oldPgDash=window.pgDash;
+  window.pgDash=function(){
+    oldPgDash.apply(this,arguments);
+    const box=document.querySelector('.bsk');if(!box)return;
+    const books=[...(D.buku||[])].sort((a,b)=>{const da=Date.parse(a.tarikh_perolehan||''),db=Date.parse(b.tarikh_perolehan||'');if(!isNaN(db)&&!isNaN(da)&&db!==da)return db-da;return (parseInt(b.id||b.no_perolehan)||0)-(parseInt(a.id||a.no_perolehan)||0)}).slice(0,12);
+    box.innerHTML=books.map(renderBookCover).join('');
+  };
 })();
 </script>
 </body>
