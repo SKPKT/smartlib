@@ -2249,6 +2249,190 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   };
 })();
 </script>
+<script>
+// SMARTLIB physical scanner modes patch
+(function(){
+  window.handleScannerEnter=function(e,callback){
+    if(e.key==='Enter'){
+      e.preventDefault();
+      const value=(e.target.value||'').trim();
+      if(value&&typeof callback==='function')callback(value);
+    }
+  };
+
+  function bookByCode(value){
+    const clean=cleanBarcode(value);
+    const raw=String(value||'').trim().toLowerCase();
+    return (D.buku||[]).find(b=>
+      String(b.no_perolehan||'')===clean||
+      String(b.isbn||'').replace(/[^0-9Xx]/g,'')===clean||
+      String(b.no_panggilan||'').toLowerCase()===raw||
+      String(b.judul||'').toLowerCase().includes(raw)
+    );
+  }
+
+  window.pilihModeKameraScan=async function(){
+    const reader=document.getElementById('scan-reader-wrap');
+    if(reader)reader.style.display='';
+    await startBarcodeScanner('scan-reader',function(code){
+      const clean=cleanBarcode(code);
+      const input=document.getElementById('scan-manual-input');
+      if(input)input.value=clean;
+      prosesISBNAtauBarcode(clean||code);
+    });
+  };
+  window.pilihModeScannerFizikal=async function(){
+    await stopBarcodeScanner();
+    const reader=document.getElementById('scan-reader-wrap');
+    if(reader)reader.style.display='none';
+    const input=document.getElementById('scan-manual-input');
+    if(input){input.focus();input.select()}
+    toast('Mode scanner fizikal aktif. Scan barcode pada input.','ok');
+  };
+  window.pilihModeManual=async function(){
+    await stopBarcodeScanner();
+    const reader=document.getElementById('scan-reader-wrap');
+    if(reader)reader.style.display='none';
+    const input=document.getElementById('scan-manual-input');
+    if(input)input.focus();
+    toast('Mode input manual aktif.','ok');
+  };
+
+  window.pgScan=function(){
+    document.getElementById('content').innerHTML=`<div class="g2"><div class="card"><div class="ct">Scan Barcode / ISBN</div><div class="al a-in">Pilih kaedah imbasan. Kamera hanya dibuka apabila butang Scan Kamera ditekan.</div><div class="card" style="padding:10px;margin-bottom:10px;background:var(--bg2)"><div class="ct" style="margin-bottom:8px">Pilih Kaedah Imbasan</div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn b-em b-sm" onclick="pilihModeKameraScan()">📷 Scan Kamera</button><button class="btn b-gh b-sm" onclick="pilihModeScannerFizikal()">🔫 Guna Scanner Fizikal</button><button class="btn b-cy b-sm" onclick="pilihModeManual()">⌨️ Input Manual</button></div><div style="font-size:10px;color:var(--mu);line-height:1.6;margin-top:7px">📷 Kamera: gunakan kamera phone/tablet untuk scan ISBN.<br>🔫 Scanner fizikal: scanner USB/Bluetooth berfungsi seperti keyboard. Klik input dahulu, kemudian scan barcode.</div></div><div id="scan-reader-wrap" style="display:none"><div id="scan-reader" style="border-radius:var(--r);overflow:hidden;min-height:320px;background:#000;margin-bottom:10px"></div><div id="scan-st" style="display:none;text-align:center;padding:5px;font-size:12px;color:var(--em);font-weight:600">Mengimbas...</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px"><button class="btn b-gh b-sm" onclick="switchScannerCamera('scan-reader',function(code){const clean=cleanBarcode(code);const input=document.getElementById('scan-manual-input');if(input)input.value=clean;prosesISBNAtauBarcode(clean||code)})">📷 Tukar Kamera Belakang</button><button class="btn b-gh b-sm" onclick="hentiScanISBN()">Henti</button></div></div><div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:12px"><div class="ct" style="margin-bottom:7px">Input Manual / Scanner Fizikal</div><div style="display:flex;gap:7px"><input type="text" id="scan-manual-input" placeholder="Scan / taip ISBN atau No. Perolehan" style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--inp);color:var(--tx)" onkeydown="handleScannerEnter(event,prosesISBNAtauBarcode)"><button class="btn b-em" onclick="cariScan()">Cari</button></div></div></div><div class="card"><div class="ct">Hasil</div><div id="scan-result" style="color:var(--mu);font-size:12px;text-align:center;padding:18px"><div style="font-size:28px;margin-bottom:7px">Buku</div>Pilih kaedah scan atau taip ISBN...</div></div></div>`;
+  };
+  window.mulaScanISBN=window.pilihModeKameraScan;
+
+  window.fokusScannerISBNDaftar=async function(){
+    await stopBarcodeScanner();
+    const input=document.getElementById('db-isbn');
+    if(input){input.focus();input.select()}
+    toast('Mode scanner fizikal aktif. Scan barcode ISBN.','ok');
+  };
+
+  function enhanceDaftarScanControls(){
+    const isbn=document.getElementById('db-isbn');
+    if(!isbn)return;
+    isbn.placeholder='Scan / taip ISBN';
+    isbn.onkeydown=function(e){handleScannerEnter(e,function(value){isbn.value=cleanBarcode(value);if(typeof debGB==='function')debGB();else if(typeof cariGB==='function')cariGB()})};
+    const wrap=isbn.parentElement;
+    if(wrap){
+      [...wrap.querySelectorAll('button')].forEach(b=>b.remove());
+      const camera=document.createElement('button');camera.type='button';camera.className='btn b-cy b-sm';camera.textContent='📷 Scan Kamera';camera.onclick=window.openISBNScannerForRegister;
+      const physical=document.createElement('button');physical.type='button';physical.className='btn b-gh b-sm';physical.textContent='🔫 Guna Scanner Fizikal';physical.onclick=window.fokusScannerISBNDaftar;
+      const cari=document.createElement('button');cari.type='button';cari.className='btn b-em b-sm';cari.textContent='🔍 Cari ISBN';cari.onclick=function(){if(typeof cariGB==='function')cariGB()};
+      wrap.appendChild(camera);wrap.appendChild(physical);wrap.appendChild(cari);
+    }
+  }
+  const prevPgDaftarScanner=window.pgDaftar;
+  window.pgDaftar=function(){prevPgDaftarScanner.apply(this,arguments);enhanceDaftarScanControls()};
+
+  window.fokusScanAhliPinjam=async function(){
+    await stopBarcodeScanner();
+    const input=document.getElementById('p-pg');
+    if(input){input.focus();input.select()}
+    toast('Scan No Kad Ahli pada input.','ok');
+  };
+  window.fokusScanBukuPinjam=async function(){
+    await stopBarcodeScanner();
+    const input=document.getElementById('p-bk');
+    if(input){input.focus();input.select()}
+    toast('Scan No Perolehan Buku pada input.','ok');
+  };
+  window.cariAhliPinjamScan=function(value){
+    const clean=cleanBarcode(value),raw=String(value||'').trim().toLowerCase();
+    const jenisSemasa=document.getElementById('p-j')?.value||'murid';
+    const pools=[{jenis:jenisSemasa,list:jenisSemasa==='murid'?(D.murid||[]):(D.guru||[])},{jenis:'murid',list:D.murid||[]},{jenis:'guru',list:D.guru||[]}];
+    for(const pool of pools){
+      const p=pool.list.find(x=>String(x.nokad||'').replace(/\D/g,'')===clean||String(x.id||'')===clean||String(x.nama||'').toLowerCase().includes(raw));
+      if(p){const sel=document.getElementById('p-j');if(sel)sel.value=pool.jenis;pilihPg(p.id,pool.jenis);return}
+    }
+    const input=document.getElementById('p-pg');if(input)input.value=value;
+    cariPg();toast('Ahli tidak dijumpai. Cuba taip nama.','wa');
+  };
+  window.cariBukuPinjamScan=function(value){
+    const b=bookByCode(value);
+    if(b){const aktif=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');if(aktif){toast('Buku sedang dipinjam.','wa');return}pilihBk(b.id);return}
+    const input=document.getElementById('p-bk');if(input)input.value=value;
+    cariBk();toast('Buku tidak dijumpai. Cuba taip judul.','wa');
+  };
+  function enhancePinjamScan(){
+    const pg=document.getElementById('p-pg'),bk=document.getElementById('p-bk');
+    if(pg){pg.placeholder='Scan No Kad Ahli atau taip nama';pg.onkeydown=e=>handleScannerEnter(e,cariAhliPinjamScan);const fg=pg.closest('.fg');if(fg&&!document.getElementById('pinjam-scan-ahli'))fg.insertAdjacentHTML('beforeend',`<div id="pinjam-scan-ahli" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn b-gh b-sm" onclick="fokusScanAhliPinjam()">🔫 Scanner Fizikal Ahli</button><small style="color:var(--mu);font-size:10px;align-self:center">Scan No Kad Ahli atau taip nama.</small></div>`)}
+    if(bk){bk.placeholder='Scan No Perolehan Buku atau taip judul';bk.onkeydown=e=>handleScannerEnter(e,cariBukuPinjamScan);const fg=bk.closest('.fg');if(fg&&!document.getElementById('pinjam-scan-buku'))fg.insertAdjacentHTML('beforeend',`<div id="pinjam-scan-buku" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn b-gh b-sm" onclick="fokusScanBukuPinjam()">🔫 Scanner Fizikal Buku</button><small style="color:var(--mu);font-size:10px;align-self:center">Scan No Perolehan / ISBN / No Panggilan.</small></div>`)}
+  }
+  const prevPgPinjamScanner=window.pgPinjam;
+  window.pgPinjam=function(){prevPgPinjamScanner.apply(this,arguments);enhancePinjamScan()};
+
+  window.fokusScanPulang=async function(){
+    await stopBarcodeScanner();
+    const input=document.getElementById('src-pl');
+    if(input){input.focus();input.select()}
+    toast('Mode scanner fizikal aktif untuk pemulangan.','ok');
+  };
+  window.pilihModeKameraPulang=async function(){
+    const wrap=document.getElementById('return-scan-reader-wrap');
+    if(wrap)wrap.style.display='';
+    await startBarcodeScanner('return-scan-reader',function(code){
+      const clean=cleanBarcode(code);
+      const input=document.getElementById('src-pl');
+      if(input)input.value=clean;
+      prosesPulanganScan(clean||code);
+    });
+  };
+  window.prosesPulanganScan=function(value){
+    const b=bookByCode(value);
+    const input=document.getElementById('src-pl');
+    if(b){
+      const aktif=(D.pinjaman||[]).find(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');
+      if(input)input.value=b.no_panggilan||b.judul||value;
+      filtPl();
+      toast(aktif?'Pinjaman aktif dijumpai. Tekan Pulang.':'Tiada pinjaman aktif untuk buku ini.',aktif?'ok':'wa');
+      return;
+    }
+    if(input)input.value=value;
+    filtPl();
+    toast('Rekod buku tidak dijumpai.','wa');
+  };
+  function enhancePulangScan(){
+    const input=document.getElementById('src-pl');if(!input)return;
+    input.placeholder='Scan No Perolehan Buku untuk pemulangan';
+    input.onkeydown=e=>handleScannerEnter(e,prosesPulanganScan);
+    const card=input.closest('.card');
+    if(card&&!document.getElementById('pulang-scan-tools'))card.insertAdjacentHTML('beforeend',`<div id="pulang-scan-tools" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn b-gh b-sm" onclick="fokusScanPulang()">🔫 Scanner Fizikal</button><button type="button" class="btn b-cy b-sm" onclick="pilihModeKameraPulang()">📷 Scan Kamera</button><button type="button" class="btn b-em b-sm" onclick="filtPl()">Cari</button><small style="color:var(--mu);font-size:10px;align-self:center">Scanner USB/Bluetooth berfungsi seperti keyboard.</small></div><div id="return-scan-reader-wrap" style="display:none;margin-top:10px"><div id="return-scan-reader" style="border-radius:var(--r);overflow:hidden;min-height:320px;background:#000;margin-bottom:8px"></div><button type="button" class="btn b-gh b-sm" onclick="stopBarcodeScanner();document.getElementById('return-scan-reader-wrap').style.display='none'">Henti</button></div>`);
+  }
+  const prevPgPulangScanner=window.pgPulang;
+  window.pgPulang=function(){prevPgPulangScanner.apply(this,arguments);enhancePulangScan()};
+
+  function enhanceOpacScanner(){
+    const input=document.getElementById('opac-q');if(!input)return;
+    input.placeholder='Cari tajuk / scan ISBN / no perolehan';
+    input.onkeydown=e=>handleScannerEnter(e,function(){runOpac()});
+    const parent=input.parentElement;
+    if(parent&&!document.getElementById('opac-scan-note'))parent.insertAdjacentHTML('afterend',`<div id="opac-scan-note" style="font-size:10px;color:var(--mu);margin-top:6px">Scanner fizikal boleh terus scan ISBN / No Perolehan pada kotak carian.</div>`);
+  }
+  const prevPgOpacScanner=window.pgOpac;
+  window.pgOpac=function(){prevPgOpacScanner.apply(this,arguments);enhanceOpacScanner()};
+  window.runOpac=async function(){
+    const q=(document.getElementById('opac-q')?.value||'').toLowerCase();
+    const div=document.getElementById('opac-result');if(!div)return;
+    if(!q&&!window._opacCF){div.textContent='Taip untuk mencari...';return}
+    if(window._mR==='opac'){
+      div.innerHTML='<div style="font-size:12px;color:var(--mu)">Mencari...</div>';
+      try{
+        const res=await apiGet({action:'opac_search',q:q});
+        if(!res?.ok)throw new Error(res?.error||'Carian gagal');
+        let rows=Array.isArray(res.data)?res.data:[];
+        if(window._opacCF){rows=rows.filter(b=>{const np=String(b.no_panggilan||'').trim().toUpperCase();if(window._opacCF==='F')return isFik(np);if(window._opacCF==='B')return !isFik(np);return np.charAt(0)===window._opacCF})}
+        renderOpacResults(rows);
+      }catch(e){div.innerHTML=`<div class="al a-er">Carian OPAC gagal: ${e.message}</div>`}
+      return;
+    }
+    const f=(D.buku||[]).filter(b=>{const text=(b.judul+b.pengarang+(b.isbn||'')+(b.no_panggilan||'')+(b.no_perolehan||'')).toLowerCase();const qm=!q||text.includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(window._opacCF==='F')km=isFik(np);else if(window._opacCF==='B')km=!isFik(np);else if(window._opacCF)km=np.charAt(0)===window._opacCF;return qm&&km});
+    renderOpacResults(f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return{no_perolehan:b.no_perolehan,no_panggilan:b.no_panggilan,judul:b.judul,pengarang:b.pengarang,penerbit:b.penerbit,tahun:b.tahun,isbn:b.isbn,status:sp?'dipinjam':(b.status||'')}}));
+  };
+})();
+</script>
 </body>
 </html>
 
