@@ -247,10 +247,19 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 .new-book-callno{font-size:8px;color:var(--mu);margin-top:1px;font-family:var(--mono)}
 .book-cover-upload-box{width:100px;height:138px;border:1.5px dashed var(--bd2);border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;color:var(--mu);font-size:10px;font-weight:600;flex-shrink:0}
 .book-cover-upload-box img{width:100%;height:100%;object-fit:cover;display:block}
-#scan-reader,#register-isbn-reader{width:100%;min-height:320px;background:#000;border-radius:16px;overflow:hidden;position:relative}
-#scan-reader video,#register-isbn-reader video{width:100%!important;height:100%!important;min-height:320px!important;object-fit:cover!important;display:block!important;opacity:1!important;visibility:visible!important;background:#000!important}
-#scan-reader canvas,#register-isbn-reader canvas{display:block!important}
-#scan-reader img,#register-isbn-reader img{display:none!important}
+#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;min-height:320px;background:#000;border-radius:16px;overflow:hidden;position:relative}
+#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{width:100%!important;height:100%!important;min-height:320px!important;object-fit:cover!important;display:block!important;opacity:1!important;visibility:visible!important;background:#000!important}
+#scan-reader canvas,#register-isbn-reader canvas,#pinjam-scan-reader canvas{display:block!important}
+#scan-reader img,#register-isbn-reader img,#pinjam-scan-reader img{display:none!important}
+.icon-btn{width:44px;height:44px;min-width:44px;border:none;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.08);font-family:var(--fn)}
+.icon-btn:active{transform:scale(.96)}
+.icon-camera{background:#06b6d4;color:#fff}
+.icon-camera:hover{background:#0891b2}
+.icon-scanner{background:#f8fafc;color:#475569;border:1.5px solid #cbd5e1}
+.icon-scanner:hover{background:#eef2f7}
+.isbn-row{display:grid;grid-template-columns:1fr 44px 44px auto;gap:8px;align-items:center}
+.scan-action-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+#db-isbn{min-width:0;width:100%}
 
 /* KALENDAR */
 .kal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
@@ -308,7 +317,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 /* RESPONSIVE */
 @media(max-width:1100px){.sg{grid-template-columns:repeat(3,1fr)}.pnt-g{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.fr.c2,.fr.c3{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}}
+@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}.isbn-row{grid-template-columns:1fr 42px 42px auto;gap:6px}.icon-btn{width:42px;height:42px;min-width:42px;font-size:17px}.scan-action-row{gap:6px}}
 </style>
 </head>
 <body>
@@ -2317,9 +2326,11 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     isbn.onkeydown=function(e){handleScannerEnter(e,function(value){isbn.value=cleanBarcode(value);if(typeof debGB==='function')debGB();else if(typeof cariGB==='function')cariGB()})};
     const wrap=isbn.parentElement;
     if(wrap){
+      wrap.className='isbn-row';
+      wrap.style.cssText='';
       [...wrap.querySelectorAll('button')].forEach(b=>b.remove());
-      const camera=document.createElement('button');camera.type='button';camera.className='btn b-cy b-sm';camera.textContent='📷 Scan Kamera';camera.onclick=window.openISBNScannerForRegister;
-      const physical=document.createElement('button');physical.type='button';physical.className='btn b-gh b-sm';physical.textContent='🔫 Guna Scanner Fizikal';physical.onclick=window.fokusScannerISBNDaftar;
+      const camera=document.createElement('button');camera.type='button';camera.className='icon-btn icon-camera';camera.textContent='📷';camera.title='Scan guna kamera';camera.onclick=window.openISBNScannerForRegister;
+      const physical=document.createElement('button');physical.type='button';physical.className='icon-btn icon-scanner';physical.textContent='🔫';physical.title='Guna scanner fizikal';physical.onclick=window.fokusScannerISBNDaftar;
       const cari=document.createElement('button');cari.type='button';cari.className='btn b-em b-sm';cari.textContent='🔍 Cari ISBN';cari.onclick=function(){if(typeof cariGB==='function')cariGB()};
       wrap.appendChild(camera);wrap.appendChild(physical);wrap.appendChild(cari);
     }
@@ -2338,6 +2349,28 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     const input=document.getElementById('p-bk');
     if(input){input.focus();input.select()}
     toast('Scan No Perolehan Buku pada input.','ok');
+  };
+  window.fokusScannerAhli=window.fokusScanAhliPinjam;
+  window.fokusScannerBuku=window.fokusScanBukuPinjam;
+  window.openPinjamUserCameraScanner=function(){
+    const wrap=document.getElementById('pinjam-camera-scan-wrap');
+    if(wrap)wrap.style.display='';
+    startBarcodeScanner('pinjam-scan-reader',function(code){
+      const clean=cleanBarcode(code);
+      const input=document.getElementById('p-pg');
+      if(input)input.value=clean;
+      cariAhliPinjamScan(clean||code);
+    });
+  };
+  window.openPinjamBookCameraScanner=function(){
+    const wrap=document.getElementById('pinjam-camera-scan-wrap');
+    if(wrap)wrap.style.display='';
+    startBarcodeScanner('pinjam-scan-reader',function(code){
+      const clean=cleanBarcode(code);
+      const input=document.getElementById('p-bk');
+      if(input)input.value=clean;
+      cariBukuPinjamScan(clean||code);
+    });
   };
   window.cariAhliPinjamScan=function(value){
     const clean=cleanBarcode(value),raw=String(value||'').trim().toLowerCase();
@@ -2358,8 +2391,10 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   };
   function enhancePinjamScan(){
     const pg=document.getElementById('p-pg'),bk=document.getElementById('p-bk');
-    if(pg){pg.placeholder='Scan No Kad Ahli atau taip nama';pg.onkeydown=e=>handleScannerEnter(e,cariAhliPinjamScan);const fg=pg.closest('.fg');if(fg&&!document.getElementById('pinjam-scan-ahli'))fg.insertAdjacentHTML('beforeend',`<div id="pinjam-scan-ahli" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn b-gh b-sm" onclick="fokusScanAhliPinjam()">🔫 Scanner Fizikal Ahli</button><small style="color:var(--mu);font-size:10px;align-self:center">Scan No Kad Ahli atau taip nama.</small></div>`)}
-    if(bk){bk.placeholder='Scan No Perolehan Buku atau taip judul';bk.onkeydown=e=>handleScannerEnter(e,cariBukuPinjamScan);const fg=bk.closest('.fg');if(fg&&!document.getElementById('pinjam-scan-buku'))fg.insertAdjacentHTML('beforeend',`<div id="pinjam-scan-buku" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn b-gh b-sm" onclick="fokusScanBukuPinjam()">🔫 Scanner Fizikal Buku</button><small style="color:var(--mu);font-size:10px;align-self:center">Scan No Perolehan / ISBN / No Panggilan.</small></div>`)}
+    if(pg){pg.placeholder='Scan No Kad Ahli atau taip nama';pg.onkeydown=e=>handleScannerEnter(e,cariAhliPinjamScan);const fg=pg.closest('.fg');if(fg&&!document.getElementById('pinjam-scan-ahli'))fg.insertAdjacentHTML('beforeend',`<div id="pinjam-scan-ahli" class="scan-action-row"><button type="button" class="icon-btn icon-scanner" onclick="fokusScanAhliPinjam()" title="Guna scanner fizikal ahli">🔫</button><button type="button" class="icon-btn icon-camera" onclick="openPinjamUserCameraScanner()" title="Scan ahli guna kamera">📷</button><small style="color:var(--mu);font-size:10px;align-self:center">Scan No Kad Ahli atau taip nama.</small></div>`)}
+    if(bk){bk.placeholder='Scan No Perolehan Buku atau taip judul';bk.onkeydown=e=>handleScannerEnter(e,cariBukuPinjamScan);const fg=bk.closest('.fg');if(fg&&!document.getElementById('pinjam-scan-buku'))fg.insertAdjacentHTML('beforeend',`<div id="pinjam-scan-buku" class="scan-action-row"><button type="button" class="icon-btn icon-scanner" onclick="fokusScanBukuPinjam()" title="Guna scanner fizikal buku">🔫</button><button type="button" class="icon-btn icon-camera" onclick="openPinjamBookCameraScanner()" title="Scan buku guna kamera">📷</button><small style="color:var(--mu);font-size:10px;align-self:center">Scan No Perolehan / ISBN / No Panggilan.</small></div>`)}
+    const card=document.querySelector('#btn-pj')?.closest('.card');
+    if(card&&!document.getElementById('pinjam-camera-scan-wrap'))card.insertAdjacentHTML('beforeend',`<div id="pinjam-camera-scan-wrap" style="display:none;margin-top:10px"><div id="pinjam-scan-reader" style="border-radius:var(--r);overflow:hidden;min-height:320px;background:#000;margin-bottom:8px"></div><button type="button" class="btn b-gh b-sm" onclick="stopBarcodeScanner();document.getElementById('pinjam-camera-scan-wrap').style.display='none'">Henti Kamera</button></div>`);
   }
   const prevPgPinjamScanner=window.pgPinjam;
   window.pgPinjam=function(){prevPgPinjamScanner.apply(this,arguments);enhancePinjamScan()};
