@@ -251,6 +251,7 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 #scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{width:100%!important;height:100%!important;min-height:320px!important;object-fit:cover!important;display:block!important;opacity:1!important;visibility:visible!important;background:#000!important}
 #scan-reader canvas,#register-isbn-reader canvas,#pinjam-scan-reader canvas{display:block!important}
 #scan-reader img,#register-isbn-reader img,#pinjam-scan-reader img{display:none!important}
+.scan-fallback-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .icon-btn{width:44px;height:44px;min-width:44px;border:none;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.08);font-family:var(--fn)}
 .icon-btn:active{transform:scale(.96)}
 .icon-camera{background:#06b6d4;color:#fff}
@@ -317,7 +318,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 /* RESPONSIVE */
 @media(max-width:1100px){.sg{grid-template-columns:repeat(3,1fr)}.pnt-g{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.fr.c2,.fr.c3{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}.isbn-row{grid-template-columns:42px 42px auto;gap:6px}.icon-btn{width:42px;height:42px;min-width:42px;font-size:17px}.scan-action-row{gap:6px}}
+@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}.isbn-row{grid-template-columns:42px 42px auto;gap:6px}.icon-btn{width:42px;height:42px;min-width:42px;font-size:17px}.scan-action-row{gap:6px}.scan-fallback-actions .btn{flex:1;justify-content:center;min-height:40px}}
 </style>
 </head>
 <body>
@@ -1264,8 +1265,6 @@ let _scanQ = null;
 let smartlibScanner = null;
 let smartlibScannerRunning = false;
 let smartlibLastScanCallback = null;
-let smartlibCameraList = [];
-let smartlibCameraIndex = 0;
 let currentBookCoverBase64 = '';
 let currentBookCoverMime = '';
 let currentBookCoverName = '';
@@ -1278,41 +1277,45 @@ function isScannerReady(){return typeof Html5Qrcode!=='undefined'}
 function cleanBarcode(code){return String(code||'').replace(/[^0-9Xx]/g,'').trim()}
 function isISBN(code){const c=cleanBarcode(code);return c.length===10||c.length===13}
 function scannerFormats(){const f=typeof Html5QrcodeSupportedFormats!=='undefined'?Html5QrcodeSupportedFormats:null;return f?[f.EAN_13,f.EAN_8,f.UPC_A,f.UPC_E,f.CODE_128,f.CODE_39,f.QR_CODE].filter(Boolean):undefined}
-function isBackCamera(cam){return /back|rear|environment|belakang/i.test((cam&&cam.label)||'')}
-function preferBackCameras(cameras){const backs=(cameras||[]).filter(isBackCamera);return backs.length?backs:(cameras||[])}
 async function startBarcodeScanner(targetId,onSuccess){
   const st=document.getElementById('scan-st'),btn=document.getElementById('btn-sc');
   try{
     smartlibLastScanCallback=onSuccess;
-    if(!isScannerReady()){toast('Scanner belum dimuatkan. Sila refresh halaman atau semak internet.','er');return}
-    console.log('Html5Qrcode loaded:',typeof Html5Qrcode!=='undefined');
+    if(!isScannerReady()){toast('Scanner belum dimuatkan. Sila refresh halaman.','er');showISBNImageFallback(targetId,onSuccess);return}
     if(location.protocol!=='https:'&&location.protocol!=='file:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){toast('Kamera hanya boleh digunakan melalui HTTPS.','er');return}
     if(smartlibScannerRunning)await stopBarcodeScanner();
     const target=document.getElementById(targetId);
     if(!target){toast('Ruang kamera tidak dijumpai.','er');return}
     target.innerHTML='';
     target.classList.add('scanner-active');
-    const allCameras=await Html5Qrcode.getCameras();
-    console.log('Available cameras:',allCameras);
-    if(!allCameras||!allCameras.length){toast('Kamera tidak dijumpai pada peranti ini.','er');return}
-    smartlibCameraList=preferBackCameras(allCameras);
-    let selectedCamera=smartlibCameraList[0];
-    const backCamera=smartlibCameraList.find(isBackCamera);
-    if(backCamera){selectedCamera=backCamera;smartlibCameraIndex=smartlibCameraList.indexOf(backCamera)}
+    showISBNImageFallback(targetId,onSuccess);
     smartlibScanner=new Html5Qrcode(targetId);
-    const config={fps:10,qrbox:function(w,h){const width=Math.floor(w*.82),height=Math.floor(width*.45);return{width:Math.min(width,360),height:Math.min(height,180)}},aspectRatio:1.777,rememberLastUsedCamera:true};
+    const config={fps:12,qrbox:function(w,h){const width=Math.floor(w*.90);const height=Math.floor(Math.min(h*.28,width*.35));return{width:Math.min(width,520),height:Math.max(height,120)}},aspectRatio:1.777,rememberLastUsedCamera:true,experimentalFeatures:{useBarCodeDetectorIfSupported:true}};
     const formats=scannerFormats();if(formats)config.formatsToSupport=formats;
-    await smartlibScanner.start(selectedCamera.id,config,async function(decodedText){
+    const success=async function(decodedText){
       if(!decodedText)return;
       const code=String(decodedText).trim();
       try{await stopBarcodeScanner()}catch(e){}
       if(typeof onSuccess==='function')onSuccess(code);
-    },function(){});
+    };
+    try{
+      await smartlibScanner.start({facingMode:{exact:'environment'}},config,success,function(){});
+    }catch(e1){
+      try{await smartlibScanner.clear()}catch(e){}
+      smartlibScanner=new Html5Qrcode(targetId);
+      await smartlibScanner.start({facingMode:'environment'},config,success,function(){});
+    }
     smartlibScannerRunning=true;
     if(st)st.style.display='block';
     if(btn)btn.textContent='Mengimbas...';
     setTimeout(()=>fixScannerVideo(targetId),700);
-    setTimeout(()=>checkScannerVideo(targetId),1800);
+    setTimeout(function(){
+      fixScannerVideo(targetId);
+      if(!checkLiveCameraVisible(targetId)){
+        toast('Kamera live tidak dapat dipaparkan. Sila guna Ambil Gambar ISBN.','wa');
+        showISBNImageFallback(targetId,onSuccess);
+      }
+    },2200);
     toast('Scanner kamera aktif.','ok');
   }catch(err){
     console.error('Scanner error:',err);smartlibScannerRunning=false;
@@ -1323,8 +1326,9 @@ async function startBarcodeScanner(targetId,onSuccess){
     if(e.includes('permission')||e.includes('notallowed'))msg='Sila benarkan akses kamera pada browser.';
     else if(e.includes('notfound'))msg='Kamera tidak dijumpai pada peranti ini.';
     else if(e.includes('notreadable'))msg='Kamera sedang digunakan oleh aplikasi lain.';
-    else if(e.includes('overconstrained'))msg='Kamera belakang tidak dapat digunakan. Cuba tukar kamera.';
-    toast(msg,'er');
+    else if(e.includes('overconstrained'))msg='Kamera belakang tidak dapat dibuka. Sila guna Ambil Gambar ISBN.';
+    toast(msg,'wa');
+    showISBNImageFallback(targetId,onSuccess);
   }
 }
 async function stopBarcodeScanner(){
@@ -1342,34 +1346,49 @@ function fixScannerVideo(targetId){
   const dashboard=target.querySelector('[id$="__dashboard_section"]');if(dashboard)dashboard.style.display='none';
   const scanRegion=target.querySelector('[id$="__scan_region"]');if(scanRegion)scanRegion.style.background='transparent';
 }
-function checkScannerVideo(targetId){
+function checkLiveCameraVisible(targetId){
   const target=document.getElementById(targetId);if(!target)return;
   const video=target.querySelector('video');
-  if(!video){toast('Video kamera tidak dapat dipaparkan. Cuba tekan Tukar Kamera atau refresh halaman.','wa');return}
-  if(video.videoWidth===0||video.videoHeight===0)toast('Kamera aktif tetapi video belum keluar. Cuba tekan Tukar Kamera.','wa');
+  if(!video)return false;
+  if(video.videoWidth===0||video.videoHeight===0)return false;
+  return true;
 }
-async function switchScannerCamera(targetId,onSuccess){
+function showISBNImageFallback(targetId,onSuccess){
+  const target=document.getElementById(targetId);if(!target)return;
+  if(targetId!=='register-isbn-reader'&&targetId!=='scan-reader')return;
+  if(document.getElementById(targetId+'-fallback'))return;
+  target.insertAdjacentHTML('afterend',`<div class="scan-fallback-actions" id="${targetId}-fallback"><input type="file" id="${targetId}-capture-file" accept="image/*" capture="environment" style="display:none" onchange="scanISBNFromImageFile(this.files[0])"><input type="file" id="${targetId}-upload-file" accept="image/*" style="display:none" onchange="scanISBNFromImageFile(this.files[0])"><button type="button" class="btn b-cy b-sm" onclick="openISBNFallbackFile('${targetId}-capture-file')">📸 Ambil Gambar ISBN</button><button type="button" class="btn b-gh b-sm" onclick="openISBNFallbackFile('${targetId}-upload-file')">🖼️ Upload Gambar ISBN</button></div>`);
+}
+async function openISBNFallbackFile(inputId){
+  await stopBarcodeScanner();
+  const input=document.getElementById(inputId);
+  if(input){input.value='';input.click()}
+}
+async function scanISBNFromImageFile(file){
   try{
-    if(!isScannerReady()){toast('Scanner belum dimuatkan.','er');return}
-    smartlibLastScanCallback=onSuccess||smartlibLastScanCallback;
-    smartlibCameraList=preferBackCameras(await Html5Qrcode.getCameras());
-    if(!smartlibCameraList||smartlibCameraList.length<2){toast('Tiada kamera lain untuk ditukar.','wa');return}
-    smartlibCameraIndex=(smartlibCameraIndex+1)%smartlibCameraList.length;
-    await stopBarcodeScanner();
-    const cameraId=smartlibCameraList[smartlibCameraIndex].id;
-    const target=document.getElementById(targetId);if(target)target.innerHTML='';
-    smartlibScanner=new Html5Qrcode(targetId);
-    const config={fps:10,qrbox:{width:280,height:130},aspectRatio:1.777};
-    const formats=scannerFormats();if(formats)config.formatsToSupport=formats;
-    await smartlibScanner.start(cameraId,config,async function(decodedText){
-      const code=String(decodedText||'').trim();if(!code)return;
-      await stopBarcodeScanner();
-      if(typeof smartlibLastScanCallback==='function')smartlibLastScanCallback(code);
-    },function(){});
-    smartlibScannerRunning=true;
-    setTimeout(()=>fixScannerVideo(targetId),700);
-    toast('Kamera ditukar.','ok');
-  }catch(err){console.error(err);toast('Gagal tukar kamera.','er')}
+    if(!file)return;
+    if(!isScannerReady()){toast('Scanner gambar belum dimuatkan. Sila refresh halaman.','er');return}
+    toast('Membaca barcode daripada gambar...','wa');
+    const tempId='smartlib-image-scan-temp';
+    let temp=document.getElementById(tempId);
+    if(!temp){temp=document.createElement('div');temp.id=tempId;temp.style.position='fixed';temp.style.left='-9999px';temp.style.top='-9999px';temp.style.width='1px';temp.style.height='1px';document.body.appendChild(temp)}
+    const imageScanner=new Html5Qrcode(tempId);
+    const decodedText=await imageScanner.scanFile(file,true);
+    try{await imageScanner.clear()}catch(e){}
+    const clean=cleanBarcode(decodedText);
+    if(!clean){toast('Barcode tidak dapat dibaca daripada gambar.','er');return}
+    toast('ISBN berjaya dibaca: '+clean,'ok');
+    const isbnInput=document.getElementById('db-isbn');
+    if(isbnInput){
+      isbnInput.value=clean;
+      if(typeof closeISBNScannerForRegister==='function')await closeISBNScannerForRegister();
+      if(typeof debGB==='function')debGB();else if(typeof cariGB==='function')cariGB();
+      return;
+    }
+    const scanInput=document.getElementById('scan-manual-input');
+    if(scanInput)scanInput.value=clean;
+    if(typeof prosesISBNAtauBarcode==='function')prosesISBNAtauBarcode(clean);
+  }catch(err){console.error(err);toast('Gagal baca barcode. Ambil gambar lebih dekat, jelas dan cukup cahaya.','er')}
 }
 function pgKad(){ return pgKadAhli(); }
 function bukaTVMode(){ return pgTV(); }
@@ -2125,7 +2144,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 (function(){
   const oldPgScan=window.pgScan;
   window.pgScan=function(){
-    document.getElementById('content').innerHTML=`<div class="g2"><div class="card"><div class="ct">Scan Barcode / ISBN</div><div class="al a-in">Arahkan kamera ke barcode ISBN buku.</div><div id="scan-reader" style="border-radius:var(--r);overflow:hidden;min-height:320px;background:#000;margin-bottom:10px"></div><div id="scan-st" style="display:none;text-align:center;padding:5px;font-size:12px;color:var(--em);font-weight:600">Mengimbas...</div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn b-em b-sm" onclick="mulaScanISBN()" id="btn-sc">Mula Scan</button><button class="btn b-gh b-sm" onclick="switchScannerCamera('scan-reader',function(code){const clean=cleanBarcode(code);const input=document.getElementById('scan-manual-input');if(input)input.value=clean;prosesISBNAtauBarcode(clean||code)})">Tukar Kamera Belakang</button><button class="btn b-gh b-sm" onclick="hentiScanISBN()">Henti</button></div><div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:12px"><div class="ct" style="margin-bottom:7px">Input Manual</div><div style="display:flex;gap:7px"><input type="text" id="scan-manual-input" placeholder="ISBN / No. Panggilan..." style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--inp);color:var(--tx)" onkeydown="if(event.key==='Enter')cariScan()"><button class="btn b-em" onclick="cariScan()">Cari</button></div></div></div><div class="card"><div class="ct">Hasil</div><div id="scan-result" style="color:var(--mu);font-size:12px;text-align:center;padding:18px"><div style="font-size:28px;margin-bottom:7px">Buku</div>Imbas barcode atau taip ISBN...</div></div></div>`;
+    document.getElementById('content').innerHTML=`<div class="g2"><div class="card"><div class="ct">Scan Barcode / ISBN</div><div class="al a-in">Arahkan kamera ke barcode ISBN buku.</div><div id="scan-reader" style="border-radius:var(--r);overflow:hidden;min-height:320px;background:#000;margin-bottom:10px"></div><div id="scan-st" style="display:none;text-align:center;padding:5px;font-size:12px;color:var(--em);font-weight:600">Mengimbas...</div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn b-em b-sm" onclick="mulaScanISBN()" id="btn-sc">Mula Scan</button><button class="btn b-gh b-sm" onclick="hentiScanISBN()">Henti</button></div><div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:12px"><div class="ct" style="margin-bottom:7px">Input Manual</div><div style="display:flex;gap:7px"><input type="text" id="scan-manual-input" placeholder="ISBN / No. Panggilan..." style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--inp);color:var(--tx)" onkeydown="if(event.key==='Enter')cariScan()"><button class="btn b-em" onclick="cariScan()">Cari</button></div></div></div><div class="card"><div class="ct">Hasil</div><div id="scan-result" style="color:var(--mu);font-size:12px;text-align:center;padding:18px"><div style="font-size:28px;margin-bottom:7px">Buku</div>Imbas barcode atau taip ISBN...</div></div></div>`;
   };
 
   window.mulaScanISBN=function(){startBarcodeScanner('scan-reader',function(code){const clean=cleanBarcode(code);const input=document.getElementById('scan-manual-input');if(input)input.value=clean;prosesISBNAtauBarcode(clean||code)})};
@@ -2202,7 +2221,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     }
     const cat=document.getElementById('db-cat')?.closest('.fg');
     if(cat&&!document.getElementById('db-cover-box'))cat.insertAdjacentHTML('afterend',`<div class="card" style="margin-top:12px;margin-bottom:12px"><div class="ct">Cover Buku</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div id="db-cover-box" class="book-cover-upload-box"><img id="db-cover-preview" src="" alt="Cover Buku" style="display:none"><div id="db-cover-empty">Cover belum dipilih</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn b-gh b-sm" onclick="document.getElementById('db-cover-file').click()">Upload</button><button type="button" class="btn b-cy b-sm" onclick="document.getElementById('db-cover-camera').click()">Ambil Gambar</button><button type="button" class="btn b-re b-sm" onclick="clearBookCover()">Buang</button></div></div><input type="file" id="db-cover-file" accept="image/*" style="display:none" onchange="handleBookCoverFile(this.files[0])"><input type="file" id="db-cover-camera" accept="image/*" capture="environment" style="display:none" onchange="handleBookCoverFile(this.files[0])"><small id="db-cover-status">Cover belum dipilih.</small></div>`);
-    if(!document.getElementById('m-scan-isbn'))document.getElementById('content').insertAdjacentHTML('beforeend',`<div class="mbg" id="m-scan-isbn"><div class="modal"><div class="m-hdr"><h3>Scan ISBN Buku</h3><button class="m-x" onclick="closeISBNScannerForRegister()">Tutup</button></div><div class="al a-in">Arahkan kamera ke barcode ISBN pada belakang buku.</div><div id="register-isbn-reader" style="width:100%;min-height:320px;background:#000;border-radius:14px;overflow:hidden"></div><div class="m-ft"><button class="btn b-gh" onclick="switchScannerCamera('register-isbn-reader',function(code){const clean=cleanBarcode(code);const input=document.getElementById('db-isbn');if(input)input.value=clean;closeISBNScannerForRegister();if(typeof debGB==='function')debGB();else if(typeof cariGB==='function')cariGB()})">Tukar Kamera Belakang</button><button class="btn b-gh" onclick="closeISBNScannerForRegister()">Henti</button></div></div></div>`);
+    if(!document.getElementById('m-scan-isbn'))document.getElementById('content').insertAdjacentHTML('beforeend',`<div class="mbg" id="m-scan-isbn"><div class="modal"><div class="m-hdr"><h3>Scan ISBN Buku</h3><button class="m-x" onclick="closeISBNScannerForRegister()">Tutup</button></div><div class="al a-in">Arahkan kamera belakang ke barcode ISBN pada belakang buku. Jika kamera gelap, gunakan Ambil Gambar ISBN.</div><div id="register-isbn-reader" style="width:100%;min-height:320px;background:#000;border-radius:14px;overflow:hidden"></div><div class="scan-fallback-actions" id="register-isbn-reader-fallback"><input type="file" id="register-isbn-reader-capture-file" accept="image/*" capture="environment" style="display:none" onchange="scanISBNFromImageFile(this.files[0])"><input type="file" id="register-isbn-reader-upload-file" accept="image/*" style="display:none" onchange="scanISBNFromImageFile(this.files[0])"><button type="button" class="btn b-cy b-sm" onclick="openISBNFallbackFile('register-isbn-reader-capture-file')">📸 Ambil Gambar ISBN</button><button type="button" class="btn b-gh b-sm" onclick="openISBNFallbackFile('register-isbn-reader-upload-file')">🖼️ Upload Gambar ISBN</button></div><div class="m-ft"><button class="btn b-gh" onclick="closeISBNScannerForRegister()">Henti</button></div></div></div>`);
     if(currentBookCoverUrl)previewBookCover(currentBookCoverUrl);
   }
 
@@ -2308,7 +2327,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   };
 
   window.pgScan=function(){
-    document.getElementById('content').innerHTML=`<div class="g2"><div class="card"><div class="ct">Scan Barcode / ISBN</div><div class="al a-in">Pilih kaedah imbasan. Kamera hanya dibuka apabila butang Scan Kamera ditekan.</div><div class="card" style="padding:10px;margin-bottom:10px;background:var(--bg2)"><div class="ct" style="margin-bottom:8px">Pilih Kaedah Imbasan</div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn b-em b-sm" onclick="pilihModeKameraScan()">📷 Scan Kamera</button><button class="btn b-gh b-sm" onclick="pilihModeScannerFizikal()">🔫 Guna Scanner Fizikal</button><button class="btn b-cy b-sm" onclick="pilihModeManual()">⌨️ Input Manual</button></div><div style="font-size:10px;color:var(--mu);line-height:1.6;margin-top:7px">📷 Kamera: gunakan kamera phone/tablet untuk scan ISBN.<br>🔫 Scanner fizikal: scanner USB/Bluetooth berfungsi seperti keyboard. Klik input dahulu, kemudian scan barcode.</div></div><div id="scan-reader-wrap" style="display:none"><div id="scan-reader" style="border-radius:var(--r);overflow:hidden;min-height:320px;background:#000;margin-bottom:10px"></div><div id="scan-st" style="display:none;text-align:center;padding:5px;font-size:12px;color:var(--em);font-weight:600">Mengimbas...</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px"><button class="btn b-gh b-sm" onclick="switchScannerCamera('scan-reader',function(code){const clean=cleanBarcode(code);const input=document.getElementById('scan-manual-input');if(input)input.value=clean;prosesISBNAtauBarcode(clean||code)})">📷 Tukar Kamera Belakang</button><button class="btn b-gh b-sm" onclick="hentiScanISBN()">Henti</button></div></div><div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:12px"><div class="ct" style="margin-bottom:7px">Input Manual / Scanner Fizikal</div><div style="display:flex;gap:7px"><input type="text" id="scan-manual-input" placeholder="Scan / taip ISBN atau No. Perolehan" style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--inp);color:var(--tx)" onkeydown="handleScannerEnter(event,prosesISBNAtauBarcode)"><button class="btn b-em" onclick="cariScan()">Cari</button></div></div></div><div class="card"><div class="ct">Hasil</div><div id="scan-result" style="color:var(--mu);font-size:12px;text-align:center;padding:18px"><div style="font-size:28px;margin-bottom:7px">Buku</div>Pilih kaedah scan atau taip ISBN...</div></div></div>`;
+    document.getElementById('content').innerHTML=`<div class="g2"><div class="card"><div class="ct">Scan Barcode / ISBN</div><div class="al a-in">Pilih kaedah imbasan. Kamera hanya dibuka apabila butang Scan Kamera ditekan.</div><div class="card" style="padding:10px;margin-bottom:10px;background:var(--bg2)"><div class="ct" style="margin-bottom:8px">Pilih Kaedah Imbasan</div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn b-em b-sm" onclick="pilihModeKameraScan()">📷 Scan Kamera</button><button class="btn b-gh b-sm" onclick="pilihModeScannerFizikal()">🔫 Guna Scanner Fizikal</button><button class="btn b-cy b-sm" onclick="pilihModeManual()">⌨️ Input Manual</button></div><div style="font-size:10px;color:var(--mu);line-height:1.6;margin-top:7px">📷 Kamera: gunakan kamera phone/tablet untuk scan ISBN.<br>🔫 Scanner fizikal: scanner USB/Bluetooth berfungsi seperti keyboard. Klik input dahulu, kemudian scan barcode.</div></div><div id="scan-reader-wrap" style="display:none"><div id="scan-reader" style="border-radius:var(--r);overflow:hidden;min-height:320px;background:#000;margin-bottom:10px"></div><div id="scan-st" style="display:none;text-align:center;padding:5px;font-size:12px;color:var(--em);font-weight:600">Mengimbas...</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px"><button class="btn b-gh b-sm" onclick="hentiScanISBN()">Henti</button></div></div><div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:12px"><div class="ct" style="margin-bottom:7px">Input Manual / Scanner Fizikal</div><div style="display:flex;gap:7px"><input type="text" id="scan-manual-input" placeholder="Scan / taip ISBN atau No. Perolehan" style="flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;background:var(--inp);color:var(--tx)" onkeydown="handleScannerEnter(event,prosesISBNAtauBarcode)"><button class="btn b-em" onclick="cariScan()">Cari</button></div></div></div><div class="card"><div class="ct">Hasil</div><div id="scan-result" style="color:var(--mu);font-size:12px;text-align:center;padding:18px"><div style="font-size:28px;margin-bottom:7px">Buku</div>Pilih kaedah scan atau taip ISBN...</div></div></div>`;
   };
   window.mulaScanISBN=window.pilihModeKameraScan;
 
