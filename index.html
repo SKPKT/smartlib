@@ -1080,8 +1080,9 @@ function pgLabel(){
         <div class="fr c3">
           <div class="fg"><label>Kolum per A4</label><input id="lbl-cols" type="number" min="1" max="10" value="4"></div>
           <div class="fg"><label>Margin A4 (mm)</label><input id="lbl-mrg" type="number" min="0" max="30" value="8"></div>
-          <div class="fg"><label>Gap antara label (mm)</label><input id="lbl-gap" type="number" min="0" max="10" value="3"></div>
+          <div class="fg"><label>Gap Kolum Label (mm)</label><input id="lbl-gap" type="number" min="0" max="30" value="3"></div>
         </div>
+        <div class="fg"><label>Jarak Baris Label (mm)</label><input id="lbl-rowgap" type="number" min="0" max="50" value="6"></div>
 
         <div class="fr c2">
           <div class="fg"><label>Saiz Fon Nama Sekolah (pt)</label><input id="lbl-fsch" type="number" min="4" max="12" value="5.5" step="0.5" oninput="updPvLbl()"></div>
@@ -1204,6 +1205,7 @@ function cetakLabelA4(){
   const cols=parseInt(document.getElementById('lbl-cols')?.value||4);
   const mrg=parseInt(document.getElementById('lbl-mrg')?.value||8);
   const gap=parseInt(document.getElementById('lbl-gap')?.value||3);
+  const rowGap=parseInt(document.getElementById('lbl-rowgap')?.value||6);
   const toPrint=(D.buku||[]).filter(b=>sel.includes(String(b.id)));
   const safeCols=Math.max(1,Math.min(cols,6));
   const contentWidthMm=210-(mrg*2)-(gap*(safeCols-1));
@@ -1220,8 +1222,8 @@ function cetakLabelA4(){
   }
 
   let bodyHTML='';
-  const gridStyle=`display:grid;grid-template-columns:repeat(${cols},${w}cm);gap:${gap}mm;background:#fff`;
-  const barcodeGridStyle=`display:grid;grid-template-columns:repeat(${safeCols},${barcodeWcm}cm);gap:${gap}mm;background:#fff;align-items:start`;
+  const gridStyle=`display:grid;grid-template-columns:repeat(${cols},${w}cm);column-gap:${gap}mm;row-gap:${rowGap}mm;background:#fff`;
+  const barcodeGridStyle=`display:grid;grid-template-columns:repeat(${safeCols},${barcodeWcm}cm);column-gap:${gap}mm;row-gap:${rowGap}mm;background:#fff;align-items:start`;
 
   if(j==='tulang'||j==='kedua')bodyHTML+=`<div style="${gridStyle}">${toPrint.map(genTulang).join('')}</div>`;
   if(j==='barcode'||j==='kedua')bodyHTML+=`<div style="${barcodeGridStyle};${j==='kedua'?'page-break-before:always':''}">${toPrint.map(genBarcode).join('')}</div>`;
