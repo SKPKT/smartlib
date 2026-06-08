@@ -1083,7 +1083,10 @@ function pgLabel(){
           <div class="fg"><label>Gap antara label (mm)</label><input id="lbl-gap" type="number" min="0" max="10" value="3"></div>
         </div>
 
-        <div class="fg"><label>Saiz Fon Nama Sekolah (pt)</label><input id="lbl-fsch" type="number" min="4" max="9" value="5.5" step="0.5" oninput="updPvLbl()"></div>
+        <div class="fr c2">
+          <div class="fg"><label>Saiz Fon Nama Sekolah (pt)</label><input id="lbl-fsch" type="number" min="4" max="12" value="5.5" step="0.5" oninput="updPvLbl()"></div>
+          <div class="fg"><label>Saiz Fon No. Panggilan Barcode (pt)</label><input id="lbl-fcall" type="number" min="7" max="18" value="11" step="0.5" oninput="updPvLbl()"></div>
+        </div>
 
         <button class="btn b-em" onclick="cetakLabelA4()">🖨️ Cetak Label Terpilih</button>
       </div>
@@ -1105,9 +1108,10 @@ function pgLabel(){
           <div style="text-align:center">
             <div style="font-size:9.5px;color:var(--mu);margin-bottom:5px">Label Barcode</div>
             <div style="width:5.5cm;height:3.8cm;border:2px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;background:#fff;gap:.7mm">
-              <div style="font-size:5.5pt;font-weight:700;text-align:center;color:#000;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${AP.sch||AP.nm||'PSS'}</div>
+              <div id="lpv-sch-bc" style="font-size:5.5pt;font-weight:700;text-align:center;color:#000;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${AP.sch||AP.nm||'PSS'}</div>
               <svg id="bc-pv" style="max-width:100%;height:40px"></svg>
               <div style="font-size:7.5pt;font-weight:700;color:#000;font-family:'Courier New',monospace">No. 001</div>
+              <div id="lpv-call-bc" style="font-size:11pt;font-weight:900;color:#000;font-family:Arial,sans-serif;line-height:1.05;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.2px">590 HAS</div>
             </div>
           </div>
         </div>
@@ -1175,12 +1179,15 @@ function updPvLbl(){
   const w=parseFloat(document.getElementById('lbl-w')?.value||2.5),h=parseFloat(document.getElementById('lbl-h')?.value||3.8);
   const f1=document.getElementById('lbl-f1')?.value||14,f2=document.getElementById('lbl-f2')?.value||12;
   const fsch=document.getElementById('lbl-fsch')?.value||5.5;
+  const fcall=document.getElementById('lbl-fcall')?.value||11;
   const sch=document.getElementById('lbl-sch')?.value||'PSS';
   const box=document.getElementById('lbl-pv-t');
   if(box){box.style.width=w+'cm';box.style.minHeight=h+'cm'}
-  const l1=document.getElementById('lpv-l1b'),l2=document.getElementById('lpv-l2b'),ls=document.getElementById('lpv-sch');
+  const l1=document.getElementById('lpv-l1b'),l2=document.getElementById('lpv-l2b'),ls=document.getElementById('lpv-sch'),lsb=document.getElementById('lpv-sch-bc'),lcb=document.getElementById('lpv-call-bc');
   if(l1)l1.style.fontSize=f1+'pt';if(l2)l2.style.fontSize=f2+'pt';
   if(ls){ls.style.fontSize=fsch+'pt';ls.textContent=sch}
+  if(lsb){lsb.style.fontSize=fsch+'pt';lsb.textContent=sch}
+  if(lcb)lcb.style.fontSize=fcall+'pt';
 }
 
 function cetakLabelA4(){
@@ -1193,6 +1200,7 @@ function cetakLabelA4(){
   const f1=parseInt(document.getElementById('lbl-f1')?.value||14);
   const f2=parseInt(document.getElementById('lbl-f2')?.value||12);
   const fsch=parseFloat(document.getElementById('lbl-fsch')?.value||5.5);
+  const fcall=parseFloat(document.getElementById('lbl-fcall')?.value||11);
   const cols=parseInt(document.getElementById('lbl-cols')?.value||4);
   const mrg=parseInt(document.getElementById('lbl-mrg')?.value||8);
   const gap=parseInt(document.getElementById('lbl-gap')?.value||3);
@@ -1208,7 +1216,7 @@ function cetakLabelA4(){
 
   function genBarcode(b){
     const np=String(b.no_perolehan||'0').padStart(10,'0');
-    return`<div class="sl-barcode-label" style="width:100%;min-width:0;min-height:${h}cm;border:1.5px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5mm;background:#fff;break-inside:avoid;box-sizing:border-box;gap:.5mm;overflow:hidden"><div style="font-size:${fsch}pt;font-weight:700;text-align:center;color:#000;font-family:'Courier New',monospace;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sch.substring(0,20)}</div><svg data-bc="${np}" style="width:100%;max-width:42mm;height:28px;display:block"></svg><div style="font-size:7.5pt;font-weight:700;color:#000;font-family:'Courier New',monospace;line-height:1">${b.no_perolehan||'–'}</div>${b.no_panggilan?`<div style="font-size:6pt;color:#333;font-family:'Courier New',monospace;line-height:1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.no_panggilan}</div>`:''}</div>`;
+    return`<div class="sl-barcode-label" style="width:100%;min-width:0;min-height:${h}cm;border:1.5px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5mm;background:#fff;break-inside:avoid;box-sizing:border-box;gap:.7mm;overflow:hidden"><div style="font-size:${fsch}pt;font-weight:700;text-align:center;color:#000;font-family:'Courier New',monospace;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sch.substring(0,28)}</div><svg data-bc="${np}" style="width:100%;max-width:42mm;height:28px;display:block"></svg><div style="font-size:7.5pt;font-weight:700;color:#000;font-family:'Courier New',monospace;line-height:1">${b.no_perolehan||'–'}</div>${b.no_panggilan?`<div class="sl-callno" style="font-size:${fcall}pt;font-weight:900;color:#000;font-family:Arial,sans-serif;line-height:1.05;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.2px">${b.no_panggilan}</div>`:''}</div>`;
   }
 
   let bodyHTML='';
@@ -1218,7 +1226,7 @@ function cetakLabelA4(){
   if(j==='tulang'||j==='kedua')bodyHTML+=`<div style="${gridStyle}">${toPrint.map(genTulang).join('')}</div>`;
   if(j==='barcode'||j==='kedua')bodyHTML+=`<div style="${barcodeGridStyle};${j==='kedua'?'page-break-before:always':''}">${toPrint.map(genBarcode).join('')}</div>`;
 
-  bukaPW('Label Cetak — SMARTLIB ('+toPrint.length+' label)',bodyHTML,`@page{margin:${mrg}mm;size:A4}.pc{padding:42px 0 0 0!important}@media print{.pc{padding:0!important}}.sl-barcode-label svg{max-width:100%!important}`);
+  bukaPW('Label Cetak — SMARTLIB ('+toPrint.length+' label)',bodyHTML,`@page{margin:${mrg}mm;size:A4}.pc{padding:42px 0 0 0!important}@media print{.pc{padding:0!important}.sl-callno{-webkit-print-color-adjust:exact;print-color-adjust:exact;text-shadow:0 0 0 #000}}.sl-barcode-label svg{max-width:100%!important}`);
   toast('🖨️ Tetingkap cetak dibuka — '+toPrint.length+' label siap!','ok');
 }
 </script>
