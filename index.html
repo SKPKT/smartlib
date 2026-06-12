@@ -851,6 +851,9 @@ async function padamB(id){const b=(D.buku||[]).find(x=>String(x.id)===String(id)
 let _impR=[];
 function prevPaste(){const lines=document.getElementById('paste-b').value.trim().split('\n').filter(l=>l.trim());if(lines.length<2)return;const hdrs=lines[0].split('\t').map(h=>h.trim().toLowerCase().replace(/ /g,'_'));_impR=lines.slice(1).map(l=>{const c=l.split('\t'),o={};hdrs.forEach((h,i)=>o[h]=c[i]||'');return{no_perolehan:o.no_perolehan||'',no_panggilan:o.no_panggilan||'',pengarang:o.pengarang||'',judul:o.judul||'',penerbit:o.penerbit||'',tahun:o.tahun||'',tarikh_perolehan:o.tarikh_perolehan||'',no_invois:o.no_invois||'',punca:o.punca||'',isbn:o.isbn||'',harga_rm:parseFloat(o.harga_rm)||0,harga_sen:parseFloat(o.harga_sen)||0,muka_surat:o.muka_surat||'',catatan:o.catatan||''}}).filter(r=>r.judul||r.no_perolehan);const d=document.getElementById('imp-pv'),btn=document.getElementById('btn-imp');if(d)d.innerHTML=_impR.length?`<div class="al a-ok">✅ ${_impR.length} rekod dibaca.</div>`:'';if(btn)btn.style.display=_impR.length?'':'none'}
 async function saveImp(){if(!_impR.length){toast('Tiada data','er');return}const btn=document.getElementById('btn-imp');btn.textContent='⏳ Mengimport...';try{let id=nxId(D.buku);const rows=_impR.map(r=>({...r,id:id++}));const res=await api({action:'import',sheet:'buku',rows});if(!res?.ok)throw new Error(res?.error);toast('✅ '+rows.length+' bahan diimport!','ok');closeM('m-imp');_impR=[];await muatSemua(true);pgPerolehan()}catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='✅ Import ke Sheets'}}
+function nextNoPerolehanLocal(){const nums=(D.buku||[]).map(b=>parseInt(String(b.no_perolehan||'').replace(/[^\d]/g,''),10)).filter(n=>!isNaN(n)&&n>0);return nums.length?Math.max(...nums)+1:1}
+async function nextNoPerolehanAuto(){try{const res=await api({action:'next_no_perolehan'});const n=parseInt(res?.data?.next_no_perolehan,10);if(res?.ok&&!isNaN(n)&&n>0)return n}catch(e){}return nextNoPerolehanLocal()}
+async function isiNoPerolehanAuto(){const el=document.getElementById('db-nop');if(!el)return;el.value=nextNoPerolehanLocal();const n=await nextNoPerolehanAuto();if(document.getElementById('db-nop')===el)el.value=n}
 
 // ═══════════════════════════════════════════════
 // DAFTAR BUKU BARU — Fiksyen/Bukan Fiksyen + Auto NP + Label Preview
@@ -954,6 +957,7 @@ function pgDaftar(){
       </div>
     </div>
   </div>`;
+  setTimeout(isiNoPerolehanAuto,0);
 }
 
 function togKat(v){
@@ -1000,14 +1004,15 @@ async function cariGB(){
   }catch(e){if(st)st.textContent='⚠️ Gagal. Isi manual.'}
 }
 async function simpanBB(){
-  const nop=document.getElementById('db-nop').value.trim(),npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
+  let nop=document.getElementById('db-nop').value.trim();const npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
+  nop=String(await nextNoPerolehanAuto());const nopEl=document.getElementById('db-nop');if(nopEl)nopEl.value=nop;
   if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}
   const btn=document.getElementById('btn-db');btn.textContent='⏳ Menyimpan...';btn.disabled=true;
   const data={id:nxId(D.buku),no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim()};
-  try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);D.buku.push(data);toast('✅ Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok">✅ <strong>${jdl}</strong> (No.${nop}) disimpan.</div>`;resetDB()}
+  try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);if(res.data?.no_perolehan){data.no_perolehan=String(res.data.no_perolehan)}D.buku.push(data);toast('✅ Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok">✅ <strong>${jdl}</strong> (No.${data.no_perolehan||nop}) disimpan.</div>`;resetDB()}
   catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='💾 Simpan ke Sheets';btn.disabled=false}
 }
-function resetDB(){['db-nop','db-isbn','db-jdl','db-pgr','db-pnb','db-thn','db-inv','db-muka','db-cat'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});const h=document.getElementById('db-hrm');if(h)h.value=0;const t=document.getElementById('db-tper');if(t)t.value=today();const d=document.getElementById('db-ddc');if(d)d.value='';const n=document.getElementById('db-npn');if(n)n.value='';updLbPv()}
+function resetDB(){['db-isbn','db-jdl','db-pgr','db-pnb','db-thn','db-inv','db-muka','db-cat'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});const h=document.getElementById('db-hrm');if(h)h.value=0;const t=document.getElementById('db-tper');if(t)t.value=today();const d=document.getElementById('db-ddc');if(d)d.value='';const n=document.getElementById('db-npn');if(n)n.value='';updLbPv();setTimeout(isiNoPerolehanAuto,0)}
 </script>
 
 <script>
@@ -2267,7 +2272,8 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   };
 
   window.simpanBB=async function(){
-    const nop=document.getElementById('db-nop').value.trim(),npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
+    let nop=document.getElementById('db-nop').value.trim();const npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
+    nop=String(await nextNoPerolehanAuto());const nopEl=document.getElementById('db-nop');if(nopEl)nopEl.value=nop;
     if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}
     const btn=document.getElementById('btn-db');btn.textContent='Menyimpan...';btn.disabled=true;
     let finalCoverUrl=currentBookCoverUrl||'',finalCoverFileId=currentBookCoverFileId||'';
@@ -2278,7 +2284,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
       }catch(e){toast('Cover gagal diupload. Buku tetap akan disimpan tanpa cover.','wa')}
     }
     const data={id:nxId(D.buku),no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim(),cover_url:finalCoverUrl,cover_file_id:finalCoverFileId};
-    try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);D.buku.push(data);toast('Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok"><strong>${jdl}</strong> (No.${nop}) disimpan.</div>`;resetDB();clearBookCover()}
+    try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);if(res.data?.no_perolehan){data.no_perolehan=String(res.data.no_perolehan)}D.buku.push(data);toast('Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok"><strong>${jdl}</strong> (No.${data.no_perolehan||nop}) disimpan.</div>`;resetDB();clearBookCover()}
     catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='Simpan ke Sheets';btn.disabled=false}
   };
 
