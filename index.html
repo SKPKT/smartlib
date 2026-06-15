@@ -484,7 +484,36 @@ const ini=nm=>(nm||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperC
 const avC=['#10b981','#06b6d4','#f59e0b','#ef4444','#8b5cf6','#ec4899','#3b82f6','#f97316'];
 const avCol=nm=>avC[(nm||'A').charCodeAt(0)%avC.length];
 const killCh=()=>{Object.values(_ch).forEach(c=>{try{c.destroy()}catch{}});_ch={}};
-const genNP=(kat,ddc,bhs,pgr,jdl)=>{const nm=(pgr||jdl).replace(/^(HJ\.?|DR\.?|PROF\.?|PN\.?|EN\.?)\s+/i,'').trim().substring(0,3).toUpperCase()||'XXX';return kat==='fiksyen'?((FIK[bhs]||'FM')+'/'+nm):((ddc||'000')+' '+nm)};
+function kodPenulisAkhir(penulis){
+  const nama=String(penulis||'').trim().replace(/\s+/g,' ');
+  if(!nama)return'XXX';
+  const parts=nama.split(' ');
+  const last=parts[parts.length-1].replace(/[^A-Za-z]/g,'');
+  return(last||'XXX').substring(0,3).toUpperCase();
+}
+function janaNoPanggilanAuto(kategori,penulis,tahun,jilid){
+  const kat=String(kategori||'').trim().toUpperCase();
+  const kod=kodPenulisAkhir(penulis);
+  const jil=String(jilid||'').trim();
+  let np=[kat,kod].filter(Boolean).join(' ');
+  const thn=String(tahun||'').trim();
+  if(thn)np+=' '+thn;
+  if(jil)np+=' v.'+jil;
+  return np;
+}
+const genNP=(kat,ddc,bhs,pgr,jdl)=>janaNoPanggilanAuto(kat==='fiksyen'?(FIK[bhs]||'FM'):(ddc||'000'),pgr||jdl,'','');
+function perluTahunNoPanggilan(judul,tahun,jilid,idAbaikan){
+  const j=String(judul||'').trim().toLowerCase().replace(/\s+/g,' ');
+  const thn=String(tahun||'').trim();
+  if(!j||!thn)return false;
+  if(String(jilid||'').trim())return true;
+  return (D.buku||[]).some(b=>{
+    if(idAbaikan&&String(b.id)===String(idAbaikan))return false;
+    const bj=String(b.judul||'').trim().toLowerCase().replace(/\s+/g,' ');
+    const bt=String(b.tahun||'').trim();
+    return bj===j&&bt&&bt!==thn;
+  });
+}
 
 // ═══════════════════════════════════════════════
 // API — SESSION TOKEN AWARE
@@ -833,27 +862,24 @@ function pgPerolehan(){_bFilt=[...D.buku];_bPg=1;sortB();document.getElementById
   <div class="pgb" id="b-pgb"></div>
 </div></div>
 <div class="mbg" id="m-edit-b"><div class="modal"><div class="m-hdr"><h3 id="meb-ttl">Edit Rekod</h3><button class="m-x" onclick="closeM('m-edit-b')">✕</button></div><div class="fr c2"><div class="fg"><label>No. Perolehan *</label><input id="eb-nop"></div><div class="fg"><label>No. Panggilan *</label><input id="eb-npn"></div></div><div class="fg"><label>Judul *</label><input id="eb-jdl"></div><div class="fr c2"><div class="fg"><label>Pengarang</label><input id="eb-pgr"></div><div class="fg"><label>Penerbit</label><input id="eb-pnb"></div></div><div class="fr c3"><div class="fg"><label>Tahun</label><input id="eb-thn"></div><div class="fg"><label>Tarikh Perolehan</label><input id="eb-tp"></div><div class="fg"><label>Punca</label><select id="eb-pnc"><option value="">–</option><option>PCG</option><option>BELI</option><option>sumbangan</option><option>SUMBANGAN</option><option>hadiah</option></select></div></div><div class="fr c3"><div class="fg"><label>ISBN</label><input id="eb-isbn"></div><div class="fg"><label>Harga (RM)</label><input id="eb-hrm" type="number" step="0.01" min="0"></div><div class="fg"><label>Muka Surat</label><input id="eb-mk"></div></div><input type="hidden" id="eb-id"><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-edit-b')">Batal</button><button class="btn b-em" onclick="simpanEditB()">💾 Simpan</button></div></div></div>
-<div class="mbg" id="m-imp"><div class="modal"><div class="m-hdr"><h3>⬆️ Import Pukal</h3><button class="m-x" onclick="closeM('m-imp')">✕</button></div><div class="al a-in" style="font-size:11px">Header: <code>no_perolehan, no_panggilan, pengarang, judul, penerbit, tahun, tarikh_perolehan, no_invois, punca, isbn, harga_rm</code></div><div class="fg"><label>Tampal dari Excel (Tab-separated)</label><textarea id="paste-b" rows="5" style="font-family:var(--mono);font-size:11px;resize:vertical"></textarea></div><button class="btn b-gh b-sm" onclick="prevPaste()">👁️ Preview</button><div id="imp-pv" style="margin-top:9px"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-imp')">Batal</button><button class="btn b-em" id="btn-imp" onclick="saveImp()" style="display:none">✅ Import ke Sheets</button></div></div></div>`;renderB();injectEditCoverUI()}
+<div class="mbg" id="m-imp"><div class="modal"><div class="m-hdr"><h3>⬆️ Import Pukal</h3><button class="m-x" onclick="closeM('m-imp')">✕</button></div><div class="al a-in" style="font-size:11px">Header: <code>no_perolehan, no_panggilan, pengarang, judul, penerbit, tahun, jilid, tarikh_perolehan, no_invois, punca, isbn, harga_rm</code></div><div class="fg"><label>Tampal dari Excel (Tab-separated)</label><textarea id="paste-b" rows="5" style="font-family:var(--mono);font-size:11px;resize:vertical"></textarea></div><button class="btn b-gh b-sm" onclick="prevPaste()">👁️ Preview</button><div id="imp-pv" style="margin-top:9px"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-imp')">Batal</button><button class="btn b-em" id="btn-imp" onclick="saveImp()" style="display:none">✅ Import ke Sheets</button></div></div></div>`;renderB();injectEditCoverUI()}
 
 function sortB(c){if(c){if(_bSort===c)_bAsc=!_bAsc;else{_bSort=c;_bAsc=true}}_bFilt.sort((a,b)=>{const va=String(a[_bSort]||'').toLowerCase(),vb=String(b[_bSort]||'').toLowerCase();if(!isNaN(parseFloat(va))&&!isNaN(parseFloat(vb)))return _bAsc?parseFloat(va)-parseFloat(vb):parseFloat(vb)-parseFloat(va);return _bAsc?va.localeCompare(vb):vb.localeCompare(va)});renderB()}
 function filtB(){const q=(document.getElementById('src-b')?.value||'').toLowerCase(),k=document.getElementById('flt-k')?.value||'',p=document.getElementById('flt-p')?.value||'';_bFilt=(D.buku||[]).filter(b=>{const qm=!q||(b.judul+b.no_panggilan+(b.isbn||'')+(b.no_perolehan||'')+(b.pengarang||'')).toLowerCase().includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(k==='F')km=isFik(np);else if(k)km=np.charAt(0)===k;return qm&&km&&(!p||b.punca===p)});_bPg=1;sortB()}
 function renderB(){const st=(_bPg-1)*_bPPg,en=Math.min(st+_bPPg,_bFilt.length),pg=_bFilt.slice(st,en);const tb=document.getElementById('tbody-b'),info=document.getElementById('b-info'),bar=document.getElementById('b-pgb');if(tb)tb.innerHTML=rowsB(pg);if(info)info.textContent=`${st+1}–${en} daripada ${_bFilt.length} (${D.buku.length} jumlah)`;if(bar){const tot=Math.ceil(_bFilt.length/_bPPg);let btn='';for(let i=1;i<=tot;i++){if(i<=2||i>tot-1||Math.abs(i-_bPg)<=1)btn+=`<button class="pgbn${_bPg===i?' on':''}" onclick="_bPg=${i};renderB()">${i}</button>`;else if(!btn.endsWith('...'))btn+=`<span style="color:var(--mu);padding:2px 4px">...</span>`}bar.innerHTML=btn}}
 function rowsB(buku){if(!buku.length)return`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--mu)">Tiada rekod.</td></tr>`;return buku.map(b=>{const cv=String(b.cover_url||'').replace(/"/g,'&quot;');return`<tr><td style="width:48px">${cv?`<img src="${cv}" alt="Cover" loading="lazy" style="width:40px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--bd);background:var(--bg2)" onerror="this.replaceWith(document.createTextNode('–'))">`:'–'}</td><td><span class="bdg bg-cy">${b.no_perolehan||'–'}</span></td><td><span style="font-family:var(--mono);font-size:10.5px;font-weight:700;color:${wNP(b.no_panggilan)};background:${wNP(b.no_panggilan)}18;padding:2px 5px;border-radius:4px">${b.no_panggilan||'–'}</span></td><td style="max-width:170px"><div style="font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul||'–'}</div><div style="font-size:9.5px;color:var(--mu)">${ddcKat(b.no_panggilan)}</div></td><td style="font-size:10.5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.pengarang||'–'}</td><td>${b.tahun||'–'}</td><td><span class="bdg bg-am">${b.punca||'–'}</span></td><td style="font-size:10.5px">${fmtRM(b.harga_rm,b.harga_sen)}</td><td><div style="display:flex;gap:3px"><button class="btn b-gh b-xs" onclick="editB(${b.id})">✏️</button><button class="btn b-gh b-xs" onclick="padamB(${b.id})" style="color:var(--red)">🗑️</button></div></td></tr>`}).join('')}
-function eksCSV(){const h=['id','no_perolehan','no_panggilan','pengarang','judul','penerbit','tahun','tarikh_perolehan','no_invois','punca','isbn','harga_rm','harga_sen','muka_surat','catatan','cover_url','cover_file_id'];const rows=[h.join(','),...D.buku.map(b=>h.map(k=>`"${(b[k]||'').toString().replace(/"/g,'""')}"`).join(','))];const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='buku_'+today()+'.csv';a.click();toast('CSV dieksport!','ok')}
+function eksCSV(){const h=['id','no_perolehan','no_panggilan','pengarang','judul','penerbit','tahun','jilid','tarikh_perolehan','no_invois','punca','isbn','harga_rm','harga_sen','muka_surat','catatan','cover_url','cover_file_id'];const rows=[h.join(','),...D.buku.map(b=>h.map(k=>`"${(b[k]||'').toString().replace(/"/g,'""')}"`).join(','))];const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='buku_'+today()+'.csv';a.click();toast('CSV dieksport!','ok')}
 function injectEditCoverUI(){const modal=document.querySelector('#m-edit-b .modal');if(!modal||document.getElementById('edit-cover-url'))return;const foot=modal.querySelector('.m-ft');if(!foot)return;foot.insertAdjacentHTML('beforebegin',`<div class="fg"><label>COVER BUKU</label><div class="cover-uploader"><div class="cover-preview-wrap"><img id="edit-cover-preview" src="" alt="Preview Cover Buku" style="display:none"><div id="edit-cover-placeholder" class="cover-placeholder">Tiada cover buku</div></div><div class="cover-actions"><button type="button" class="btn b-cy b-sm" onclick="document.getElementById('edit-cover-camera').click()">📸 Ambil Gambar</button><button type="button" class="btn b-gh b-sm" onclick="document.getElementById('edit-cover-upload').click()">🖼️ Upload Gambar</button><button type="button" class="btn b-re b-sm" onclick="clearEditCover()">🗑️ Buang Cover</button></div><input id="edit-cover-camera" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleEditCoverFile(this.files[0])"><input id="edit-cover-upload" type="file" accept="image/*" style="display:none" onchange="handleEditCoverFile(this.files[0])"><input id="edit-cover-url" type="hidden"><input id="edit-cover-file-id" type="hidden"><small id="edit-cover-status" style="color:var(--mu)">Cover belum dipilih.</small></div></div>`)}
 function setEditCoverPreview(url,fileId){const img=document.getElementById('edit-cover-preview'),placeholder=document.getElementById('edit-cover-placeholder'),hidden=document.getElementById('edit-cover-url'),hidFile=document.getElementById('edit-cover-file-id'),st=document.getElementById('edit-cover-status');if(hidden)hidden.value=url||'';if(hidFile)hidFile.value=fileId||'';if(img){if(url){img.src=url;img.style.display='block'}else{img.src='';img.style.display='none'}}if(placeholder)placeholder.style.display=url?'none':'flex';if(st)st.textContent=url?'Cover buku tersedia.':'Cover belum dipilih.'}
 function clearEditCover(){setEditCoverPreview('','');const cam=document.getElementById('edit-cover-camera'),up=document.getElementById('edit-cover-upload');if(cam)cam.value='';if(up)up.value='';toast('Cover dibuang. Klik Simpan untuk kemas kini rekod.','ok')}
 function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})}
 async function handleEditCoverFile(file){const oldUrl=document.getElementById('edit-cover-url')?.value||'',oldFile=document.getElementById('edit-cover-file-id')?.value||'';try{if(!file)return;if(!file.type.startsWith('image/')){toast('Sila pilih fail gambar.','er');return}toast('Memuat naik cover buku...','wa');let dataUrl,base64,mimeType='image/jpeg';if(typeof compressImageToBase64==='function'){const r=await compressImageToBase64(file,900,.75);dataUrl=r.dataUrl;base64=r.base64;mimeType=r.mimeType||mimeType}else{dataUrl=await fileToDataUrl(file);base64=dataUrl.split(',')[1];mimeType=file.type||mimeType}setEditCoverPreview(dataUrl,'');const res=await api({action:'upload_cover_buku',fileName:file.name||('cover-'+Date.now()+'.jpg'),mimeType,base64});if(!res||!res.ok||!res.data||!res.data.cover_url)throw new Error((res&&res.error)||'Gagal upload cover.');setEditCoverPreview(res.data.cover_url,res.data.file_id||'');toast('Cover buku berjaya dimuat naik.','ok')}catch(err){console.error(err);setEditCoverPreview(oldUrl,oldFile);toast('Gagal memuat naik cover buku.','er')}}
 function editB(id){const b=(D.buku||[]).find(x=>String(x.id)===String(id));if(!b)return;injectEditCoverUI();document.getElementById('meb-ttl').textContent='Edit Rekod';const f={nop:'no_perolehan',npn:'no_panggilan',jdl:'judul',pgr:'pengarang',pnb:'penerbit',thn:'tahun',tp:'tarikh_perolehan',pnc:'punca',isbn:'isbn',hrm:'harga_rm',mk:'muka_surat'};Object.entries(f).forEach(([el,key])=>{const e=document.getElementById('eb-'+el);if(e)e.value=b[key]||''});document.getElementById('eb-id').value=id;setEditCoverPreview(b.cover_url||'',b.cover_file_id||'');openM('m-edit-b')}
-async function simpanEditB(){const nop=document.getElementById('eb-nop').value.trim(),npn=document.getElementById('eb-npn').value.trim(),jdl=document.getElementById('eb-jdl').value.trim();if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}const id=document.getElementById('eb-id').value;const data={no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('eb-pgr').value.trim(),penerbit:document.getElementById('eb-pnb').value.trim(),tahun:document.getElementById('eb-thn').value.trim(),tarikh_perolehan:document.getElementById('eb-tp').value.trim(),punca:document.getElementById('eb-pnc').value,isbn:document.getElementById('eb-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('eb-hrm').value)||0,muka_surat:document.getElementById('eb-mk').value.trim(),cover_url:document.getElementById('edit-cover-url')?.value||'',cover_file_id:document.getElementById('edit-cover-file-id')?.value||''};try{const res=await api({action:'kemaskini',sheet:'buku',id,data});if(!res?.ok)throw new Error(res?.error);toast('Dikemas kini!','ok');closeM('m-edit-b');await muatSemua(true);pgPerolehan()}catch(e){toast('Gagal: '+e.message,'er')}}
+async function simpanEditB(){const nop=document.getElementById('eb-nop').value.trim(),npn=document.getElementById('eb-npn').value.trim(),jdl=document.getElementById('eb-jdl').value.trim();if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}const id=document.getElementById('eb-id').value;const data={no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('eb-pgr').value.trim(),penerbit:document.getElementById('eb-pnb').value.trim(),tahun:document.getElementById('eb-thn').value.trim(),jilid:document.getElementById('eb-jilid')?.value.trim()||'',tarikh_perolehan:document.getElementById('eb-tp').value.trim(),punca:document.getElementById('eb-pnc').value,isbn:document.getElementById('eb-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('eb-hrm').value)||0,muka_surat:document.getElementById('eb-mk').value.trim(),cover_url:document.getElementById('edit-cover-url')?.value||'',cover_file_id:document.getElementById('edit-cover-file-id')?.value||''};try{const res=await api({action:'kemaskini',sheet:'buku',id,data});if(!res?.ok)throw new Error(res?.error);toast('Dikemas kini!','ok');closeM('m-edit-b');await muatSemua(true);pgPerolehan()}catch(e){toast('Gagal: '+e.message,'er')}}
 async function padamB(id){const b=(D.buku||[]).find(x=>String(x.id)===String(id));if(!b)return;if(!confirm('Padam?\n\n'+b.judul))return;try{const res=await api({action:'padam',sheet:'buku',id:String(id)});if(!res?.ok)throw new Error(res?.error);toast('Dipadam','ok');await muatSemua(true);pgPerolehan()}catch(e){toast('Gagal: '+e.message,'er')}}
 let _impR=[];
-function prevPaste(){const lines=document.getElementById('paste-b').value.trim().split('\n').filter(l=>l.trim());if(lines.length<2)return;const hdrs=lines[0].split('\t').map(h=>h.trim().toLowerCase().replace(/ /g,'_'));_impR=lines.slice(1).map(l=>{const c=l.split('\t'),o={};hdrs.forEach((h,i)=>o[h]=c[i]||'');return{no_perolehan:o.no_perolehan||'',no_panggilan:o.no_panggilan||'',pengarang:o.pengarang||'',judul:o.judul||'',penerbit:o.penerbit||'',tahun:o.tahun||'',tarikh_perolehan:o.tarikh_perolehan||'',no_invois:o.no_invois||'',punca:o.punca||'',isbn:o.isbn||'',harga_rm:parseFloat(o.harga_rm)||0,harga_sen:parseFloat(o.harga_sen)||0,muka_surat:o.muka_surat||'',catatan:o.catatan||''}}).filter(r=>r.judul||r.no_perolehan);const d=document.getElementById('imp-pv'),btn=document.getElementById('btn-imp');if(d)d.innerHTML=_impR.length?`<div class="al a-ok">✅ ${_impR.length} rekod dibaca.</div>`:'';if(btn)btn.style.display=_impR.length?'':'none'}
+function prevPaste(){const lines=document.getElementById('paste-b').value.trim().split('\n').filter(l=>l.trim());if(lines.length<2)return;const hdrs=lines[0].split('\t').map(h=>h.trim().toLowerCase().replace(/ /g,'_'));_impR=lines.slice(1).map(l=>{const c=l.split('\t'),o={};hdrs.forEach((h,i)=>o[h]=c[i]||'');return{no_perolehan:o.no_perolehan||'',no_panggilan:o.no_panggilan||'',pengarang:o.pengarang||'',judul:o.judul||'',penerbit:o.penerbit||'',tahun:o.tahun||'',jilid:o.jilid||'',tarikh_perolehan:o.tarikh_perolehan||'',no_invois:o.no_invois||'',punca:o.punca||'',isbn:o.isbn||'',harga_rm:parseFloat(o.harga_rm)||0,harga_sen:parseFloat(o.harga_sen)||0,muka_surat:o.muka_surat||'',catatan:o.catatan||''}}).filter(r=>r.judul||r.no_perolehan);const d=document.getElementById('imp-pv'),btn=document.getElementById('btn-imp');if(d)d.innerHTML=_impR.length?`<div class="al a-ok">✅ ${_impR.length} rekod dibaca.</div>`:'';if(btn)btn.style.display=_impR.length?'':'none'}
 async function saveImp(){if(!_impR.length){toast('Tiada data','er');return}const btn=document.getElementById('btn-imp');btn.textContent='⏳ Mengimport...';try{let id=nxId(D.buku);const rows=_impR.map(r=>({...r,id:id++}));const res=await api({action:'import',sheet:'buku',rows});if(!res?.ok)throw new Error(res?.error);toast('✅ '+rows.length+' bahan diimport!','ok');closeM('m-imp');_impR=[];await muatSemua(true);pgPerolehan()}catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='✅ Import ke Sheets'}}
-function nextNoPerolehanLocal(){const nums=(D.buku||[]).map(b=>parseInt(String(b.no_perolehan||'').replace(/[^\d]/g,''),10)).filter(n=>!isNaN(n)&&n>0);return nums.length?Math.max(...nums)+1:1}
-async function nextNoPerolehanAuto(){try{const res=await api({action:'next_no_perolehan'});const n=parseInt(res?.data?.next_no_perolehan,10);if(res?.ok&&!isNaN(n)&&n>0)return n}catch(e){}return nextNoPerolehanLocal()}
-async function isiNoPerolehanAuto(){const el=document.getElementById('db-nop');if(!el)return;el.value=nextNoPerolehanLocal();const n=await nextNoPerolehanAuto();if(document.getElementById('db-nop')===el)el.value=n}
 
 // ═══════════════════════════════════════════════
 // DAFTAR BUKU BARU — Fiksyen/Bukan Fiksyen + Auto NP + Label Preview
@@ -914,7 +940,7 @@ function pgDaftar(){
       </div>
       <div class="fg"><label>Judul / Tajuk *</label><input id="db-jdl" type="text"></div>
       <div class="fr c2"><div class="fg"><label>Pengarang</label><input id="db-pgr" type="text" oninput="autoNP()"></div><div class="fg"><label>Penerbit</label><input id="db-pnb" type="text"></div></div>
-      <div class="fr c3"><div class="fg"><label>Tahun</label><input id="db-thn" type="text" placeholder="${new Date().getFullYear()}"></div><div class="fg"><label>Tarikh Perolehan</label><input id="db-tper" type="text" value="${today()}"></div><div class="fg"><label>Punca</label><select id="db-pnc"><option value="">–</option><option>PCG</option><option>BELI</option><option>sumbangan</option><option>SUMBANGAN</option><option>hadiah</option></select></div></div>
+      <div class="fr c3"><div class="fg"><label>Tahun</label><input id="db-thn" type="text" placeholder="${new Date().getFullYear()}" oninput="autoNP()"></div><div class="fg"><label>Tarikh Perolehan</label><input id="db-tper" type="text" value="${today()}"></div><div class="fg"><label>Punca</label><select id="db-pnc"><option value="">–</option><option>PCG</option><option>BELI</option><option>sumbangan</option><option>SUMBANGAN</option><option>hadiah</option></select></div></div>
       <div class="fr c3"><div class="fg"><label>Harga (RM)</label><input id="db-hrm" type="number" step="0.01" min="0" value="0"></div><div class="fg"><label>No. Invois</label><input id="db-inv" type="text"></div><div class="fg"><label>Muka Surat</label><input id="db-muka" type="text"></div></div>
       <div class="fg"><label>Catatan</label><input id="db-cat" type="text"></div>
       <div style="display:flex;gap:7px"><button class="btn b-em" onclick="simpanBB()" id="btn-db">💾 Simpan ke Sheets</button><button class="btn b-gh b-sm" onclick="resetDB()">🔄 Reset</button></div>
@@ -957,7 +983,6 @@ function pgDaftar(){
       </div>
     </div>
   </div>`;
-  setTimeout(isiNoPerolehanAuto,0);
 }
 
 function togKat(v){
@@ -971,9 +996,12 @@ function autoNP(){
   const bhs=document.getElementById('db-bhs')?.value||'MS';
   const pgr=(document.getElementById('db-pgr')?.value||'').trim();
   const jdl=(document.getElementById('db-jdl')?.value||'').trim();
-  const np=genNP(kat,ddc,bhs,pgr,jdl);
+  const tahun=(document.getElementById('db-thn')?.value||'').trim();
+  const jilid=(document.getElementById('db-jilid')?.value||'').trim();
+  const kategori=kat==='fiksyen'?(FIK[bhs]||'FM'):(ddc||'000');
+  const np=janaNoPanggilanAuto(kategori,pgr||jdl,perluTahunNoPanggilan(jdl,tahun,jilid)?tahun:'',jilid);
   const el=document.getElementById('db-npn');if(el)el.value=np;
-  const h=document.getElementById('db-np-h');if(h)h.textContent=np?`✅ ${np}`:'';
+  const h=document.getElementById('db-np-h');if(h)h.textContent=np?np:'';
   updLbPv();
 }
 function updLbPv(){
@@ -1004,15 +1032,14 @@ async function cariGB(){
   }catch(e){if(st)st.textContent='⚠️ Gagal. Isi manual.'}
 }
 async function simpanBB(){
-  let nop=document.getElementById('db-nop').value.trim();const npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
-  nop=String(await nextNoPerolehanAuto());const nopEl=document.getElementById('db-nop');if(nopEl)nopEl.value=nop;
+  const nop=document.getElementById('db-nop').value.trim(),npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
   if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}
   const btn=document.getElementById('btn-db');btn.textContent='⏳ Menyimpan...';btn.disabled=true;
-  const data={id:nxId(D.buku),no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim()};
-  try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);if(res.data?.no_perolehan){data.no_perolehan=String(res.data.no_perolehan)}D.buku.push(data);toast('✅ Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok">✅ <strong>${jdl}</strong> (No.${data.no_perolehan||nop}) disimpan.</div>`;resetDB()}
+  const data={id:nxId(D.buku),no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),jilid:document.getElementById('db-jilid')?.value.trim()||'',tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim()};
+  try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);D.buku.push(data);toast('✅ Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok">✅ <strong>${jdl}</strong> (No.${nop}) disimpan.</div>`;resetDB()}
   catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='💾 Simpan ke Sheets';btn.disabled=false}
 }
-function resetDB(){['db-isbn','db-jdl','db-pgr','db-pnb','db-thn','db-inv','db-muka','db-cat'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});const h=document.getElementById('db-hrm');if(h)h.value=0;const t=document.getElementById('db-tper');if(t)t.value=today();const d=document.getElementById('db-ddc');if(d)d.value='';const n=document.getElementById('db-npn');if(n)n.value='';updLbPv();setTimeout(isiNoPerolehanAuto,0)}
+function resetDB(){['db-nop','db-isbn','db-jdl','db-pgr','db-pnb','db-thn','db-inv','db-muka','db-cat'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});const h=document.getElementById('db-hrm');if(h)h.value=0;const t=document.getElementById('db-tper');if(t)t.value=today();const d=document.getElementById('db-ddc');if(d)d.value='';const n=document.getElementById('db-npn');if(n)n.value='';updLbPv()}
 </script>
 
 <script>
@@ -2272,8 +2299,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   };
 
   window.simpanBB=async function(){
-    let nop=document.getElementById('db-nop').value.trim();const npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
-    nop=String(await nextNoPerolehanAuto());const nopEl=document.getElementById('db-nop');if(nopEl)nopEl.value=nop;
+    const nop=document.getElementById('db-nop').value.trim(),npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
     if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}
     const btn=document.getElementById('btn-db');btn.textContent='Menyimpan...';btn.disabled=true;
     let finalCoverUrl=currentBookCoverUrl||'',finalCoverFileId=currentBookCoverFileId||'';
@@ -2283,8 +2309,8 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
         if(up&&up.ok&&up.data){finalCoverUrl=up.data.cover_url||'';finalCoverFileId=up.data.file_id||''}else toast('Cover gagal diupload. Buku tetap akan disimpan tanpa cover.','wa');
       }catch(e){toast('Cover gagal diupload. Buku tetap akan disimpan tanpa cover.','wa')}
     }
-    const data={id:nxId(D.buku),no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim(),cover_url:finalCoverUrl,cover_file_id:finalCoverFileId};
-    try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);if(res.data?.no_perolehan){data.no_perolehan=String(res.data.no_perolehan)}D.buku.push(data);toast('Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok"><strong>${jdl}</strong> (No.${data.no_perolehan||nop}) disimpan.</div>`;resetDB();clearBookCover()}
+    const data={id:nxId(D.buku),no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),jilid:document.getElementById('db-jilid')?.value.trim()||'',tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim(),cover_url:finalCoverUrl,cover_file_id:finalCoverFileId};
+    try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);D.buku.push(data);toast('Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok"><strong>${jdl}</strong> (No.${nop}) disimpan.</div>`;resetDB();clearBookCover()}
     catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='Simpan ke Sheets';btn.disabled=false}
   };
 
@@ -2516,6 +2542,157 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     }
     const f=(D.buku||[]).filter(b=>{const text=(b.judul+b.pengarang+(b.isbn||'')+(b.no_panggilan||'')+(b.no_perolehan||'')).toLowerCase();const qm=!q||text.includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(window._opacCF==='F')km=isFik(np);else if(window._opacCF==='B')km=!isFik(np);else if(window._opacCF)km=np.charAt(0)===window._opacCF;return qm&&km});
     renderOpacResults(f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return{no_perolehan:b.no_perolehan,no_panggilan:b.no_panggilan,judul:b.judul,pengarang:b.pengarang,penerbit:b.penerbit,tahun:b.tahun,isbn:b.isbn,status:sp?'dipinjam':(b.status||'')}}));
+  };
+})();
+</script>
+<script>
+// SMARTLIB jilid support patch
+(function(){
+  function cleanText(v){
+    return String(v == null ? '' : v).trim();
+  }
+
+  function normalizeJilid(v){
+    const s = cleanText(v);
+    if(!s) return '';
+    const m = s.match(/^(?:v\.?|vol\.?|jilid)\s*(.+)$/i);
+    return 'v.' + cleanText(m ? m[1] : s).replace(/\s+/g,'');
+  }
+
+  function applyJilidToNoPanggilan(noPanggilan,tahun,jilid){
+    const j = normalizeJilid(jilid);
+    let np = cleanText(noPanggilan);
+    if(!np) return np;
+    np = np.replace(/\s+v\.?\s*[^ ]+$/i,'').trim();
+    np = np.replace(/\//g,' ').replace(/\s+/g,' ').trim();
+    const thn = cleanText(tahun);
+    const forceTahun = !!j || (typeof perluTahunNoPanggilan === 'function' && perluTahunNoPanggilan(
+      document.getElementById('eb-jdl')?.value || document.getElementById('db-jdl')?.value || '',
+      thn,
+      jilid,
+      document.getElementById('eb-id')?.value || ''
+    ));
+    if(thn && forceTahun && !new RegExp('(?:^|\\s)' + thn.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '$').test(np)){
+      np += ' ' + thn;
+    }
+    return (np + (j ? ' ' + j : '')).replace(/\s+/g,' ').trim();
+  }
+
+  function getDaftarJilid(){
+    return cleanText(document.getElementById('db-jilid')?.value || '');
+  }
+
+  function getEditJilid(){
+    return cleanText(document.getElementById('eb-jilid')?.value || '');
+  }
+
+  function injectDaftarJilid(){
+    if(document.getElementById('db-jilid')) return;
+    const tahun = document.getElementById('db-thn');
+    const holder = tahun?.closest('.fg');
+    if(!holder) return;
+    holder.insertAdjacentHTML('afterend','<div class="fg"><label>Jilid / Siri</label><input id="db-jilid" type="text" placeholder="cth: 1, 2, 3" oninput="autoNP()"><small>Isi jika buku bersiri / berjilid.</small></div>');
+  }
+
+  function injectEditJilid(){
+    if(document.getElementById('eb-jilid')) return;
+    const tahun = document.getElementById('eb-thn');
+    const holder = tahun?.closest('.fg');
+    if(!holder) return;
+    holder.insertAdjacentHTML('afterend','<div class="fg"><label>Jilid / Siri</label><input id="eb-jilid" type="text" placeholder="cth: 1, 2, 3" oninput="syncEditJilidNoPanggilan()"><small>Isi jika buku bersiri / berjilid.</small></div>');
+  }
+
+  window.syncEditJilidNoPanggilan = function(){
+    const np = document.getElementById('eb-npn');
+    if(!np) return;
+    np.value = applyJilidToNoPanggilan(np.value, document.getElementById('eb-thn')?.value || '', getEditJilid());
+  };
+
+  const oldPgDaftar = window.pgDaftar;
+  if(typeof oldPgDaftar === 'function'){
+    window.pgDaftar = function(){
+      const out = oldPgDaftar.apply(this, arguments);
+      injectDaftarJilid();
+      return out;
+    };
+  }
+
+  const oldAutoNP = window.autoNP;
+  if(typeof oldAutoNP === 'function'){
+    window.autoNP = function(){
+      oldAutoNP.apply(this, arguments);
+      injectDaftarJilid();
+      const np = document.getElementById('db-npn');
+      if(np){
+        np.value = applyJilidToNoPanggilan(np.value, document.getElementById('db-thn')?.value || '', getDaftarJilid());
+        const h = document.getElementById('db-np-h');
+        if(h && np.value) h.textContent = np.value;
+      }
+      if(typeof window.updLbPv === 'function') window.updLbPv();
+    };
+  }
+
+  const oldEditB = window.editB;
+  if(typeof oldEditB === 'function'){
+    window.editB = function(id){
+      const out = oldEditB.apply(this, arguments);
+      injectEditJilid();
+      const b = (window.D?.buku || D.buku || []).find(x => String(x.id) === String(id));
+      const el = document.getElementById('eb-jilid');
+      if(el && b) el.value = b.jilid || '';
+      return out;
+    };
+  }
+
+  const oldResetDB = window.resetDB;
+  if(typeof oldResetDB === 'function'){
+    window.resetDB = function(){
+      const out = oldResetDB.apply(this, arguments);
+      const el = document.getElementById('db-jilid');
+      if(el) el.value = '';
+      return out;
+    };
+  }
+
+  const oldApi = window.api;
+  if(typeof oldApi === 'function'){
+    window.api = async function(payload,retry){
+      if(payload && payload.sheet === 'buku'){
+        if(payload.data){
+          const jilid = payload.data.jilid !== undefined ? payload.data.jilid : (document.getElementById('eb-jilid') ? getEditJilid() : getDaftarJilid());
+          payload = {...payload, data:{...payload.data, jilid:jilid || ''}};
+          if(payload.data.no_panggilan){
+            payload.data.no_panggilan = applyJilidToNoPanggilan(payload.data.no_panggilan, payload.data.tahun, jilid);
+          }
+        }
+        if(Array.isArray(payload.rows)){
+          payload = {...payload, rows:payload.rows.map(r=>{
+            const row = {...r};
+            if(row.no_panggilan){
+              row.no_panggilan = applyJilidToNoPanggilan(row.no_panggilan, row.tahun, row.jilid);
+            }
+            return row;
+          })};
+        }
+      }
+      return oldApi.call(this, payload, retry);
+    };
+  }
+
+  const oldPrevPaste = window.prevPaste;
+  if(typeof oldPrevPaste === 'function'){
+    window.prevPaste = function(){
+      const out = oldPrevPaste.apply(this, arguments);
+      if(typeof _impR !== 'undefined' && Array.isArray(_impR)){
+        _impR = _impR.map(r => ({...r, jilid:r.jilid || ''}));
+      }
+      return out;
+    };
+  }
+
+  window.SMARTLIB_JILID = {
+    normalizeJilid,
+    applyJilidToNoPanggilan
   };
 })();
 </script>
