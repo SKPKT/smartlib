@@ -264,6 +264,9 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 .icon-scanner{background:#f8fafc;color:#475569;border:1.5px solid #cbd5e1}
 .icon-scanner:hover{background:#eef2f7}
 .isbn-row{display:grid;grid-template-columns:44px 44px auto;gap:8px;align-items:center;justify-content:start}
+.isbn-edit-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.isbn-edit-row input{flex:1;min-width:160px}
+.isbn-edit-row .icon-btn{min-width:42px;justify-content:center}
 .scan-action-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 #db-isbn{min-width:0;width:100%;grid-column:1/-1}
 
@@ -323,7 +326,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 /* RESPONSIVE */
 @media(max-width:1100px){.sg{grid-template-columns:repeat(3,1fr)}.pnt-g{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.fr.c2,.fr.c3{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.cover-preview-wrap{width:100px;height:136px}.cover-actions .btn{flex:1;justify-content:center;min-height:40px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}.isbn-row{grid-template-columns:42px 42px auto;gap:6px}.icon-btn{width:42px;height:42px;min-width:42px;font-size:17px}.scan-action-row{gap:6px}.scan-fallback-actions .btn{flex:1;justify-content:center;min-height:40px}}
+@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.cover-preview-wrap{width:100px;height:136px}.cover-actions .btn{flex:1;justify-content:center;min-height:40px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}.isbn-row{grid-template-columns:42px 42px auto;gap:6px}.isbn-edit-row{align-items:stretch}.isbn-edit-row input{width:100%;flex-basis:100%}.isbn-edit-row .btn{min-height:40px}.icon-btn{width:42px;height:42px;min-width:42px;font-size:17px}.scan-action-row{gap:6px}.scan-fallback-actions .btn{flex:1;justify-content:center;min-height:40px}}
 </style>
 </head>
 <body>
@@ -861,7 +864,7 @@ function pgPerolehan(){_bFilt=[...D.buku];_bPg=1;sortB();document.getElementById
   <div style="font-size:10.5px;color:var(--mu)" id="b-info"></div>
   <div class="pgb" id="b-pgb"></div>
 </div></div>
-<div class="mbg" id="m-edit-b"><div class="modal"><div class="m-hdr"><h3 id="meb-ttl">Edit Rekod</h3><button class="m-x" onclick="closeM('m-edit-b')">✕</button></div><div class="fr c2"><div class="fg"><label>No. Perolehan *</label><input id="eb-nop"></div><div class="fg"><label>No. Panggilan *</label><input id="eb-npn"></div></div><div class="fg"><label>Judul *</label><input id="eb-jdl"></div><div class="fr c2"><div class="fg"><label>Pengarang</label><input id="eb-pgr"></div><div class="fg"><label>Penerbit</label><input id="eb-pnb"></div></div><div class="fr c3"><div class="fg"><label>Tahun</label><input id="eb-thn"></div><div class="fg"><label>Tarikh Perolehan</label><input id="eb-tp"></div><div class="fg"><label>Punca</label><select id="eb-pnc"><option value="">–</option><option>PCG</option><option>BELI</option><option>sumbangan</option><option>SUMBANGAN</option><option>hadiah</option></select></div></div><div class="fr c3"><div class="fg"><label>ISBN</label><input id="eb-isbn"></div><div class="fg"><label>Harga (RM)</label><input id="eb-hrm" type="number" step="0.01" min="0"></div><div class="fg"><label>Muka Surat</label><input id="eb-mk"></div></div><input type="hidden" id="eb-id"><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-edit-b')">Batal</button><button class="btn b-em" onclick="simpanEditB()">💾 Simpan</button></div></div></div>
+<div class="mbg" id="m-edit-b"><div class="modal"><div class="m-hdr"><h3 id="meb-ttl">Edit Rekod</h3><button class="m-x" onclick="closeM('m-edit-b')">✕</button></div><div class="fr c2"><div class="fg"><label>No. Perolehan *</label><input id="eb-nop"></div><div class="fg"><label>No. Panggilan *</label><input id="eb-npn"></div></div><div class="fg"><label>Judul *</label><input id="eb-jdl"></div><div class="fr c2"><div class="fg"><label>Pengarang</label><input id="eb-pgr"></div><div class="fg"><label>Penerbit</label><input id="eb-pnb"></div></div><div class="fr c3"><div class="fg"><label>Tahun</label><input id="eb-thn"></div><div class="fg"><label>Tarikh Perolehan</label><input id="eb-tp"></div><div class="fg"><label>Punca</label><select id="eb-pnc"><option value="">–</option><option>PCG</option><option>BELI</option><option>sumbangan</option><option>SUMBANGAN</option><option>hadiah</option></select></div></div><div class="fr c3"><div class="fg"><label>ISBN</label><div class="isbn-edit-row"><input id="eb-isbn" type="text" placeholder="Scan / taip ISBN" onkeydown="handleEditISBNEnter(event)"><button type="button" class="btn b-cy b-sm icon-btn" title="Scan Kamera" onclick="openEditISBNCameraScanner()">📷</button><button type="button" class="btn b-gh b-sm icon-btn" title="Scanner Fizikal" onclick="focusEditISBNPhysicalScanner()">🔫</button><button type="button" class="btn b-em b-sm" onclick="cariISBNEdit()">🔍 Cari ISBN</button></div><small id="eb-gb-st" style="color:var(--cy)"></small></div><div class="fg"><label>Harga (RM)</label><input id="eb-hrm" type="number" step="0.01" min="0"></div><div class="fg"><label>Muka Surat</label><input id="eb-mk"></div></div><input type="hidden" id="eb-id"><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-edit-b')">Batal</button><button class="btn b-em" onclick="simpanEditB()">💾 Simpan</button></div></div></div>
 <div class="mbg" id="m-imp"><div class="modal"><div class="m-hdr"><h3>⬆️ Import Pukal</h3><button class="m-x" onclick="closeM('m-imp')">✕</button></div><div class="al a-in" style="font-size:11px">Header: <code>no_perolehan, no_panggilan, pengarang, judul, penerbit, tahun, jilid, tarikh_perolehan, no_invois, punca, isbn, harga_rm</code></div><div class="fg"><label>Tampal dari Excel (Tab-separated)</label><textarea id="paste-b" rows="5" style="font-family:var(--mono);font-size:11px;resize:vertical"></textarea></div><button class="btn b-gh b-sm" onclick="prevPaste()">👁️ Preview</button><div id="imp-pv" style="margin-top:9px"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-imp')">Batal</button><button class="btn b-em" id="btn-imp" onclick="saveImp()" style="display:none">✅ Import ke Sheets</button></div></div></div>`;renderB();injectEditCoverUI()}
 
 function sortB(c){if(c){if(_bSort===c)_bAsc=!_bAsc;else{_bSort=c;_bAsc=true}}_bFilt.sort((a,b)=>{const va=String(a[_bSort]||'').toLowerCase(),vb=String(b[_bSort]||'').toLowerCase();if(!isNaN(parseFloat(va))&&!isNaN(parseFloat(vb)))return _bAsc?parseFloat(va)-parseFloat(vb):parseFloat(vb)-parseFloat(va);return _bAsc?va.localeCompare(vb):vb.localeCompare(va)});renderB()}
@@ -876,6 +879,34 @@ function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=
 async function handleEditCoverFile(file){const oldUrl=document.getElementById('edit-cover-url')?.value||'',oldFile=document.getElementById('edit-cover-file-id')?.value||'';try{if(!file)return;if(!file.type.startsWith('image/')){toast('Sila pilih fail gambar.','er');return}toast('Memuat naik cover buku...','wa');let dataUrl,base64,mimeType='image/jpeg';if(typeof compressImageToBase64==='function'){const r=await compressImageToBase64(file,900,.75);dataUrl=r.dataUrl;base64=r.base64;mimeType=r.mimeType||mimeType}else{dataUrl=await fileToDataUrl(file);base64=dataUrl.split(',')[1];mimeType=file.type||mimeType}setEditCoverPreview(dataUrl,'');const res=await api({action:'upload_cover_buku',fileName:file.name||('cover-'+Date.now()+'.jpg'),mimeType,base64});if(!res||!res.ok||!res.data||!res.data.cover_url)throw new Error((res&&res.error)||'Gagal upload cover.');setEditCoverPreview(res.data.cover_url,res.data.file_id||'');toast('Cover buku berjaya dimuat naik.','ok')}catch(err){console.error(err);setEditCoverPreview(oldUrl,oldFile);toast('Gagal memuat naik cover buku.','er')}}
 function editB(id){const b=(D.buku||[]).find(x=>String(x.id)===String(id));if(!b)return;injectEditCoverUI();document.getElementById('meb-ttl').textContent='Edit Rekod';const f={nop:'no_perolehan',npn:'no_panggilan',jdl:'judul',pgr:'pengarang',pnb:'penerbit',thn:'tahun',tp:'tarikh_perolehan',pnc:'punca',isbn:'isbn',hrm:'harga_rm',mk:'muka_surat'};Object.entries(f).forEach(([el,key])=>{const e=document.getElementById('eb-'+el);if(e)e.value=b[key]||''});document.getElementById('eb-id').value=id;setEditCoverPreview(b.cover_url||'',b.cover_file_id||'');openM('m-edit-b')}
 async function simpanEditB(){const nop=document.getElementById('eb-nop').value.trim(),npn=document.getElementById('eb-npn').value.trim(),jdl=document.getElementById('eb-jdl').value.trim();if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}const id=document.getElementById('eb-id').value;const data={no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('eb-pgr').value.trim(),penerbit:document.getElementById('eb-pnb').value.trim(),tahun:document.getElementById('eb-thn').value.trim(),jilid:document.getElementById('eb-jilid')?.value.trim()||'',tarikh_perolehan:document.getElementById('eb-tp').value.trim(),punca:document.getElementById('eb-pnc').value,isbn:document.getElementById('eb-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('eb-hrm').value)||0,muka_surat:document.getElementById('eb-mk').value.trim(),cover_url:document.getElementById('edit-cover-url')?.value||'',cover_file_id:document.getElementById('edit-cover-file-id')?.value||''};try{const res=await api({action:'kemaskini',sheet:'buku',id,data});if(!res?.ok)throw new Error(res?.error);toast('Dikemas kini!','ok');closeM('m-edit-b');await muatSemua(true);pgPerolehan()}catch(e){toast('Gagal: '+e.message,'er')}}
+function focusEditISBNPhysicalScanner(){const input=document.getElementById('eb-isbn');if(!input)return;input.focus();input.select();toast('Sila scan barcode ISBN menggunakan scanner fizikal.','wa')}
+function handleEditISBNEnter(e){if(e.key==='Enter'){e.preventDefault();cariISBNEdit()}}
+async function cariISBNEdit(){
+  const input=document.getElementById('eb-isbn'),st=document.getElementById('eb-gb-st');
+  const isbn=String(input?.value||'').replace(/[-\s]/g,'').trim();
+  if(!isbn||isbn.length<10){toast('Sila masukkan ISBN yang sah.','er');if(st)st.textContent='ISBN tidak sah.';return}
+  try{
+    if(st)st.textContent='🔍 Mencari maklumat ISBN...';
+    const res=await api({action:'isbn_lookup',isbn});
+    if(!res||!res.ok||!res.data||!res.data.jumpa){if(st)st.textContent='❌ ISBN tidak dijumpai dalam Google Books.';toast('ISBN tidak dijumpai. Sila isi manual.','wa');return}
+    const b=res.data;
+    const hasExisting=(document.getElementById('eb-jdl')?.value.trim()||document.getElementById('eb-pgr')?.value.trim()||document.getElementById('eb-pnb')?.value.trim());
+    let overwrite=true;
+    if(hasExisting)overwrite=confirm('Maklumat buku sudah ada.\n\nAdakah anda mahu kemaskini maklumat buku berdasarkan Google Books?');
+    if(overwrite){
+      if(b.judul)document.getElementById('eb-jdl').value=b.judul;
+      if(b.pengarang)document.getElementById('eb-pgr').value=b.pengarang;
+      if(b.penerbit)document.getElementById('eb-pnb').value=b.penerbit;
+      if(b.tahun)document.getElementById('eb-thn').value=b.tahun;
+      if(b.muka_surat&&document.getElementById('eb-mk'))document.getElementById('eb-mk').value=b.muka_surat;
+      if((b.cover_url||b.thumbnail)&&document.getElementById('edit-cover-url')&&!document.getElementById('edit-cover-url').value)setEditCoverPreview(b.cover_url||b.thumbnail,'');
+      if(typeof autoEditNoPanggilan==='function')autoEditNoPanggilan();
+    }
+    if(st)st.textContent='✅ Maklumat ISBN dijumpai.';
+    toast('Maklumat ISBN berjaya dijumpai.','ok');
+  }catch(err){console.error(err);if(st)st.textContent='⚠️ Gagal cari ISBN.';toast('Gagal mencari ISBN.','er')}
+}
+function openEditISBNCameraScanner(){openISBNCameraScanner({targetInputId:'eb-isbn',afterScan:function(isbn){toast('ISBN berjaya discan: '+isbn,'ok');cariISBNEdit()}})}
 async function padamB(id){const b=(D.buku||[]).find(x=>String(x.id)===String(id));if(!b)return;if(!confirm('Padam?\n\n'+b.judul))return;try{const res=await api({action:'padam',sheet:'buku',id:String(id)});if(!res?.ok)throw new Error(res?.error);toast('Dipadam','ok');await muatSemua(true);pgPerolehan()}catch(e){toast('Gagal: '+e.message,'er')}}
 let _impR=[];
 function prevPaste(){const lines=document.getElementById('paste-b').value.trim().split('\n').filter(l=>l.trim());if(lines.length<2)return;const hdrs=lines[0].split('\t').map(h=>h.trim().toLowerCase().replace(/ /g,'_'));_impR=lines.slice(1).map(l=>{const c=l.split('\t'),o={};hdrs.forEach((h,i)=>o[h]=c[i]||'');return{no_perolehan:o.no_perolehan||'',no_panggilan:o.no_panggilan||'',pengarang:o.pengarang||'',judul:o.judul||'',penerbit:o.penerbit||'',tahun:o.tahun||'',jilid:o.jilid||'',tarikh_perolehan:o.tarikh_perolehan||'',no_invois:o.no_invois||'',punca:o.punca||'',isbn:o.isbn||'',harga_rm:parseFloat(o.harga_rm)||0,harga_sen:parseFloat(o.harga_sen)||0,muka_surat:o.muka_surat||'',catatan:o.catatan||''}}).filter(r=>r.judul||r.no_perolehan);const d=document.getElementById('imp-pv'),btn=document.getElementById('btn-imp');if(d)d.innerHTML=_impR.length?`<div class="al a-ok">✅ ${_impR.length} rekod dibaca.</div>`:'';if(btn)btn.style.display=_impR.length?'':'none'}
@@ -1321,6 +1352,8 @@ let _scanQ = null;
 let smartlibScanner = null;
 let smartlibScannerRunning = false;
 let smartlibLastScanCallback = null;
+let smartlibISBNScanTargetInputId = '';
+let smartlibISBNScanAfterScan = null;
 let currentBookCoverBase64 = '';
 let currentBookCoverMime = '';
 let currentBookCoverName = '';
@@ -1336,6 +1369,7 @@ function scannerFormats(){const f=typeof Html5QrcodeSupportedFormats!=='undefine
 async function startBarcodeScanner(targetId,onSuccess){
   const st=document.getElementById('scan-st'),btn=document.getElementById('btn-sc');
   try{
+    if(targetId!=='register-isbn-reader'){smartlibISBNScanTargetInputId='';smartlibISBNScanAfterScan=null}
     smartlibLastScanCallback=onSuccess;
     if(!isScannerReady()){toast('Scanner belum dimuatkan. Sila refresh halaman.','er');showISBNImageFallback(targetId,onSuccess);return}
     if(location.protocol!=='https:'&&location.protocol!=='file:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){toast('Kamera hanya boleh digunakan melalui HTTPS.','er');return}
@@ -1409,6 +1443,29 @@ function checkLiveCameraVisible(targetId){
   if(video.videoWidth===0||video.videoHeight===0)return false;
   return true;
 }
+function setScannedISBN(targetInputId,isbn,afterScan){
+  const clean=cleanBarcode(isbn);
+  const input=document.getElementById(targetInputId);
+  if(input)input.value=clean;
+  if(typeof afterScan==='function')afterScan(clean);
+}
+async function closeActiveISBNScanner(){
+  await stopBarcodeScanner();
+  closeM('m-scan-isbn');
+}
+function ensureISBNScannerModal(){
+  if(document.getElementById('m-scan-isbn'))return;
+  document.body.insertAdjacentHTML('beforeend',`<div class="mbg" id="m-scan-isbn"><div class="modal"><div class="m-hdr"><h3>Scan ISBN Buku</h3><button class="m-x" onclick="closeActiveISBNScanner()">Tutup</button></div><div class="al a-in">Arahkan kamera belakang ke barcode ISBN pada belakang buku. Jika kamera gelap, gunakan Ambil Gambar ISBN.</div><div id="register-isbn-reader" style="width:100%;min-height:320px;background:#000;border-radius:14px;overflow:hidden"></div><div class="scan-fallback-actions" id="register-isbn-reader-fallback"><input type="file" id="register-isbn-reader-capture-file" accept="image/*" capture="environment" style="display:none" onchange="scanISBNFromImageFile(this.files[0])"><input type="file" id="register-isbn-reader-upload-file" accept="image/*" style="display:none" onchange="scanISBNFromImageFile(this.files[0])"><button type="button" class="btn b-cy b-sm" onclick="openISBNFallbackFile('register-isbn-reader-capture-file')">📸 Ambil Gambar ISBN</button><button type="button" class="btn b-gh b-sm" onclick="openISBNFallbackFile('register-isbn-reader-upload-file')">🖼️ Upload Gambar ISBN</button></div><div class="m-ft"><button class="btn b-gh" onclick="closeActiveISBNScanner()">Henti</button></div></div></div>`);
+}
+function openISBNCameraScanner(opts){
+  const targetInputId=opts&&opts.targetInputId?opts.targetInputId:'db-isbn';
+  const afterScan=opts&&typeof opts.afterScan==='function'?opts.afterScan:null;
+  smartlibISBNScanTargetInputId=targetInputId;
+  smartlibISBNScanAfterScan=afterScan;
+  ensureISBNScannerModal();
+  openM('m-scan-isbn');
+  setTimeout(()=>{startBarcodeScanner('register-isbn-reader',function(code){setScannedISBN(targetInputId,code,function(isbn){closeActiveISBNScanner();if(afterScan)afterScan(isbn)})})},600);
+}
 function showISBNImageFallback(targetId,onSuccess){
   const target=document.getElementById(targetId);if(!target)return;
   if(targetId!=='register-isbn-reader'&&targetId!=='scan-reader')return;
@@ -1434,6 +1491,13 @@ async function scanISBNFromImageFile(file){
     const clean=cleanBarcode(decodedText);
     if(!clean){toast('Barcode tidak dapat dibaca daripada gambar.','er');return}
     toast('ISBN berjaya dibaca: '+clean,'ok');
+    if(smartlibISBNScanTargetInputId){
+      setScannedISBN(smartlibISBNScanTargetInputId,clean,function(isbn){
+        closeActiveISBNScanner();
+        if(typeof smartlibISBNScanAfterScan==='function')smartlibISBNScanAfterScan(isbn);
+      });
+      return;
+    }
     const isbnInput=document.getElementById('db-isbn');
     if(isbnInput){
       isbnInput.value=clean;
@@ -2284,8 +2348,8 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 
   const oldPgDaftar=window.pgDaftar;
   window.pgDaftar=function(){oldPgDaftar.apply(this,arguments);injectRegisterTools()};
-  window.openISBNScannerForRegister=function(){openM('m-scan-isbn');setTimeout(()=>{startBarcodeScanner('register-isbn-reader',function(code){const clean=cleanBarcode(code);const input=document.getElementById('db-isbn');if(input)input.value=clean;closeISBNScannerForRegister();if(typeof debGB==='function')debGB();else if(typeof cariGB==='function')cariGB();toast('ISBN berjaya diimbas: '+clean,'ok')})},600)};
-  window.closeISBNScannerForRegister=async function(){await stopBarcodeScanner();closeM('m-scan-isbn')};
+  window.openISBNScannerForRegister=function(){openISBNCameraScanner({targetInputId:'db-isbn',afterScan:function(clean){if(typeof debGB==='function')debGB();else if(typeof cariGB==='function')cariGB();toast('ISBN berjaya diimbas: '+clean,'ok')}})};
+  window.closeISBNScannerForRegister=async function(){await closeActiveISBNScanner()};
 
   const oldCariGB=window.cariGB;
   window.cariGB=async function(){
