@@ -478,7 +478,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 // ═══════════════════════════════════════════════
 const GAS='https://script.google.com/macros/s/AKfycbx7rWTKKzkIywz93hVKXV_BF-CNz9CR8KC-AXFIUynTk-yof3VPLB27sXm2A66e4lvR/exec';
 let _tok=null,_me=null,_mR='',_pg='dash',_ch={},_sq=null,_rfT=null,_tmp=[];
-const D={buku:[],murid:[],guru:[],pinjaman:[],pelupusan:[],ok:false};
+const D={buku:[],murid:[],guru:[],pinjaman:[],pelupusan:[],tempahan_pss:[],ok:false};
 const AP={nm:'SMARTLIB',tag:'✦ SISTEM PENGURUSAN PUSAT SUMBER SEKOLAH ✦',em:'📚',logo:'',sch:'Sekolah Kebangsaan Pendidikan Khas Taiping'};
 const S={denda:.20,maks_hari:14,maks_pinjam:3};
 let _ann=[{id:1,ttl:'Selamat datang ke SMARTLIB',sub:'Sistem dimuatkan berjaya.',t:'Hari ini',w:'em'},{id:2,ttl:'Program Membaca 10 Minit',sub:'Setiap hari 8:00–8:10 pagi.',t:'20 Mei 2026',w:'cy'},{id:3,ttl:'Pulangkan Buku Lewat',sub:'Elak denda — pulangkan sebelum tarikh akhir.',t:'18 Mei 2026',w:'am'}];
@@ -567,6 +567,7 @@ function prosesD(data){
   if(Array.isArray(data.guru))D.guru=data.guru;
   if(Array.isArray(data.pinjaman))D.pinjaman=data.pinjaman.map(p=>({...p,denda:parseFloat(p.denda)||0}));
   if(Array.isArray(data.pelupusan))D.pelupusan=data.pelupusan;
+  if(Array.isArray(data.tempahan_pss))D.tempahan_pss=data.tempahan_pss;
   if(Array.isArray(data.settings))data.settings.forEach(r=>{
     if(r.kunci==='sekolah')AP.sch=r.nilai;if(r.kunci==='nama_app')AP.nm=r.nilai||'SMARTLIB';
     if(r.kunci==='tagline')AP.tag=r.nilai;if(r.kunci==='logo_emoji')AP.em=r.nilai||'📚';
@@ -1653,32 +1654,89 @@ function cetakKadTerus(jenis,id){
 // TEMPAHAN
 // ════════════════════════════════════════════════════
 function pgTempahan(){
-  const buku=D.buku||[],murid=D.murid||[],guru=D.guru||[];
+  const role=roleTempahanPss();
+  const boleh=bolehTempahanPss();
+  const admin=isAdminTempahanPss();
+  if(!boleh){
+    document.getElementById('content').innerHTML=`
+    <div class="card">
+      <div class="ct">🔖 Tempahan Penggunaan PSS</div>
+      <div class="al a-wa">Modul Tempahan hanya untuk Guru dan Staf.</div>
+    </div>`;
+    return;
+  }
+  const rows=tempahanRowsVisible();
+  const stats=tempahanStats(rows);
+  const nama=_me?.nama||'',email=_me?.email||'',kat=role==='staf'?'Staf':'Guru';
   document.getElementById('content').innerHTML=`
+  <div class="sg" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-bottom:12px">
+    ${[['Jumlah Tempahan',stats.jumlah,'🔖'],['Menunggu',stats.menunggu,'⏳'],['Diluluskan',stats.diluluskan,'✅'],['Selesai',stats.selesai,'📘'],['Hari Ini',stats.hariIni,'📅']].map(x=>`<div class="sc"><div><div class="sn">${x[0]}</div><div class="sv">${x[1]}</div></div><div class="si2">${x[2]}</div></div>`).join('')}
+  </div>
   <div class="g2">
     <div class="card">
-      <div class="ct">🔖 Buat Tempahan Baru</div>
-      <div class="fg"><label>Jenis</label><select id="tmp-j"><option value="murid">Murid</option><option value="guru">Guru</option></select></div>
-      <div class="fg" style="position:relative"><label>Cari Pengguna *</label><input type="search" id="tmp-pg" placeholder="Nama atau no. kad..." oninput="cariTmpPg()"><div id="tmp-pg-dd" style="background:var(--card);border:1.5px solid var(--bd);border-radius:8px;position:absolute;z-index:50;width:100%;display:none;max-height:140px;overflow-y:auto;box-shadow:var(--shl)"></div></div>
-      <div id="tmp-pg-sel" style="display:none;padding:8px;border-radius:7px;margin-bottom:8px;border:1px solid rgba(16,185,129,.3);background:var(--eml)"><strong id="tmp-pg-nm"></strong><br><small id="tmp-pg-i" style="color:var(--mu)"></small><input type="hidden" id="tmp-pg-id"></div>
-      <div class="fg" style="position:relative"><label>Cari Bahan *</label><input type="search" id="tmp-bk" placeholder="Judul atau no. panggilan..." oninput="cariTmpBk()"><div id="tmp-bk-dd" style="background:var(--card);border:1.5px solid var(--bd);border-radius:8px;position:absolute;z-index:50;width:100%;display:none;max-height:140px;overflow-y:auto;box-shadow:var(--shl)"></div></div>
-      <div id="tmp-bk-sel" style="display:none;padding:8px;border-radius:7px;margin-bottom:8px;border:1px solid rgba(6,182,212,.3);background:var(--cyl)"><strong id="tmp-bk-ttl"></strong><br><small id="tmp-bk-i" style="color:var(--mu)"></small><input type="hidden" id="tmp-bk-id"></div>
-      <button class="btn b-em" style="width:100%;justify-content:center" onclick="simpanTempahan()">🔖 Buat Tempahan</button>
+      <div class="ct">🔖 Borang Tempahan Penggunaan PSS</div>
+      <div class="fr c2">
+        <div class="fg"><label>Tarikh Tempahan *</label><input id="tp-tarikh" type="date"></div>
+        <div class="fg"><label>Lokasi *</label><select id="tp-lokasi">${tempahanLokasiOptions()}</select></div>
+        <div class="fg"><label>Masa Mula *</label><input id="tp-mula" type="time"></div>
+        <div class="fg"><label>Masa Tamat *</label><input id="tp-tamat" type="time"></div>
+        <div class="fg"><label>Nama Penempah *</label><input id="tp-nama" value="${hTmp(nama)}" placeholder="Nama guru / staf"></div>
+        <div class="fg"><label>Kategori Penempah *</label><select id="tp-kat">${tempahanKategoriOptions(kat)}</select></div>
+      </div>
+      <div class="fg"><label>Email Penempah</label><input id="tp-email" type="email" value="${hTmp(email)}" placeholder="email@moe-dl.edu.my"></div>
+      <div class="fg"><label>Program / Aktiviti *</label><input id="tp-program" placeholder="cth: Aktiviti NILAM / kelas masuk PSS"></div>
+      <div class="fr c2">
+        <div class="fg"><label>Bilangan Murid / Peserta</label><input id="tp-bil" type="number" min="0" placeholder="0"></div>
+        <div class="fg"><label>Keperluan</label><input id="tp-keperluan" placeholder="LCD, komputer, buku rujukan..."></div>
+      </div>
+      <div class="fg"><label>Catatan</label><textarea id="tp-catatan" rows="2" placeholder="Catatan tambahan"></textarea></div>
+      <button class="btn b-em" style="width:100%;justify-content:center" onclick="simpanTempahanPss()">🔖 Hantar Tempahan</button>
     </div>
     <div class="card">
-      <div class="ct">📋 Senarai Tempahan (${_tempahan.length})</div>
-      ${!_tempahan.length?'<div style="text-align:center;padding:26px;color:var(--mu)">Tiada tempahan aktif</div>':
-      `<div class="tw"><table><thead><tr><th>Pengguna</th><th>Bahan</th><th>Tarikh</th><th>Status</th><th>Tindakan</th></tr></thead>
-      <tbody>${_tempahan.map(t=>{const bk=buku.find(x=>String(x.id)===String(t.buku_id))||{judul:'?'};const pg2=t.jenis==='murid'?(murid.find(x=>String(x.id)===String(t.pengguna_id))||{nama:'?'}):(guru.find(x=>String(x.id)===String(t.pengguna_id))||{nama:'?'});return`<tr><td style="font-size:11px">${pg2.nama}</td><td style="font-size:10px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${bk.judul}</td><td>${t.tarikh}</td><td><span class="bdg ${t.status==='aktif'?'bg-am':'bg-em'}">${t.status}</span></td><td><button class="btn b-gh b-xs" onclick="batalTmp('${t.id}')" style="color:var(--red)">✕</button></td></tr>`}).join('')}</tbody></table></div>`}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <div class="ct" style="margin:0">${admin?'📋 Senarai Tempahan':'📋 Senarai Tempahan Saya'}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn b-gh b-sm" onclick="cetakLaporanTempahan()">🖨️ Cetak Laporan</button>
+          <button class="btn b-gh b-sm" onclick="exportTempahanCSV()">⬇️ Export CSV</button>
+        </div>
+      </div>
+      <div class="fr c2" style="margin-bottom:10px">
+        <div class="fg"><label>Filter Status</label><select id="tp-f-status" onchange="renderSenaraiTempahan()"><option value="">Semua status</option>${tempahanStatusOptions('')}</select></div>
+        <div class="fg"><label>Filter Tarikh</label><input id="tp-f-date" type="date" onchange="renderSenaraiTempahan()"></div>
+      </div>
+      <div id="tp-list"></div>
     </div>
-  </div>`;
+  </div>
+  ${modalEditTempahanHtml()}`;
+  renderSenaraiTempahan();
 }
-function cariTmpPg(){const j=document.getElementById('tmp-j').value;const q=(document.getElementById('tmp-pg').value||'').toLowerCase();const list=j==='murid'?D.murid:D.guru;const res=(list||[]).filter(p=>p.aktif!==false&&(p.nama?.toLowerCase().includes(q)||(p.nokad||'').includes(q)));const dd=document.getElementById('tmp-pg-dd');if(!q||!res.length){dd.style.display='none';return}dd.innerHTML=res.slice(0,5).map(p=>`<div style="padding:7px 11px;cursor:pointer;border-bottom:1px solid var(--bd);font-size:12px" onmousedown="pilihTmpPg(${p.id},'${j}')" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''"><strong>${p.nama}</strong><br><small>${p.nokad||''}</small></div>`).join('');dd.style.display='block'}
-function pilihTmpPg(id,j){const list=j==='murid'?D.murid:D.guru;const p=(list||[]).find(x=>String(x.id)===String(id));if(!p)return;document.getElementById('tmp-pg-id').value=id;document.getElementById('tmp-pg-nm').textContent=p.nama;document.getElementById('tmp-pg-i').textContent=`${j==='murid'?(p.tingkatan||'–'):(p.jawatan||'–')} | ${p.nokad}`;document.getElementById('tmp-pg-sel').style.display='block';document.getElementById('tmp-pg-dd').style.display='none';document.getElementById('tmp-pg').value=p.nama}
-function cariTmpBk(){const q=(document.getElementById('tmp-bk').value||'').toLowerCase();const res=(D.buku||[]).filter(b=>(b.judul+b.no_panggilan).toLowerCase().includes(q));const dd=document.getElementById('tmp-bk-dd');if(!q||!res.length){dd.style.display='none';return}dd.innerHTML=res.slice(0,5).map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return`<div style="padding:7px 11px;cursor:pointer;border-bottom:1px solid var(--bd);font-size:12px" onmousedown="pilihTmpBk(${b.id})" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''"><strong>${b.judul}</strong>${sp?' <span class="bdg bg-am" style="font-size:9px">Dipinjam</span>':''}<br><code style="font-size:10px">${b.no_panggilan}</code></div>`}).join('');dd.style.display='block'}
-function pilihTmpBk(id){const b=(D.buku||[]).find(x=>String(x.id)===String(id));if(!b)return;document.getElementById('tmp-bk-id').value=id;document.getElementById('tmp-bk-ttl').textContent=b.judul;document.getElementById('tmp-bk-i').textContent='No. Panggilan: '+b.no_panggilan;document.getElementById('tmp-bk-sel').style.display='block';document.getElementById('tmp-bk-dd').style.display='none';document.getElementById('tmp-bk').value=b.judul}
-function simpanTempahan(){const pgId=document.getElementById('tmp-pg-id').value,bukuId=document.getElementById('tmp-bk-id').value,j=document.getElementById('tmp-j').value;if(!pgId||!bukuId){toast('Pilih pengguna dan bahan','er');return}_tempahan.push({id:Date.now(),pengguna_id:pgId,buku_id:bukuId,jenis:j,tarikh:new Date().toLocaleDateString('ms-MY'),status:'aktif'});toast('✅ Tempahan dibuat!','ok');pgTempahan()}
-function batalTmp(id){_tempahan=_tempahan.filter(t=>String(t.id)!==String(id));toast('Tempahan dibatalkan','ok');pgTempahan()}
+function hTmp(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function vTmp(id){return (document.getElementById(id)?.value||'').trim()}
+function roleTempahanPss(){const r=String(window._mR||_mR||_me?.peranan||'').toLowerCase();if(r.includes('admin'))return'admin';if(r.includes('guru'))return'guru';if(r.includes('staf')||r.includes('staff'))return'staf';if(_me?.jawatan){const j=String(_me.jawatan||'').toLowerCase();return j.includes('staf')||j.includes('staff')?'staf':'guru'}return'murid'}
+function isAdminTempahanPss(){return roleTempahanPss()==='admin'}
+function bolehTempahanPss(){return ['admin','guru','staf'].includes(roleTempahanPss())}
+function ownTempahanPss(t){const em=String(_me?.email||'').trim().toLowerCase(),nm=String(_me?.nama||'').trim().toLowerCase();return(!!em&&String(t.email_penempah||'').trim().toLowerCase()===em)||String(t.nama_penempah||'').trim().toLowerCase()===nm}
+function tempahanRowsVisible(){let rows=[...(D.tempahan_pss||[])];if(!isAdminTempahanPss())rows=rows.filter(ownTempahanPss);return rows.sort((a,b)=>String(b.tarikh_tempahan||'').localeCompare(String(a.tarikh_tempahan||''))||String(b.masa_mula||'').localeCompare(String(a.masa_mula||'')))}
+function tempahanStats(rows){const todayStr=typeof today==='function'?today():new Date().toISOString().slice(0,10);return{jumlah:rows.length,menunggu:rows.filter(r=>r.status==='Menunggu').length,diluluskan:rows.filter(r=>r.status==='Diluluskan').length,selesai:rows.filter(r=>r.status==='Selesai').length,hariIni:rows.filter(r=>r.tarikh_tempahan===todayStr).length}}
+function tempahanStatusOptions(sel){return['Menunggu','Diluluskan','Ditolak','Selesai','Batal'].map(s=>`<option value="${s}" ${sel===s?'selected':''}>${s}</option>`).join('')}
+function tempahanLokasiOptions(sel=''){return['Ruang Bacaan PSS','Bilik Multimedia','Sudut NILAM','Ruang Komputer','Seluruh PSS','Lain-lain'].map(s=>`<option value="${s}" ${sel===s?'selected':''}>${s}</option>`).join('')}
+function tempahanKategoriOptions(sel='Guru'){return['Guru','Staf','Murid','Panitia','Unit / Kelab'].map(s=>`<option value="${s}" ${sel===s?'selected':''}>${s}</option>`).join('')}
+function kelasStatusTempahan(s){return s==='Menunggu'?'bg-am':s==='Diluluskan'?'bg-em':s==='Ditolak'?'bg-re':s==='Selesai'?'bg-cy':'bg-sl'}
+function filteredTempahanPss(){let rows=tempahanRowsVisible();const st=vTmp('tp-f-status'),dt=vTmp('tp-f-date');if(st)rows=rows.filter(r=>r.status===st);if(dt)rows=rows.filter(r=>r.tarikh_tempahan===dt);return rows}
+function renderSenaraiTempahan(){const box=document.getElementById('tp-list');if(!box)return;const rows=filteredTempahanPss();if(!rows.length){box.innerHTML='<div style="text-align:center;padding:26px;color:var(--mu)">Tiada tempahan direkodkan.</div>';return}box.innerHTML=`<div class="tw"><table><thead><tr><th>Tarikh</th><th>Masa</th><th>Nama Penempah</th><th>Program / Aktiviti</th><th>Lokasi</th><th>Bil.</th><th>Status</th><th>Tindakan</th></tr></thead><tbody>${rows.map(t=>`<tr><td>${hTmp(t.tarikh_tempahan||'-')}</td><td>${hTmp((t.masa_mula||'-')+' - '+(t.masa_tamat||'-'))}</td><td style="font-size:11px">${hTmp(t.nama_penempah||'-')}<br><small style="color:var(--mu)">${hTmp(t.kategori_penempah||'-')}</small></td><td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${hTmp(t.program_aktiviti||'-')}</td><td style="font-size:11px">${hTmp(t.lokasi||'-')}</td><td>${hTmp(t.bil_murid||'0')}</td><td><span class="bdg ${kelasStatusTempahan(t.status)}">${hTmp(t.status||'Menunggu')}</span></td><td>${aksiTempahanPss(t)}</td></tr>`).join('')}</tbody></table></div>`}
+function aksiTempahanPss(t){const admin=isAdminTempahanPss(),own=ownTempahanPss(t),id=hTmp(t.id);let btn='';if(admin){btn+=`<button class="btn b-gh b-xs" onclick="editTempahanPss('${id}')">✏️</button><button class="btn b-em b-xs" onclick="ubahStatusTempahanPss('${id}','Diluluskan')">Lulus</button><button class="btn b-gh b-xs" style="color:var(--red)" onclick="ubahStatusTempahanPss('${id}','Ditolak')">Tolak</button><button class="btn b-cy b-xs" onclick="ubahStatusTempahanPss('${id}','Selesai')">Selesai</button><button class="btn b-gh b-xs" onclick="ubahStatusTempahanPss('${id}','Batal')">Batal</button><button class="btn b-gh b-xs" style="color:var(--red)" onclick="padamTempahanPss('${id}')">🗑️</button>`}else if(own&&t.status==='Menunggu'){btn+=`<button class="btn b-gh b-xs" style="color:var(--red)" onclick="ubahStatusTempahanPss('${id}','Batal')">Batal</button>`}return`<div style="display:flex;gap:3px;flex-wrap:wrap">${btn||'-'}</div>`}
+function dataTempahanPss(prefix='tp'){return{tarikh_tempahan:vTmp(prefix+'-tarikh'),masa_mula:vTmp(prefix+'-mula'),masa_tamat:vTmp(prefix+'-tamat'),nama_penempah:vTmp(prefix+'-nama'),kategori_penempah:vTmp(prefix+'-kat'),email_penempah:vTmp(prefix+'-email'),program_aktiviti:vTmp(prefix+'-program'),lokasi:vTmp(prefix+'-lokasi'),bil_murid:vTmp(prefix+'-bil')||'0',keperluan:vTmp(prefix+'-keperluan'),status:vTmp(prefix+'-status')||'Menunggu',catatan:vTmp(prefix+'-catatan')}}
+function validTempahanPss(d){return d.tarikh_tempahan&&d.masa_mula&&d.masa_tamat&&d.nama_penempah&&d.program_aktiviti&&d.lokasi&&d.masa_tamat>d.masa_mula}
+function konflikTempahanPss(d,abaikanId=''){return(D.tempahan_pss||[]).find(t=>String(t.id)!==String(abaikanId)&&t.tarikh_tempahan===d.tarikh_tempahan&&t.lokasi===d.lokasi&&!['Ditolak','Batal'].includes(t.status)&&d.masa_mula<String(t.masa_tamat||'')&&d.masa_tamat>String(t.masa_mula||''))}
+function resetTempahanPss(){['tarikh','mula','tamat','program','bil','keperluan','catatan'].forEach(k=>{const el=document.getElementById('tp-'+k);if(el)el.value=''});const nm=document.getElementById('tp-nama'),em=document.getElementById('tp-email'),kat=document.getElementById('tp-kat');if(nm)nm.value=_me?.nama||'';if(em)em.value=_me?.email||'';if(kat)kat.value=roleTempahanPss()==='staf'?'Staf':'Guru'}
+async function simpanTempahanPss(){if(!bolehTempahanPss()){toast('Modul Tempahan hanya untuk Guru dan Staf.','er');return}const d=dataTempahanPss('tp');d.status='Menunggu';d.created_at=new Date().toISOString();if(!validTempahanPss(d)){toast('Sila lengkapkan maklumat tempahan.','er');return}if(konflikTempahanPss(d)&&!confirm('Slot ini bertindih dengan tempahan lain. Teruskan juga?'))return;const r=await api({action:'tambah_tempahan_pss',data:d});if(!r?.ok){toast(r?.error||'Gagal simpan tempahan.','er');return}await muatSemua(true);pgTempahan();if(r.data&&r.data.email_admin_ok===false)toast('Tempahan berjaya disimpan, tetapi email notifikasi gagal dihantar.','wa');else toast('Tempahan berjaya dihantar. Admin telah dimaklumkan melalui email.','ok')}
+function modalEditTempahanHtml(){return`<div class="mbg" id="m-edit-tempahan"><div class="modal"><div class="m-hdr"><h3>✏️ Edit Tempahan PSS</h3><button class="m-x" onclick="closeM('m-edit-tempahan')">✕</button></div><input type="hidden" id="te-id"><div class="fr c2"><div class="fg"><label>Tarikh Tempahan *</label><input id="te-tarikh" type="date"></div><div class="fg"><label>Lokasi *</label><select id="te-lokasi">${tempahanLokasiOptions()}</select></div><div class="fg"><label>Masa Mula *</label><input id="te-mula" type="time"></div><div class="fg"><label>Masa Tamat *</label><input id="te-tamat" type="time"></div><div class="fg"><label>Nama Penempah *</label><input id="te-nama"></div><div class="fg"><label>Kategori Penempah *</label><select id="te-kat">${tempahanKategoriOptions()}</select></div><div class="fg"><label>Email Penempah</label><input id="te-email" type="email"></div><div class="fg"><label>Status</label><select id="te-status">${tempahanStatusOptions('Menunggu')}</select></div></div><div class="fg"><label>Program / Aktiviti *</label><input id="te-program"></div><div class="fr c2"><div class="fg"><label>Bilangan Murid / Peserta</label><input id="te-bil" type="number" min="0"></div><div class="fg"><label>Keperluan</label><input id="te-keperluan"></div></div><div class="fg"><label>Catatan</label><textarea id="te-catatan" rows="2"></textarea></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-edit-tempahan')">Batal</button><button class="btn b-em" onclick="simpanEditTempahanPss()">💾 Simpan</button></div></div></div>`}
+function editTempahanPss(id){const t=(D.tempahan_pss||[]).find(x=>String(x.id)===String(id));if(!t)return;if(!isAdminTempahanPss()){toast('Akses tidak dibenarkan.','er');return}['tarikh','mula','tamat','nama','kat','email','program','lokasi','bil','keperluan','status','catatan'].forEach(k=>{const map={tarikh:'tarikh_tempahan',mula:'masa_mula',tamat:'masa_tamat',nama:'nama_penempah',kat:'kategori_penempah',email:'email_penempah',program:'program_aktiviti',lokasi:'lokasi',bil:'bil_murid',keperluan:'keperluan',status:'status',catatan:'catatan'};const el=document.getElementById('te-'+k);if(el)el.value=t[map[k]]||''});document.getElementById('te-id').value=id;openM('m-edit-tempahan')}
+async function simpanEditTempahanPss(){const id=vTmp('te-id'),d=dataTempahanPss('te');if(!validTempahanPss(d)){toast('Sila lengkapkan maklumat tempahan.','er');return}if(konflikTempahanPss(d,id)&&!confirm('Slot ini bertindih dengan tempahan lain. Teruskan juga?'))return;const r=await api({action:'kemaskini_tempahan_pss',id,data:d});if(!r?.ok){toast(r?.error||'Gagal kemaskini tempahan.','er');return}closeM('m-edit-tempahan');await muatSemua(true);pgTempahan();toast('Tempahan dikemaskini.','ok')}
+async function ubahStatusTempahanPss(id,status){const t=(D.tempahan_pss||[]).find(x=>String(x.id)===String(id));if(!t)return;if(!isAdminTempahanPss()&&!(ownTempahanPss(t)&&status==='Batal'&&t.status==='Menunggu')){toast('Akses tidak dibenarkan.','er');return}const r=await api({action:'status_tempahan_pss',id,status,oleh:{nama:_me?.nama||'',peranan:roleTempahanPss()}});if(!r?.ok){toast(r?.error||'Gagal kemaskini status.','er');return}await muatSemua(true);pgTempahan();toast('Status tempahan dikemaskini.','ok')}
+async function padamTempahanPss(id){if(!isAdminTempahanPss()){toast('Akses tidak dibenarkan.','er');return}if(!confirm('Padam tempahan ini?'))return;const r=await api({action:'padam',sheet:'tempahan_pss',id});if(!r?.ok){toast(r?.error||'Gagal padam tempahan.','er');return}await muatSemua(true);pgTempahan();toast('Tempahan dipadam.','ok')}
+function cetakLaporanTempahan(){const rows=filteredTempahanPss();const sch=AP.sekolah||'Sekolah';const html=`<h2 style="margin:0 0 4px">Laporan Tempahan Penggunaan PSS</h2><div style="font-size:12px;margin-bottom:12px">${hTmp(sch)}<br>Tarikh laporan: ${new Date().toLocaleDateString('ms-MY')}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${['Tarikh','Masa','Nama','Program / Aktiviti','Lokasi','Bil.','Status'].map(h=>`<th style="border:1px solid #999;padding:5px;text-align:left">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(t=>`<tr><td style="border:1px solid #999;padding:5px">${hTmp(t.tarikh_tempahan||'')}</td><td style="border:1px solid #999;padding:5px">${hTmp((t.masa_mula||'')+' - '+(t.masa_tamat||''))}</td><td style="border:1px solid #999;padding:5px">${hTmp(t.nama_penempah||'')}</td><td style="border:1px solid #999;padding:5px">${hTmp(t.program_aktiviti||'')}</td><td style="border:1px solid #999;padding:5px">${hTmp(t.lokasi||'')}</td><td style="border:1px solid #999;padding:5px">${hTmp(t.bil_murid||'')}</td><td style="border:1px solid #999;padding:5px">${hTmp(t.status||'')}</td></tr>`).join('')}</tbody></table>`;openPrintWindow('Laporan Tempahan PSS',html,'body{font-family:Arial,sans-serif;color:#111}')}
+function exportTempahanCSV(){const h=['id','tarikh_tempahan','masa_mula','masa_tamat','nama_penempah','kategori_penempah','email_penempah','program_aktiviti','lokasi','bil_murid','keperluan','status','catatan','created_at'];const rows=[h.join(','),...filteredTempahanPss().map(r=>h.map(k=>`"${String(r[k]||'').replace(/"/g,'""')}"`).join(','))];const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'}));a.download='tempahan_pss_'+(typeof today==='function'?today():Date.now())+'.csv';a.click();toast('CSV tempahan dieksport.','ok')}
 
 // ════════════════════════════════════════════════════
 // SCAN, OPAC, LAPORAN, PELUPUSAN, NILAM, ADMIN asas
@@ -2119,7 +2177,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 
   window.limitAhliSirkulasi = function(){
     if(window._mR !== 'ahli') return;
-    const allowed = ['pinjam','pulang','denda','opac'];
+    const allowed = ['pinjam','pulang','denda','tempahan','opac'];
     document.querySelectorAll('.sbi[onclick^="nav("]').forEach(el=>{
       const m=(el.getAttribute('onclick')||'').match(/nav\('([^']+)'\)/);
       if(m && !allowed.includes(m[1])) el.style.display='none';
@@ -2128,7 +2186,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 
   const oldNav = window.nav;
   window.nav = function(p){
-    if(window._mR==='ahli' && !['pinjam','pulang','denda','opac'].includes(p)) p='pinjam';
+    if(window._mR==='ahli' && !['pinjam','pulang','denda','tempahan','opac'].includes(p)) p='pinjam';
     return oldNav(p);
   };
 
