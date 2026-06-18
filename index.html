@@ -2667,6 +2667,55 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     holder.insertAdjacentHTML('afterend','<div class="fg"><label>Jilid / Siri</label><input id="eb-jilid" type="text" placeholder="cth: 1, 2, 3" oninput="syncEditJilidNoPanggilan()"><small>Isi jika buku bersiri / berjilid.</small></div>');
   }
 
+  function enhanceEditISBNTools(){
+    const isbn = document.getElementById('eb-isbn');
+    if(!isbn) return;
+    isbn.type = 'text';
+    isbn.placeholder = 'Scan / taip ISBN';
+    isbn.onkeydown = window.handleEditISBNEnter;
+
+    let wrap = isbn.closest('.isbn-edit-row');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.className = 'isbn-edit-row';
+      isbn.parentNode.insertBefore(wrap, isbn);
+      wrap.appendChild(isbn);
+    }
+    if(document.getElementById('btn-edit-isbn-camera')) return;
+
+    const camera = document.createElement('button');
+    camera.type = 'button';
+    camera.id = 'btn-edit-isbn-camera';
+    camera.className = 'btn b-cy b-sm icon-btn';
+    camera.title = 'Scan Kamera';
+    camera.textContent = '📷';
+    camera.onclick = window.openEditISBNCameraScanner;
+
+    const physical = document.createElement('button');
+    physical.type = 'button';
+    physical.id = 'btn-edit-isbn-physical';
+    physical.className = 'btn b-gh b-sm icon-btn';
+    physical.title = 'Scanner Fizikal';
+    physical.textContent = '🔫';
+    physical.onclick = window.focusEditISBNPhysicalScanner;
+
+    const cari = document.createElement('button');
+    cari.type = 'button';
+    cari.id = 'btn-edit-isbn-search';
+    cari.className = 'btn b-em b-sm';
+    cari.textContent = '🔍 Cari ISBN';
+    cari.onclick = window.cariISBNEdit;
+
+    wrap.appendChild(camera);
+    wrap.appendChild(physical);
+    wrap.appendChild(cari);
+
+    const fg = wrap.closest('.fg');
+    if(fg && !document.getElementById('eb-gb-st')){
+      fg.insertAdjacentHTML('beforeend','<small id="eb-gb-st" style="color:var(--cy)"></small>');
+    }
+  }
+
   window.syncEditJilidNoPanggilan = function(){
     const np = document.getElementById('eb-npn');
     if(!np) return;
@@ -2702,6 +2751,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     window.editB = function(id){
       const out = oldEditB.apply(this, arguments);
       injectEditJilid();
+      enhanceEditISBNTools();
       const b = (window.D?.buku || D.buku || []).find(x => String(x.id) === String(id));
       const el = document.getElementById('eb-jilid');
       if(el && b) el.value = b.jilid || '';
