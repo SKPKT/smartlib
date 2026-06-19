@@ -372,8 +372,8 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
     <div id="l-ahli" style="display:none">
       <div class="l-err" id="l-err-b"></div>
       <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);border-radius:7px;padding:8px 11px;margin-bottom:10px;font-size:10.5px;color:rgba(255,255,255,.6)">🎓 Pengawas PSS — log masuk untuk rekod pinjaman anda.</div>
-      <div class="lfg"><label>No. Kad Pengenalan</label><input id="l-nokad" type="text" placeholder="cth: 050101015001"></div>
-      <div class="lfg"><label>No. Ahli / Kata Laluan</label><input id="l-ahli-p" type="password" placeholder="No. Ahli PSS"></div>
+      <div class="lfg"><label>No. Ahli</label><input id="l-nokad" type="text" placeholder="cth: M-0024 / G-002"></div>
+      <div class="lfg"><label>Kata Laluan (No. IC)</label><input id="l-ahli-p" type="password" placeholder="No. Kad Pengenalan"></div>
       <button class="l-btn cy" onclick="doLogin('ahli')">🔍 Log Masuk Ahli</button>
     </div>
     <div id="l-opac" style="display:none">
@@ -634,11 +634,12 @@ async function doLogin(jenis){
     }catch(e){err.textContent='Gagal sambung: '+e.message;err.style.display='block';btn.textContent='✨ Log Masuk';btn.disabled=false}
   } else {
     const nokad=document.getElementById('l-nokad').value.trim();
+    const pass=document.getElementById('l-ahli-p')?.value.trim()||'';
     const err=document.getElementById('l-err-b');err.style.display='none';
-    if(!nokad){err.textContent='Sila masukkan No. K/P.';err.style.display='block';return}
-    const ahli=[...(D.murid||[]),...(D.guru||[])].find(x=>x.nokad===nokad&&x.aktif!==false&&x.aktif!=='FALSE');
+    if(!nokad||!pass){err.textContent='Sila masukkan No. Ahli dan kata laluan No. IC.';err.style.display='block';return}
+    const ahli=cariAhliLoginKad(nokad,pass);
     if(!ahli){err.textContent='Ahli tidak dijumpai dalam sistem.';err.style.display='block';return}
-    _me={...ahli,username:ahli.nokad,peranan:'ahli'};_mR='ahli';
+    _me={...ahli,username:formatIdKadAhli(ahli.jenis_pengguna,ahli),no_ahli:formatIdKadAhli(ahli.jenis_pengguna,ahli),peranan:'ahli'};_mR='ahli';
     masuklah();
   }
 }
@@ -1533,7 +1534,7 @@ function bukaTVMode(){ return pgTV(); }
 // ════════════════════════════════════════════════════
 function pgKadAhli(){
   const murid=D.murid||[],guru=D.guru||[];
-  const semua=[...murid.map(m=>({...m,jenis:'murid'})),...guru.map(g=>({...g,jenis:'guru'}))];
+  const semua=semuaAhliKad();
   const sch=AP.sekolah||AP.nama||'PSS';
   const sah='31 Disember '+new Date().getFullYear();
   document.getElementById('content').innerHTML=`
@@ -1546,8 +1547,8 @@ function pgKadAhli(){
       <div class="fg"><label>Pilih Ahli (cetak satu)</label>
         <select id="kad-sel" onchange="prevKad()">
           <option value="">– Pilih Ahli –</option>
-          <optgroup label="Murid">${murid.map(m=>`<option value="murid-${m.id}">${m.nama} (${m.tingkatan||'–'})</option>`).join('')}</optgroup>
-          <optgroup label="Guru">${guru.map(g=>`<option value="guru-${g.id}">${g.nama} (${g.jawatan||'–'})</option>`).join('')}</optgroup>
+          <optgroup label="Murid">${murid.map(m=>`<option value="murid|${m.id}">${m.nama} (${m.tingkatan||'–'})</option>`).join('')}</optgroup>
+          <optgroup label="Guru">${guru.map(g=>`<option value="guru|${g.id}">${g.nama} (${g.jawatan||'–'})</option>`).join('')}</optgroup>
         </select>
       </div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
@@ -1571,15 +1572,51 @@ function pgKadAhli(){
       <th><input type="checkbox" onchange="document.querySelectorAll('.kad-chk').forEach(c=>c.checked=this.checked)"></th>
       <th>Nama</th><th>Jenis</th><th>No. K/P</th><th>Kelas/Jawatan</th><th>Status</th><th>Cetak</th>
     </tr></thead><tbody>${semua.map(a=>{const ak=a.aktif!==false&&a.aktif!=='FALSE';return`<tr>
-      <td><input type="checkbox" class="kad-chk" value="${a.jenis}-${a.id}"></td>
+      <td><input type="checkbox" class="kad-chk" value="${a.jenis_pengguna}|${a.id}"></td>
       <td><div style="display:flex;align-items:center;gap:7px"><div style="width:26px;height:26px;border-radius:50%;background:${avCol(a.nama)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${ini(a.nama)}</div><strong style="font-size:12px">${a.nama}</strong></div></td>
-      <td><span class="bdg ${a.jenis==='murid'?'bg-cy':'bg-pu'}">${a.jenis}</span></td>
+      <td><span class="bdg ${a.jenis_pengguna==='murid'?'bg-cy':'bg-pu'}">${a.jenis_pengguna}</span></td>
       <td><code style="font-size:11px">${a.nokad||'–'}</code></td>
-      <td>${a.jenis==='murid'?(a.tingkatan||'–'):(a.jawatan||'–')}</td>
+      <td>${a.jenis_pengguna==='murid'?(a.tingkatan||'–'):(a.jawatan||'–')}</td>
       <td><span class="bdg ${ak?'bg-em':'bg-re'}">${ak?'Aktif':'Tidak Aktif'}</span></td>
-      <td><button class="btn b-cy b-xs" onclick="cetakKadTerus('${a.jenis}',${a.id})">🖨️</button></td>
+      <td><button class="btn b-cy b-xs" onclick="cetakKadTerus('${a.jenis_pengguna}',${a.id})">🖨️</button></td>
     </tr>`}).join('')}</tbody></table></div>
   </div>`;prevKad();
+}
+function semuaAhliKad(){
+  return [
+    ...(D.murid||[]).map(m=>({...m,jenis_pengguna:'murid'})),
+    ...(D.guru||[]).map(g=>({...g,jenis_pengguna:'guru'}))
+  ];
+}
+function formatIdKadAhli(jenis,a){
+  const pref=jenis==='guru'?'G':'M';
+  const pad=2;
+  return pref+'-'+String(a?.id||'').padStart(pad,'0');
+}
+function getAhliKadByValue(value){
+  const [jenis,id]=String(value||'').split('|');
+  if(jenis==='guru'){
+    const g=(D.guru||[]).find(x=>String(x.id)===String(id));
+    return g?{...g,jenis_pengguna:'guru'}:null;
+  }
+  if(jenis==='murid'){
+    const m=(D.murid||[]).find(x=>String(x.id)===String(id));
+    return m?{...m,jenis_pengguna:'murid'}:null;
+  }
+  return null;
+}
+function normAhliLogin(s){return String(s||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')}
+function cariAhliLoginKad(noAhli,passIC){
+  const no=normAhliLogin(noAhli),pass=normAhliLogin(passIC);
+  if(!no||!pass)return null;
+  return semuaAhliKad().find(a=>{
+    const aktif=a.aktif!==false&&String(a.aktif).toUpperCase()!=='FALSE'&&String(a.aktif)!=='0';
+    const kad=formatIdKadAhli(a.jenis_pengguna,a);
+    const noPad=String(a.id||'').padStart(2,'0');
+    const noOk=[a.no_ahli,kad,noPad,a.id].some(v=>normAhliLogin(v)===no);
+    const passOk=normAhliLogin(a.nokad)===pass;
+    return aktif&&noOk&&passOk;
+  })||null;
 }
 function genKadHTML(a,jenis,sch,sah){
   return genKadPrintHTML(a,jenis,sch,sah,true);
@@ -1590,12 +1627,13 @@ function memberCardPrintCss(){return `
 .member-card-header{text-align:center;padding:10px 8px 6px}.member-card-logo{width:44px;height:44px;object-fit:contain;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.74);color:#0b7f65;font-size:22px;font-weight:900}.member-card-logo img{width:100%;height:100%;object-fit:contain;display:block}.member-card-system{font-size:12px;font-weight:800;color:#0b7f65;letter-spacing:.2px}.member-card-school{font-size:8.8px;line-height:1.25;font-weight:700;color:#234;margin-top:2px}.member-card-body{padding:8px 10px 6px;text-align:center}.member-card-type{font-size:11px;font-weight:800;text-transform:uppercase;color:#fff;margin-bottom:6px;letter-spacing:.4px;text-shadow:0 1px 2px rgba(0,0,0,.18)}.member-card-name{background:#fff;color:#111827;font-size:11px;font-weight:800;border-radius:8px;padding:6px 8px;line-height:1.25;margin-bottom:6px;min-height:28px;display:flex;align-items:center;justify-content:center}.member-card-meta{font-size:8.5px;line-height:1.4;color:#0f172a;font-weight:700}.member-card-footer{background:#fff;padding:6px 8px 8px;text-align:center}.member-card-barcode{width:100%;height:34px;display:block}.member-card-code{margin-top:3px;font-size:8px;font-weight:700;color:#111;font-family:Arial,monospace}.member-card-copy{margin-top:3px;font-size:5.5px;color:#64748b}
 @media print{body{background:#fff}.member-card-print{box-shadow:none}}`}
 function genKadPrintHTML(a,jenis,sch,sah,isPreview=false){
-  const no=(jenis==='murid'?'M':'G')+'-'+String(a.id||'').padStart(4,'0');
+  jenis=jenis||a.jenis_pengguna||a.jenis||'murid';
+  const no=formatIdKadAhli(jenis,a);
   const kelas=jenis==='murid'?(a.tingkatan||'–'):(a.jawatan||'–');
-  const code=String(a.no_ahli||a.id||a.nokad||no).replace(/\s+/g,'');
+  const code=no;
   const jenisLabel=jenis==='murid'?'PELAJAR':(String(kelas).toLowerCase().includes('staf')?'STAF':'GURU / STAF');
   const logo=AP.logo?`<img src="${AP.logo}" alt="Logo">`:(AP.em||'📚');
-  return `<div class="member-card-print${isPreview?' member-card-preview':''}"><div class="member-card-header"><div class="member-card-logo">${logo}</div><div class="member-card-system">${AP.nama||'SMARTLIB'}</div><div class="member-card-school">${sch||'Sekolah Kebangsaan Pendidikan Khas Taiping'}</div></div><div class="member-card-body"><div class="member-card-type">${jenisLabel}</div><div class="member-card-name">${a.nama||'Nama Ahli'}</div><div class="member-card-meta"><div>ID: ${no}</div><div>No. Kad/Ahli: ${a.nokad||code||'–'}</div><div>${jenis==='murid'?'Kelas':'Jawatan'}: ${kelas||'–'}</div><div>Sah Hingga: ${sah||'–'}</div></div></div><div class="member-card-footer"><svg class="member-card-barcode" data-bc="${code||no}"></svg><div class="member-card-code">${code||no}</div><div class="member-card-copy">© 2026 SMARTLIB |Syahida Suffian</div></div></div>`;
+  return `<div class="member-card-print${isPreview?' member-card-preview':''}"><div class="member-card-header"><div class="member-card-logo">${logo}</div><div class="member-card-system">${AP.nama||'SMARTLIB'}</div><div class="member-card-school">${sch||'Sekolah Kebangsaan Pendidikan Khas Taiping'}</div></div><div class="member-card-body"><div class="member-card-type">${jenisLabel}</div><div class="member-card-name">${a.nama||'Nama Ahli'}</div><div class="member-card-meta"><div>ID: ${no}</div><div>No. Kad/Ahli: ${a.nokad||a.no_ahli||'–'}</div><div>${jenis==='murid'?'Kelas':'Jawatan'}: ${kelas||'–'}</div><div>Sah Hingga: ${sah||'–'}</div></div></div><div class="member-card-footer"><svg class="member-card-barcode" data-bc="${code}"></svg><div class="member-card-code">${code}</div><div class="member-card-copy">© 2026 SMARTLIB |Syahida Suffian</div></div></div>`;
 }
 function renderKadBarcodes(scope=document){
   setTimeout(()=>{scope.querySelectorAll('.member-card-barcode[data-bc]').forEach(svg=>{try{JsBarcode(svg,svg.getAttribute('data-bc'),{format:'CODE128',width:1.15,height:30,displayValue:false,margin:0})}catch(e){console.warn(e)}})},60);
@@ -1614,24 +1652,24 @@ function prevKad(){
   const sah=document.getElementById('kad-sah')?.value||'';
   const wrap=document.getElementById('kad-prev-wrap');if(!wrap)return;
   if(!sel){wrap.innerHTML=genKadHTML({nama:'Nama Ahli',nokad:'050101-01-5001',tingkatan:'–',id:'0001'},'murid',sch,sah);renderKadBarcodes(wrap);return}
-  const[j,id]=sel.split('-');const list=j==='murid'?D.murid:D.guru;const a=list?.find(x=>String(x.id)===id);
-  if(!a)return;wrap.innerHTML=genKadHTML(a,j,sch,sah);renderKadBarcodes(wrap);
+  const a=getAhliKadByValue(sel);
+  if(!a)return;wrap.innerHTML=genKadHTML(a,a.jenis_pengguna,sch,sah);renderKadBarcodes(wrap);
 }
 function cetakSatuKad(){
   const sel=document.getElementById('kad-sel')?.value||'';if(!sel){toast('Sila pilih ahli untuk dicetak.','wa');return}
   const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
   const sah=document.getElementById('kad-sah')?.value||'';
-  const[j,id]=sel.split('-');const list=j==='murid'?D.murid:D.guru;const a=list?.find(x=>String(x.id)===id);
+  const a=getAhliKadByValue(sel);
   if(!a){toast('Ahli tidak dijumpai','er');return}
-  openPrintWindow('Kad Ahli — '+a.nama,`<div class="member-card-print-grid">${genKadPrintHTML(a,j,sch,sah)}</div>`,memberCardPrintCss());
+  openPrintWindow('Kad Ahli — '+a.nama,`<div class="member-card-print-grid">${genKadPrintHTML(a,a.jenis_pengguna,sch,sah)}</div>`,memberCardPrintCss());
   toast('🪪 Tetingkap cetak dibuka!','ok');
 }
 function cetakSemuaKad(){
   const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
   const sah=document.getElementById('kad-sah')?.value||'';
-  const semua=[...(D.murid||[]).map(m=>({...m,jenis:'murid'})),...(D.guru||[]).map(g=>({...g,jenis:'guru'}))];
+  const semua=semuaAhliKad();
   if(!semua.length){toast('Tiada ahli untuk dicetak.','wa');return}
-  openPrintWindow('Kad Ahli Semua',`<div class="member-card-print-grid">${semua.map(a=>genKadPrintHTML(a,a.jenis,sch,sah)).join('')}</div>`,memberCardPrintCss());
+  openPrintWindow('Kad Ahli Semua',`<div class="member-card-print-grid">${semua.map(a=>genKadPrintHTML(a,a.jenis_pengguna,sch,sah)).join('')}</div>`,memberCardPrintCss());
   toast(`🖨️ ${semua.length} kad siap dicetak!`,'ok');
 }
 function cetakBatchKad(){
@@ -1639,15 +1677,15 @@ function cetakBatchKad(){
   if(!sel.length){toast('Sila pilih ahli untuk dicetak.','wa');return}
   const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
   const sah=document.getElementById('kad-sah')?.value||'';
-  const kads=sel.map(s=>{const[j,id]=s.split('-');const list=j==='murid'?D.murid:D.guru;const a=list?.find(x=>String(x.id)===id);return a?genKadPrintHTML(a,j,sch,sah):''}).join('');
+  const kads=sel.map(s=>{const a=getAhliKadByValue(s);return a?genKadPrintHTML(a,a.jenis_pengguna,sch,sah):''}).join('');
   openPrintWindow(`Kad Ahli (${sel.length})`,`<div class="member-card-print-grid">${kads}</div>`,memberCardPrintCss());
   toast(`🖨️ ${sel.length} kad dicetak!`,'ok');
 }
 function cetakKadTerus(jenis,id){
-  const list=jenis==='murid'?D.murid:D.guru;const a=list?.find(x=>String(x.id)===String(id));
+  const a=getAhliKadByValue(jenis+'|'+id);
   if(!a){toast('Ahli tidak dijumpai','er');return}
   const sch=AP.sekolah||AP.nama||'PSS';const sah='31 Dis '+new Date().getFullYear();
-  openPrintWindow('Kad — '+a.nama,`<div class="member-card-print-grid">${genKadPrintHTML(a,jenis,sch,sah)}</div>`,memberCardPrintCss());
+  openPrintWindow('Kad — '+a.nama,`<div class="member-card-print-grid">${genKadPrintHTML(a,a.jenis_pengguna,sch,sah)}</div>`,memberCardPrintCss());
   toast('🪪 Kad '+a.nama,'ok');
 }
 // ════════════════════════════════════════════════════
@@ -1990,13 +2028,14 @@ async function doLogin(jenis){
 
   if(jenis==='ahli'){
     const nokad=(document.getElementById('l-nokad')?.value||'').trim();
-    if(!nokad){setLoginError('l-err-b','Sila masukkan No. K/P.');return;}
+    const pass=(document.getElementById('l-ahli-p')?.value||'').trim();
+    if(!nokad||!pass){setLoginError('l-err-b','Sila masukkan No. Ahli dan kata laluan No. IC.');return;}
     // Cuba guna data sedia ada; kalau kosong, muat di latar terlebih dahulu tetapi jangan sekat terlalu lama.
     try{
       if(!(D.murid?.length||D.guru?.length)) await muatSemua(true);
-      const ahli=[...(D.murid||[]),...(D.guru||[])].find(x=>x.nokad===nokad&&x.aktif!==false&&x.aktif!=='FALSE'&&x.aktif!=='false');
+      const ahli=cariAhliLoginKad(nokad,pass);
       if(!ahli){setLoginError('l-err-b','Ahli tidak dijumpai dalam sistem.');return;}
-      _me={...ahli,username:ahli.nokad,peranan:'ahli'};_mR='ahli';masuklah();
+      _me={...ahli,username:formatIdKadAhli(ahli.jenis_pengguna,ahli),no_ahli:formatIdKadAhli(ahli.jenis_pengguna,ahli),peranan:'ahli'};_mR='ahli';masuklah();
     }catch(e){setLoginError('l-err-b','Data ahli belum siap dimuat. Cuba semula sebentar lagi.');}
   }
 }
@@ -2139,17 +2178,12 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     if(jenis==='ahli'){
       const nokad=(document.getElementById('l-nokad')?.value||'').trim();
       const pass=(document.getElementById('l-ahli-p')?.value||'').trim();
-      if(!nokad){ setErr('l-err-b','Sila masukkan No. K/P.'); return; }
+      if(!nokad||!pass){ setErr('l-err-b','Sila masukkan No. Ahli dan kata laluan No. IC.'); return; }
       try{
         if(!(D.murid?.length || D.guru?.length)) await muatSemua(true);
-        const ahli=[...(D.murid||[]),...(D.guru||[])].find(x=>{
-          const aktif = x.aktif!==false && String(x.aktif).toUpperCase()!=='FALSE' && String(x.aktif)!=='0';
-          const nok = String(x.nokad||'').trim()===nokad;
-          const passOk = !pass || String(x.no_ahli||x.id||x.nokad||'').trim()===pass || String(x.nokad||'').trim()===pass;
-          return aktif && nok && passOk;
-        });
+        const ahli=cariAhliLoginKad(nokad,pass);
         if(!ahli){ setErr('l-err-b','Ahli tidak dijumpai atau kata laluan ahli salah.'); return; }
-        window._me={...ahli, username:ahli.nokad, peranan:'ahli'};
+        window._me={...ahli, username:formatIdKadAhli(ahli.jenis_pengguna,ahli), no_ahli:formatIdKadAhli(ahli.jenis_pengguna,ahli), peranan:'ahli'};
         window._mR='ahli';
         masuklah();
         limitAhliSirkulasi();
