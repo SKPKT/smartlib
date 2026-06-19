@@ -722,6 +722,11 @@ document.addEventListener('click',e=>{if(!e.target.closest('#notif-dd')&&!e.targ
 
 // CARIAN PANTAS
 function cariPantas(){
+  if(window._mR==='ahli'){
+    const dd=document.getElementById('src-dd');
+    if(dd)dd.style.display='none';
+    return;
+  }
   const q=(document.getElementById('tb-src')?.value||'').toLowerCase().trim();
   const dd=document.getElementById('src-dd');
   if(!q||q.length<2){if(dd)dd.style.display='none';return}
@@ -2231,21 +2236,28 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     ['tb-av','sb-av'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=i; });
     const unm=document.getElementById('sb-unm'); if(unm) unm.textContent=nama;
     const rol=document.getElementById('sb-rol'); if(rol) rol.textContent=window._mR==='ahli'?'Ahli PSS':(window._me?.peranan||'admin');
-    applyAP(); mulaRF(); nav(window._mR==='ahli'?'pinjam':'dash'); toast('Selamat datang, '+nama+'! 👋','ok');
+    applyAP(); if(typeof window.applyRoleUI==='function')window.applyRoleUI(); mulaRF(); nav(window._mR==='ahli'?'pinjam':'dash'); toast('Selamat datang, '+nama+'! 👋','ok');
   };
 
   window.limitAhliSirkulasi = function(){
     if(window._mR !== 'ahli') return;
-    const allowed = ['pinjam','pulang','denda','tempahan','opac'];
+    const allowed = ['pinjam','pulang','tempahan'];
     document.querySelectorAll('.sbi[onclick^="nav("]').forEach(el=>{
       const m=(el.getAttribute('onclick')||'').match(/nav\('([^']+)'\)/);
-      if(m && !allowed.includes(m[1])) el.style.display='none';
+      if(m) el.style.display=allowed.includes(m[1])?'':'none';
     });
+    const searchWrap=document.querySelector('.srch');
+    if(searchWrap)searchWrap.style.display='none';
+    const sbRol=document.getElementById('sb-rol');
+    if(sbRol)sbRol.textContent='Sirkulasi & Tempahan';
   };
 
   const oldNav = window.nav;
   window.nav = function(p){
-    if(window._mR==='ahli' && !['pinjam','pulang','denda','tempahan','opac'].includes(p)) p='pinjam';
+    if(window._mR==='ahli' && !['pinjam','pulang','tempahan'].includes(p)){
+      toast('Akses ahli terhad kepada Pinjaman, Pemulangan dan Tempahan PSS sahaja.','wa');
+      p='pinjam';
+    }
     return oldNav(p);
   };
 
@@ -2275,13 +2287,22 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 
   window.applyRoleUI=function(){
     const isOpac=window._mR==='opac';
+    const isAhli=window._mR==='ahli';
+    const ahliAllowed=['pinjam','pulang','tempahan'];
     document.querySelectorAll('.sbi').forEach(item=>{
       const oc=item.getAttribute('onclick')||'';
-      item.style.display=(isOpac&&!oc.includes("nav('opac')"))?'none':'';
+      const m=oc.match(/nav\('([^']+)'\)/);
+      if(isOpac){
+        item.style.display=oc.includes("nav('opac')")?'':'none';
+      }else if(isAhli&&m){
+        item.style.display=ahliAllowed.includes(m[1])?'':'none';
+      }else{
+        item.style.display='';
+      }
     });
     const searchWrap=document.querySelector('.srch');
     const globalSearch=document.getElementById('tb-src');
-    if(searchWrap)searchWrap.style.display=isOpac?'none':'';
+    if(searchWrap)searchWrap.style.display=(isOpac||isAhli)?'none':'';
     if(globalSearch&&isOpac)globalSearch.placeholder='Cari buku dalam OPAC...';
     const sbUnm=document.getElementById('sb-unm');
     const sbRol=document.getElementById('sb-rol');
@@ -2292,6 +2313,8 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
       if(sbRol)sbRol.textContent='Carian Buku Sahaja';
       if(tbAv)tbAv.textContent='OP';
       if(sbAv)sbAv.textContent='OP';
+    }else if(isAhli){
+      if(sbRol)sbRol.textContent='Sirkulasi & Tempahan';
     }
   };
 
