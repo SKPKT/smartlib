@@ -589,6 +589,29 @@ async function muatSemua(senyap=false){
     if(_pg==='dash'&&_me){killCh();pgDash()}
   }catch(e){setDot(false);if(!senyap)toast('Gagal sambung: '+e.message,'er')}
 }
+let _lastBukuFast=0,_bukuFastBusy=false;
+async function muatBukuFast(force=false){
+  if(_bukuFastBusy)return null;
+  if(!force&&D.buku?.length&&Date.now()-_lastBukuFast<20000)return null;
+  _bukuFastBusy=true;
+  try{
+    const res=await api({action:'baca_buku_fast',force:force?1:0},1);
+    if(res?.ok&&Array.isArray(res.data?.buku)){
+      D.buku=res.data.buku;
+      _lastBukuFast=Date.now();
+      if(_pg==='perolehan'){
+        _bFilt=[...D.buku];
+        if(document.getElementById('tbody-b'))filtB();
+      }
+      return res.data;
+    }
+  }catch(e){
+    console.warn('baca_buku_fast gagal:',e.message);
+  }finally{
+    _bukuFastBusy=false;
+  }
+  return null;
+}
 function mulaRF(){if(_rfT)clearInterval(_rfT);_rfT=setInterval(()=>muatSemua(true),30000)}
 function setDot(l){const d=document.getElementById('ri-dot');if(d)d.className='ri-dot'+(l?' ld':'')}
 function updLwBdg(){
@@ -882,7 +905,7 @@ function pgPerolehan(){_bFilt=[...D.buku];_bPg=1;sortB();document.getElementById
   <div class="pgb" id="b-pgb"></div>
 </div></div>
 <div class="mbg" id="m-edit-b"><div class="modal"><div class="m-hdr"><h3 id="meb-ttl">Edit Rekod</h3><button class="m-x" onclick="closeM('m-edit-b')">✕</button></div><div class="fr c2"><div class="fg"><label>No. Perolehan *</label><input id="eb-nop"></div><div class="fg"><label>No. Panggilan *</label><input id="eb-npn"></div></div><div class="fg"><label>Judul *</label><input id="eb-jdl"></div><div class="fr c2"><div class="fg"><label>Pengarang</label><input id="eb-pgr"></div><div class="fg"><label>Penerbit</label><input id="eb-pnb"></div></div><div class="fr c3"><div class="fg"><label>Tahun</label><input id="eb-thn"></div><div class="fg"><label>Tarikh Perolehan</label><input id="eb-tp"></div><div class="fg"><label>Punca</label><select id="eb-pnc"><option value="">–</option><option>PCG</option><option>BELI</option><option>sumbangan</option><option>SUMBANGAN</option><option>hadiah</option></select></div></div><div class="fr c3"><div class="fg"><label>ISBN</label><div class="isbn-edit-row"><input id="eb-isbn" type="text" placeholder="Scan / taip ISBN" onkeydown="handleEditISBNEnter(event)"><button type="button" class="btn b-cy b-sm icon-btn" title="Scan Kamera" onclick="openEditISBNCameraScanner()">📷</button><button type="button" class="btn b-gh b-sm icon-btn" title="Scanner Fizikal" onclick="focusEditISBNPhysicalScanner()">🔫</button><button type="button" class="btn b-em b-sm" onclick="cariISBNEdit()">🔍 Cari ISBN</button></div><small id="eb-gb-st" style="color:var(--cy)"></small></div><div class="fg"><label>Harga (RM)</label><input id="eb-hrm" type="number" step="0.01" min="0"></div><div class="fg"><label>Muka Surat</label><input id="eb-mk"></div></div><input type="hidden" id="eb-id"><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-edit-b')">Batal</button><button class="btn b-em" onclick="simpanEditB()">💾 Simpan</button></div></div></div>
-<div class="mbg" id="m-imp"><div class="modal"><div class="m-hdr"><h3>⬆️ Import Pukal</h3><button class="m-x" onclick="closeM('m-imp')">✕</button></div><div class="al a-in" style="font-size:11px">Header: <code>no_perolehan, no_panggilan, pengarang, judul, penerbit, tahun, jilid, tarikh_perolehan, no_invois, punca, isbn, harga_rm</code></div><div class="fg"><label>Tampal dari Excel (Tab-separated)</label><textarea id="paste-b" rows="5" style="font-family:var(--mono);font-size:11px;resize:vertical"></textarea></div><button class="btn b-gh b-sm" onclick="prevPaste()">👁️ Preview</button><div id="imp-pv" style="margin-top:9px"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-imp')">Batal</button><button class="btn b-em" id="btn-imp" onclick="saveImp()" style="display:none">✅ Import ke Sheets</button></div></div></div>`;renderB();injectEditCoverUI()}
+<div class="mbg" id="m-imp"><div class="modal"><div class="m-hdr"><h3>⬆️ Import Pukal</h3><button class="m-x" onclick="closeM('m-imp')">✕</button></div><div class="al a-in" style="font-size:11px">Header: <code>no_perolehan, no_panggilan, pengarang, judul, penerbit, tahun, jilid, tarikh_perolehan, no_invois, punca, isbn, harga_rm</code></div><div class="fg"><label>Tampal dari Excel (Tab-separated)</label><textarea id="paste-b" rows="5" style="font-family:var(--mono);font-size:11px;resize:vertical"></textarea></div><button class="btn b-gh b-sm" onclick="prevPaste()">👁️ Preview</button><div id="imp-pv" style="margin-top:9px"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-imp')">Batal</button><button class="btn b-em" id="btn-imp" onclick="saveImp()" style="display:none">✅ Import ke Sheets</button></div></div></div>`;renderB();injectEditCoverUI();muatBukuFast(false)}
 
 function sortB(c){if(c){if(_bSort===c)_bAsc=!_bAsc;else{_bSort=c;_bAsc=true}}_bFilt.sort((a,b)=>{const va=String(a[_bSort]||'').toLowerCase(),vb=String(b[_bSort]||'').toLowerCase();if(!isNaN(parseFloat(va))&&!isNaN(parseFloat(vb)))return _bAsc?parseFloat(va)-parseFloat(vb):parseFloat(vb)-parseFloat(va);return _bAsc?va.localeCompare(vb):vb.localeCompare(va)});renderB()}
 function filtB(){const q=(document.getElementById('src-b')?.value||'').toLowerCase(),k=document.getElementById('flt-k')?.value||'',p=document.getElementById('flt-p')?.value||'';_bFilt=(D.buku||[]).filter(b=>{const qm=!q||(b.judul+b.no_panggilan+(b.isbn||'')+(b.no_perolehan||'')+(b.pengarang||'')).toLowerCase().includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(k==='F')km=isFik(np);else if(k)km=np.charAt(0)===k;return qm&&km&&(!p||b.punca===p)});_bPg=1;sortB()}
@@ -1591,7 +1614,9 @@ function semuaAhliKad(){
 function formatIdKadAhli(jenis,a){
   const pref=jenis==='guru'?'G':'M';
   const pad=2;
-  return pref+'-'+String(a?.id||'').padStart(pad,'0');
+  const raw=String(a?.id||'').trim().replace(/^[MG]\s*-?\s*/i,'');
+  const core=/^\d+$/.test(raw)?String(parseInt(raw,10)||0):raw;
+  return pref+'-'+String(core||'0').padStart(pad,'0');
 }
 function getAhliKadByValue(value){
   const [jenis,id]=String(value||'').split('|');
@@ -1612,7 +1637,7 @@ function cariAhliLoginKad(noAhli,passIC){
   return semuaAhliKad().find(a=>{
     const aktif=a.aktif!==false&&String(a.aktif).toUpperCase()!=='FALSE'&&String(a.aktif)!=='0';
     const kad=formatIdKadAhli(a.jenis_pengguna,a);
-    const noPad=String(a.id||'').padStart(2,'0');
+    const noPad=String(a.id||'').trim().replace(/^[MG]\s*-?\s*/i,'').padStart(2,'0');
     const noOk=[a.no_ahli,kad,noPad,a.id].some(v=>normAhliLogin(v)===no);
     const passOk=normAhliLogin(a.nokad)===pass;
     return aktif&&noOk&&passOk;
@@ -1876,7 +1901,7 @@ function hdlLogo(e){const f=e.target.files[0];if(!f)return;if(f.size>500000){toa
 function padamLogo(){AP.logo='';applyAP();saveSetting('logo_url','');toast('Logo dibuang','ok');pgAdmin()}
 async function simpanAP(){const nm=document.getElementById('ap-nm').value.trim()||'SMARTLIB';const tag=document.getElementById('ap-tag').value.trim();const sch=document.getElementById('ap-sch').value.trim();const em=document.getElementById('ap-em').value.trim()||'📚';AP.nama=nm;AP.tag=tag;AP.em=em;AP.sekolah=sch;applyAP();try{await Promise.all([saveSetting('nama_app',nm),saveSetting('tagline',tag),saveSetting('sekolah',sch),saveSetting('logo_emoji',em)]);if(AP.logo)await saveSetting('logo_url',AP.logo);toast('✅ Penampilan disimpan!','ok');pgAdmin()}catch(e){toast('Gagal: '+e.message,'er')}}
 async function simpanTetapan(){S.maks_hari=parseInt(document.getElementById('set-mh').value)||14;S.maks_pinjam=parseInt(document.getElementById('set-mp').value)||3;S.denda=parseFloat(document.getElementById('set-dn').value)||0.20;try{await Promise.all([saveSetting('maks_hari',S.maks_hari),saveSetting('maks_pinjam',S.maks_pinjam),saveSetting('denda_sehari',S.denda)]);toast('✅ Tetapan disimpan!','ok')}catch(e){toast('Gagal: '+e.message,'er')}}
-async function muatSemula(){toast('🔄 Menyinkron...','ok');await muatSemua(false);toast('✅ Data disinkron!','ok')}
+async function muatSemula(){toast('🔄 Menyinkron...','ok');if(_pg==='perolehan'){await muatBukuFast(true);toast('✅ Rekod perolehan disinkron!','ok');return}await muatSemua(false);toast('✅ Data disinkron!','ok')}
 function eksportBackup(){const data=JSON.stringify({buku:D.buku,murid:D.murid,guru:D.guru,pinjaman:D.pinjaman,tarikh:new Date().toISOString()},null,2);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='smartlib_backup_'+today()+'.json';a.click();toast('Backup dieksport!','ok')}
 
 // ════════════════════════════════════════════════════
