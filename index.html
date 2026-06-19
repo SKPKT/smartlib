@@ -1780,7 +1780,7 @@ function pgTempahan(){
 }
 function hTmp(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function vTmp(id){return (document.getElementById(id)?.value||'').trim()}
-function roleTempahanPss(){const r=String(window._mR||_mR||_me?.peranan||'').toLowerCase();if(r.includes('admin'))return'admin';if(r.includes('guru'))return'guru';if(r.includes('staf')||r.includes('staff'))return'staf';if(_me?.jawatan){const j=String(_me.jawatan||'').toLowerCase();return j.includes('staf')||j.includes('staff')?'staf':'guru'}return'murid'}
+function roleTempahanPss(){const jp=String(_me?.jenis_pengguna||'').toLowerCase();if(jp==='guru')return'guru';if(jp==='murid')return'murid';const r=String(window._mR||_mR||_me?.peranan||'').toLowerCase();if(r.includes('admin'))return'admin';if(r.includes('guru'))return'guru';if(r.includes('staf')||r.includes('staff'))return'staf';if(_me?.jawatan){const j=String(_me.jawatan||'').toLowerCase();return j.includes('staf')||j.includes('staff')?'staf':'guru'}return'murid'}
 function isAdminTempahanPss(){return roleTempahanPss()==='admin'}
 function bolehTempahanPss(){return ['admin','guru','staf'].includes(roleTempahanPss())}
 function ownTempahanPss(t){const em=String(_me?.email||'').trim().toLowerCase(),nm=String(_me?.nama||'').trim().toLowerCase();return(!!em&&String(t.email_penempah||'').trim().toLowerCase()===em)||String(t.nama_penempah||'').trim().toLowerCase()===nm}
