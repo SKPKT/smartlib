@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>SMARTLIB — Pusat Sumber Sekolah</title>
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#10b981">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SMARTLib">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
@@ -259,6 +267,23 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 #edit-cover-preview{width:100%;height:100%;object-fit:cover;display:block}
 .cover-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;color:var(--mu);padding:8px}
 .cover-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tv-shell{position:fixed;inset:0;z-index:998;background:#030f09;color:#f8fafc;overflow:auto;font-family:var(--fn)}
+.tv-header{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:minmax(260px,1fr) auto minmax(260px,1fr);align-items:center;gap:20px;padding:16px 24px;background:rgba(3,15,9,.96);border-bottom:1px solid rgba(16,185,129,.24);backdrop-filter:blur(12px)}
+.tv-brand{display:flex;align-items:center;gap:12px;min-width:0}.tv-logo{width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:26px;flex-shrink:0}.tv-logo img{width:100%;height:100%;object-fit:cover}.tv-brand-name{font-size:24px;font-weight:800;color:#fff}.tv-school{font-size:14px;color:#a7f3d0;line-height:1.35;white-space:normal}
+.tv-clock{text-align:center;min-width:230px}.tv-time{font-family:var(--mono);font-size:42px;line-height:1;font-weight:800;color:#34d399}.tv-day{font-size:16px;font-weight:700;margin-top:5px}.tv-date{font-size:14px;color:#a7f3d0;margin-top:2px}
+.tv-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}.tv-btn{border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.09);color:#fff;padding:10px 14px;font-size:14px;font-weight:700;cursor:pointer}.tv-btn:hover{background:rgba(16,185,129,.25);border-color:#10b981}
+.tv-rotate-hint{display:none;margin:12px 14px 0;padding:10px 12px;border-radius:8px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.3);color:#cffafe;text-align:center;font-size:14px}
+.tv-content{padding:22px 24px 30px}.tv-main-grid{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(320px,1.2fr) minmax(300px,1fr);gap:24px;align-items:start}.tv-panel{min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.055);padding:18px;overflow:hidden}.tv-panel-title{font-size:22px;font-weight:800;color:#fff;margin-bottom:14px}.tv-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tv-stat{border-radius:9px;background:rgba(255,255,255,.065);padding:12px;min-height:92px}.tv-stat-label{font-size:18px;font-weight:700;color:#d1fae5;line-height:1.3}.tv-stat-value{font-size:38px;line-height:1.05;font-weight:800;margin-top:5px}
+.tv-loans{display:flex;flex-direction:column;gap:9px}.tv-loan{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;border-left:4px solid #10b981;border-radius:8px;background:rgba(255,255,255,.06);padding:10px 12px}.tv-loan-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:800}.tv-loan-name,.tv-loan-book{white-space:normal;overflow-wrap:anywhere}.tv-loan-name{font-size:18px;font-weight:700;color:#fff;line-height:1.3}.tv-loan-book{font-size:18px;color:#d1fae5;line-height:1.35;margin-top:2px}.tv-loan-date{font-size:14px;color:#a7f3d0;text-align:right}
+.tv-ann-list{display:grid;gap:10px}.tv-ann{border-radius:9px;background:rgba(255,255,255,.06);padding:12px 14px;border-left:4px solid #8b5cf6}.tv-ann-title{font-size:18px;font-weight:800;color:#fff}.tv-ann-text{font-size:18px;line-height:1.45;color:#d1fae5;margin-top:4px;white-space:normal;overflow-wrap:anywhere}.tv-ann-date{font-size:14px;color:#a7f3d0;margin-top:6px}
+.tv-empty{display:flex;align-items:center;justify-content:center;min-height:120px;border-radius:9px;background:rgba(255,255,255,.04);color:#d1fae5;font-size:18px;text-align:center;padding:20px;white-space:normal}
+.tv-latest-books{grid-column:1/-1;margin-top:24px;min-height:320px}.tv-books-grid{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:18px}.tv-book-card{position:relative;min-width:0;border-radius:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);padding:12px;animation:tvFade .35s ease}.tv-book-media{width:100%;height:210px;border-radius:10px;overflow:hidden;background:rgba(16,185,129,.13);display:flex;align-items:center;justify-content:center}.tv-book-cover{width:100%;height:100%;object-fit:cover;display:block}.tv-book-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;background:linear-gradient(135deg,rgba(16,185,129,.22),rgba(6,182,212,.2));font-family:var(--mono);font-size:26px;font-weight:800;color:#6ee7b7}.tv-book-title{font-size:17px;font-weight:800;line-height:1.35;color:#fff;margin-top:10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;overflow-wrap:anywhere}.tv-book-callno{font-size:14px;color:#a7f3d0;margin-top:5px;font-family:var(--mono)}.tv-new-badge{position:absolute;top:20px;right:20px;border-radius:99px;background:#10b981;color:#fff;font-size:12px;font-weight:800;padding:4px 8px}.tv-slide-dots{display:flex;justify-content:center;gap:6px;margin-top:14px}.tv-slide-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25)}.tv-slide-dot.on{background:#10b981;transform:scale(1.25)}
+@keyframes tvFade{from{opacity:.3;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(max-width:1100px){.tv-books-grid{grid-template-columns:repeat(3,minmax(160px,1fr))}.tv-header{grid-template-columns:1fr auto}.tv-clock{grid-row:2;grid-column:1/-1}.tv-actions{grid-column:2}}
+@media(max-width:900px){.tv-main-grid{grid-template-columns:1fr 1fr}.tv-main-grid>.tv-panel:last-child{grid-column:1/-1}.tv-books-grid{grid-template-columns:repeat(3,minmax(150px,1fr))}.tv-content{padding:18px}.tv-header{padding:14px 18px}}
+@media(max-width:640px){.tv-shell{position:fixed}.tv-header{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:13px}.tv-brand{justify-content:center;text-align:left}.tv-clock{min-width:0}.tv-time{font-size:36px}.tv-actions{justify-content:center}.tv-content{padding:14px}.tv-main-grid{grid-template-columns:1fr;gap:14px}.tv-main-grid>.tv-panel:last-child{grid-column:auto}.tv-panel{padding:15px}.tv-panel-title{font-size:20px}.tv-stats{grid-template-columns:1fr 1fr}.tv-stat-value{font-size:32px}.tv-loan{grid-template-columns:38px minmax(0,1fr)}.tv-loan-date{grid-column:2;text-align:left}.tv-loan-name{font-size:16px}.tv-loan-book{font-size:14px}.tv-latest-books{margin-top:14px}.tv-books-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tv-book-media{height:190px}.tv-book-title{font-size:15px}.tv-school{font-size:12px}}
+@media(max-width:640px) and (orientation:portrait){.tv-rotate-hint{display:block}}
+@media(max-width:390px){.tv-books-grid{grid-template-columns:1fr}.tv-book-media{height:230px}.tv-stats{grid-template-columns:1fr}}
 .member-card-print-grid{display:grid;grid-template-columns:repeat(3,54mm);gap:6mm;padding:8mm;align-items:start}
 .member-card-print{width:54mm;height:86mm;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#dff8f3 0%,#7be0c9 45%,#11b98e 100%);border:1.5px solid rgba(0,0,0,.08);box-shadow:0 4px 12px rgba(0,0,0,.12);display:flex;flex-direction:column;justify-content:space-between;color:#123;font-family:'Plus Jakarta Sans',Arial,sans-serif;break-inside:avoid;position:relative}
 .member-card-header{text-align:center;padding:10px 8px 6px}
@@ -704,8 +729,8 @@ function masuklah(){
   document.getElementById('sb-rol').textContent=_mR==='ahli'?'Ahli PSS':(_me.peranan||'admin');
   applyAP();mulaRF();nav('dash');toast('Selamat datang, '+_me.nama+'! 👋','ok');
 }
-async function doLogout(){
-  if(!confirm('Log keluar dari SMARTLIB?'))return;
+async function doLogout(skipConfirm=false){
+  if(!skipConfirm&&!confirm('Log keluar dari SMARTLIB?'))return;
   if(_rfT)clearInterval(_rfT);if(_sq){try{_sq.stop().catch(()=>{})}catch{}}_sq=null;
   if(_tok){try{await api({action:'logout'})}catch{}}_tok=null;_me=null;_mR='';killCh();showLogin();
 }
@@ -1899,8 +1924,8 @@ async function prosesLupus(){const sel=[...document.querySelectorAll('.lp-chk:ch
 
 function pgNilam(){document.getElementById('content').innerHTML=`<div class="al a-in">📝 NILAM — Nilaian Amalan Membaca. Modul ini akan dibangunkan sepenuhnya.</div><div class="card"><div class="ct">📝 Program NILAM — Rekod Membaca Murid</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">${['Jumlah Rekod','Murid Aktif','Buku Bulan Ini','Sasaran'].map((l,i)=>`<div class="stat s-pu" style="border-radius:var(--rs)"><div class="s-lb">${l}</div><div class="s-vl">${['0','0','0','–'][i]}</div></div>`).join('')}</div><div class="al a-wa">⚠️ Modul NILAM sedang dalam pembangunan. Akan tersedia dalam versi akan datang.</div><button class="btn b-em" onclick="nav('pinjam')">← Kembali ke Pinjaman</button></div>`}
 
-function pgAdmin(){document.getElementById('content').innerHTML=`
-<div class="tabs" id="adm-tabs"><button class="tab on" onclick="admTab('ap',this)">🎨 Penampilan</button><button class="tab" onclick="admTab('ann',this)">📢 Pengumuman</button><button class="tab" onclick="admTab('set',this)">⚙️ Tetapan</button><button class="tab" onclick="admTab('dat',this)">🔄 Data</button></div>
+function pgAdmin(){const isAdminPw=_mR==='admin'||String(_me?.peranan||'').toLowerCase()==='admin';document.getElementById('content').innerHTML=`
+<div class="tabs" id="adm-tabs"><button class="tab on" onclick="admTab('ap',this)">🎨 Penampilan</button><button class="tab" onclick="admTab('ann',this)">📢 Pengumuman</button><button class="tab" onclick="admTab('set',this)">⚙️ Tetapan</button>${isAdminPw?`<button class="tab" onclick="admTab('sec',this)">🔐 Kata Laluan</button>`:''}<button class="tab" onclick="admTab('dat',this)">🔄 Data</button></div>
 <div id="adm-ap">
   <div class="g2">
     <div class="card">
@@ -1955,6 +1980,7 @@ function pgAdmin(){document.getElementById('content').innerHTML=`
     <button class="btn b-em" onclick="simpanTetapan()">💾 Simpan</button>
   </div>
 </div>
+${isAdminPw?`<div id="adm-sec" style="display:none"><div class="card"><div class="ct">🔐 Tukar Kata Laluan Admin</div><div class="al a-in">Kata laluan baharu mesti mempunyai sekurang-kurangnya 8 aksara serta mengandungi huruf dan nombor.</div><div class="fg"><label>Kata Laluan Semasa</label><div style="display:flex;gap:6px"><input id="pw-current" type="password" autocomplete="current-password" style="flex:1"><button type="button" class="btn b-gh" onclick="togglePasswordVisibility('pw-current',this)" title="Tunjuk atau sembunyikan kata laluan">👁</button></div></div><div class="fr c2"><div class="fg"><label>Kata Laluan Baharu</label><div style="display:flex;gap:6px"><input id="pw-new" type="password" autocomplete="new-password" style="flex:1"><button type="button" class="btn b-gh" onclick="togglePasswordVisibility('pw-new',this)" title="Tunjuk atau sembunyikan kata laluan">👁</button></div></div><div class="fg"><label>Sahkan Kata Laluan Baharu</label><div style="display:flex;gap:6px"><input id="pw-confirm" type="password" autocomplete="new-password" style="flex:1"><button type="button" class="btn b-gh" onclick="togglePasswordVisibility('pw-confirm',this)" title="Tunjuk atau sembunyikan kata laluan">👁</button></div></div></div><button class="btn b-em" id="pw-save-btn" onclick="simpanKataLaluanAdmin()">Simpan Kata Laluan Baharu</button></div></div>`:''}
 <div id="adm-dat" style="display:none">
   <div class="card">
     <div class="ct">🔄 Sinkronisasi Data</div>
@@ -1966,7 +1992,26 @@ function pgAdmin(){document.getElementById('content').innerHTML=`
   </div>
 </div>`;
 }
-function admTab(t,btn){['ap','ann','set','dat'].forEach(id=>{const el=document.getElementById('adm-'+id);if(el)el.style.display=id===t?'':'none'});document.querySelectorAll('#adm-tabs .tab').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on')}
+function admTab(t,btn){['ap','ann','set','sec','dat'].forEach(id=>{const el=document.getElementById('adm-'+id);if(el)el.style.display=id===t?'':'none'});document.querySelectorAll('#adm-tabs .tab').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on')}
+function togglePasswordVisibility(id,btn){const input=document.getElementById(id);if(!input)return;input.type=input.type==='password'?'text':'password';if(btn)btn.textContent=input.type==='password'?'👁':'🙈'}
+async function simpanKataLaluanAdmin(){
+  if(!(_mR==='admin'||String(_me?.peranan||'').toLowerCase()==='admin')){toast('Akses admin diperlukan.','er');return}
+  const current=document.getElementById('pw-current')?.value||'',next=document.getElementById('pw-new')?.value||'',confirmPw=document.getElementById('pw-confirm')?.value||'';
+  if(!current){toast('Sila masukkan kata laluan semasa.','er');return}
+  if(next.length<8){toast('Kata laluan baharu minimum 8 aksara.','er');return}
+  if(!/[A-Za-z]/.test(next)||!/\d/.test(next)){toast('Kata laluan baharu mesti mengandungi huruf dan nombor.','er');return}
+  if(next!==confirmPw){toast('Pengesahan kata laluan tidak sepadan.','er');return}
+  if(next===current){toast('Kata laluan baharu tidak boleh sama dengan kata laluan lama.','er');return}
+  const btn=document.getElementById('pw-save-btn'),oldText=btn?.textContent||'Simpan Kata Laluan Baharu';if(btn){btn.disabled=true;btn.textContent='Menyimpan...'}
+  try{
+    const res=await api({action:'tukar_password',id:_me.id,password_semasa:current,password_baru:next});
+    if(!res?.ok)throw new Error(res?.error||'Gagal mengemas kini kata laluan.');
+    ['pw-current','pw-new','pw-confirm'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+    toast('Kata laluan berjaya dikemas kini. Sila log masuk semula.','ok');
+    setTimeout(()=>doLogout(true),2500);
+  }catch(e){toast(e.message||'Gagal mengemas kini kata laluan.','er')}
+  finally{if(btn){btn.disabled=false;btn.textContent=oldText}}
+}
 function renderAnn(){return(_ann||[]).map(a=>`<div class="ann-it ${a.w}" style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="ann-ttl">${a.ttl}</div><div class="ann-sub">${a.sub}</div><div class="ann-dt">${a.tarikh}</div></div><button onclick="padamAnn(${a.id})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:15px;flex-shrink:0">✕</button></div>`).join('')}
 function tambahAnn(){const ttl=document.getElementById('ann-ttl').value.trim(),sub=document.getElementById('ann-sub').value.trim();if(!ttl){toast('Masukkan judul','er');return}_ann.push({id:Date.now(),ttl,sub,tarikh:document.getElementById('ann-td').value||new Date().toLocaleDateString('ms-MY'),w:document.getElementById('ann-w').value});saveSetting('ann',JSON.stringify(_ann));document.getElementById('ann-list').innerHTML=renderAnn();document.getElementById('ann-ttl').value='';document.getElementById('ann-sub').value='';toast('Pengumuman ditambah!','ok')}
 function padamAnn(id){_ann=_ann.filter(a=>a.id!==id);saveSetting('ann',JSON.stringify(_ann));document.getElementById('ann-list').innerHTML=renderAnn();toast('Pengumuman dipadam','ok')}
@@ -1983,46 +2028,62 @@ function eksportBackup(){const data=JSON.stringify({buku:D.buku,murid:D.murid,gu
 // BOOT
 // ════════════════════════════════════════════════════
 
+let _tvClockTimer=null,_tvRefreshTimer=null,_tvSlideTimer=null,_tvBookPage=0,_tvAnnPage=0;
 function pgTV(){bukaTVMode()}
+function tvSortedBooks(){return[...(D.buku||[])].sort((a,b)=>{const da=Date.parse(a.tarikh_perolehan||''),db=Date.parse(b.tarikh_perolehan||'');if(!isNaN(db)&&!isNaN(da)&&db!==da)return db-da;return(parseInt(b.no_perolehan||b.id)||0)-(parseInt(a.no_perolehan||a.id)||0)})}
+function tvAnnouncementsHtml(){
+  const rows=_ann||[];if(!rows.length)return'<div class="tv-empty">📢 Tiada pengumuman semasa.</div>';
+  const page=Math.floor(_tvAnnPage%Math.max(1,Math.ceil(rows.length/2))),slice=rows.slice(page*2,page*2+2);
+  return slice.map(a=>`<div class="tv-ann" style="border-left-color:${a.w==='em'?'#10b981':a.w==='cy'?'#06b6d4':a.w==='am'?'#f59e0b':'#ef4444'}"><div class="tv-ann-title">${escapeHtml(a.ttl||'Pengumuman')}</div><div class="tv-ann-text">${escapeHtml(a.sub||'')}</div><div class="tv-ann-date">${escapeHtml(a.tarikh||a.t||'')}</div></div>`).join('');
+}
+function tvBooksHtml(){
+  const all=tvSortedBooks().slice(0,24);if(!all.length)return'<div class="tv-empty">📚 Tiada bahan terbaharu.</div>';
+  const perPage=6,pages=Math.max(1,Math.ceil(all.length/perPage)),page=_tvBookPage%pages,rows=all.slice(page*perPage,page*perPage+perPage);
+  const cards=rows.map(b=>{const cover=getBookCover(b),call=escapeHtml(b.no_panggilan||'–');return`<div class="tv-book-card"><div class="tv-book-media">${cover?`<img class="tv-book-cover" src="${escapeHtml(cover)}" alt="Cover ${escapeHtml(b.judul||'buku')}" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="tv-book-fallback" style="display:none">${call}</div>`:`<div class="tv-book-fallback">${call}</div>`}</div><span class="tv-new-badge">Baharu</span><div class="tv-book-title">${escapeHtml(b.judul||'–')}</div><div class="tv-book-callno">${call}</div></div>`}).join('');
+  const dots=pages>1?`<div class="tv-slide-dots">${Array.from({length:pages},(_,i)=>`<span class="tv-slide-dot${i===page?' on':''}"></span>`).join('')}</div>`:'';
+  return`<div class="tv-books-grid">${cards}</div>${dots}`;
+}
+function renderTVMode(){
+  const box=document.getElementById('tv-content');if(!box)return;
+  const buku=D.buku||[],pin=D.pinjaman||[],murid=D.murid||[],guru=D.guru||[],now=today();
+  const aktif=pin.filter(p=>p.status==='pinjam'),lewat=aktif.filter(p=>now>p.tarikh_patut);
+  const pulangHari=pin.filter(p=>String(p.tarikh_pulang||'').slice(0,10)===now).length;
+  const tempahHari=(D.tempahan_pss||[]).filter(t=>t.tarikh_tempahan===now&&!['Ditolak','Batal'].includes(t.status)).length;
+  const loans=[...aktif].sort((a,b)=>String(b.tarikh_pinjam||'').localeCompare(String(a.tarikh_pinjam||''))).slice(0,6);
+  const loanHtml=loans.length?loans.map(p=>{const b=buku.find(x=>String(x.id)===String(p.buku_id))||{judul:'Bahan tidak dijumpai'};const u=p.jenis_pengguna==='murid'?(murid.find(x=>String(x.id)===String(p.pengguna_id))||{nama:'Ahli'}):(guru.find(x=>String(x.id)===String(p.pengguna_id))||{nama:'Ahli'});const late=now>p.tarikh_patut;return`<div class="tv-loan" style="border-left-color:${late?'#ef4444':'#10b981'}"><div class="tv-loan-avatar" style="background:${avCol(u.nama||'Ahli')}">${ini(u.nama||'A')}</div><div><div class="tv-loan-name">${escapeHtml(u.nama||'Ahli')}</div><div class="tv-loan-book">${escapeHtml(b.judul||'–')}</div></div><div class="tv-loan-date">${escapeHtml(fmtD(p.tarikh_pinjam)||p.tarikh_pinjam||'')}</div></div>`}).join(''):'<div class="tv-empty">📚 Tiada pinjaman terkini hari ini</div>';
+  const stats=[['Jumlah Bahan',buku.length,'#34d399'],['Dipinjam',aktif.length,'#fbbf24'],['Lewat',lewat.length,'#f87171'],['Ahli',murid.length+guru.length,'#22d3ee'],['Tempahan Hari Ini',tempahHari,'#c4b5fd'],['Pemulangan Hari Ini',pulangHari,'#60a5fa']];
+  box.innerHTML=`<div class="tv-main-grid"><section class="tv-panel"><h2 class="tv-panel-title">Statistik Hari Ini</h2><div class="tv-stats">${stats.map(([label,value,color])=>`<div class="tv-stat"><div class="tv-stat-label">${label}</div><div class="tv-stat-value" style="color:${color}">${value}</div></div>`).join('')}</div></section><section class="tv-panel"><h2 class="tv-panel-title">Pinjaman Terkini</h2><div class="tv-loans">${loanHtml}</div></section><section class="tv-panel"><h2 class="tv-panel-title">Pengumuman</h2><div class="tv-ann-list" id="tv-ann-list">${tvAnnouncementsHtml()}</div></section></div><section class="tv-panel tv-latest-books"><h2 class="tv-panel-title">Bahan Terbaharu</h2><div id="tv-books-body">${tvBooksHtml()}</div></section>`;
+}
+function updateTVClock(){
+  const d=new Date(),time=document.getElementById('tv-time'),day=document.getElementById('tv-day'),date=document.getElementById('tv-date');
+  if(time)time.textContent=d.toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  if(day)day.textContent=d.toLocaleDateString('ms-MY',{weekday:'long'});
+  if(date)date.textContent=d.toLocaleDateString('ms-MY',{day:'numeric',month:'long',year:'numeric'});
+}
+function updateTVFullscreenButton(){const btn=document.getElementById('tv-fullscreen-btn');if(btn)btn.textContent=document.fullscreenElement?'✕ Keluar Skrin Penuh':'⛶ Skrin Penuh'}
+async function toggleTVFullscreen(){try{if(!document.fullscreenElement){const el=document.getElementById('tv-ov')||document.documentElement;await el.requestFullscreen()}else await document.exitFullscreen()}catch(e){toast('Mod skrin penuh tidak disokong pada peranti ini.','wa')}updateTVFullscreenButton()}
+async function tutupTVMode(){
+  clearInterval(_tvClockTimer);clearInterval(_tvRefreshTimer);clearInterval(_tvSlideTimer);_tvClockTimer=_tvRefreshTimer=_tvSlideTimer=null;
+  if(document.fullscreenElement){try{await document.exitFullscreen()}catch(e){}}
+  document.getElementById('tv-ov')?.remove();
+}
+function advanceTVSlides(){
+  _tvBookPage++;_tvAnnPage++;
+  const books=document.getElementById('tv-books-body'),anns=document.getElementById('tv-ann-list');
+  if(books)books.innerHTML=tvBooksHtml();if(anns)anns.innerHTML=tvAnnouncementsHtml();
+}
 function bukaTVMode(){
-  const buku=D.buku||[],pin=D.pinjaman||[],murid=D.murid||[],guru=D.guru||[];
-  const aktif=pin.filter(p=>p.status==='pinjam'),lewat=aktif.filter(p=>today()>p.tarikh_patut);
-  const ov=document.createElement('div');ov.id='tv-ov';ov.style.cssText='position:fixed;inset:0;z-index:998;background:#030f09';
-  ov.innerHTML=`<div style="height:100vh;display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:12px 22px;border-bottom:1px solid rgba(16,185,129,.15);display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:10px"><div style="font-size:24px">📚</div><div><div style="font-size:16px;font-weight:800;color:#fff">${AP.nama||'SMARTLIB'}</div><div style="font-size:9px;color:rgba(255,255,255,.3)">${AP.sekolah||'Pusat Sumber Sekolah'}</div></div></div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div id="tv-c" style="font-size:20px;font-weight:800;color:#10b981;font-family:monospace">00:00</div>
-        <button onclick="document.getElementById('tv-ov').remove()" style="background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.4);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px">Tutup TV</button>
-      </div>
-    </div>
-    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:16px 22px;overflow:hidden">
-      <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px">
-        <div style="color:#10b981;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em">Statistik Hari Ini</div>
-        ${[['Jumlah Bahan',buku.length,'#10b981'],['Dipinjam',aktif.length,'#f59e0b'],['Lewat',lewat.length,'#ef4444'],['Ahli',murid.length+guru.length,'#06b6d4']].map(([l,v,c])=>`<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:9px 11px"><span style="color:rgba(255,255,255,.5);font-size:12px">${l}</span><span style="color:${c};font-size:24px;font-weight:800">${v}</span></div>`).join('')}
-      </div>
-      <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:12px;padding:14px;overflow:hidden">
-        <div style="color:#06b6d4;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:9px">Pinjaman Terkini</div>
-        <div style="display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:260px">
-          ${aktif.slice(0,6).map(p=>{const b=buku.find(x=>String(x.id)===String(p.buku_id))||{judul:'?'};const pg=p.jenis_pengguna==='murid'?(murid.find(x=>String(x.id)===String(p.pengguna_id))||{nama:'?'}):(guru.find(x=>String(x.id)===String(p.pengguna_id))||{nama:'?'});const lw=today()>p.tarikh_patut;return`<div style="background:rgba(255,255,255,.05);border-radius:7px;padding:7px 9px;border-left:3px solid ${lw?'#ef4444':'#10b981'}"><div style="font-size:12px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pg.nama}</div><div style="font-size:10px;color:rgba(255,255,255,.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul}</div></div>`}).join('')||'<div style="color:rgba(255,255,255,.25);text-align:center;padding:14px">Tiada pinjaman</div>'}
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);border-radius:12px;padding:12px;flex:1">
-          <div style="color:#8b5cf6;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Pengumuman</div>
-          ${(_ann||[]).slice(0,3).map(a=>`<div style="background:rgba(255,255,255,.05);border-radius:7px;padding:6px 9px;margin-bottom:4px;border-left:3px solid ${a.w==='em'?'#10b981':a.w==='cy'?'#06b6d4':a.w==='am'?'#f59e0b':'#ef4444'}"><div style="font-size:11px;font-weight:700;color:#fff">${a.ttl}</div><div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:1px">${a.sub}</div></div>`).join('')}
-        </div>
-        <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.12);border-radius:12px;padding:12px">
-          <div style="color:rgba(255,255,255,.35);font-size:9.5px;font-weight:600;margin-bottom:5px">Bahan Terbaharu</div>
-          ${[...buku].sort((a,b)=>(parseInt(b.no_perolehan)||0)-(parseInt(a.no_perolehan)||0)).slice(0,3).map(b=>`<div style="font-size:11px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.05)">${b.judul||'–'}</div>`).join('')}
-        </div>
-      </div>
-    </div>
-  </div>`;
-  document.body.appendChild(ov);
-  let tvTm=setInterval(()=>{const c=document.getElementById('tv-c');if(c)c.textContent=new Date().toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});if(!document.getElementById('tv-ov'))clearInterval(tvTm)},1000);
+  document.getElementById('tv-ov')?.remove();clearInterval(_tvClockTimer);clearInterval(_tvRefreshTimer);clearInterval(_tvSlideTimer);_tvBookPage=0;_tvAnnPage=0;
+  const ov=document.createElement('div');ov.id='tv-ov';ov.className='tv-shell';
+  const logo=AP.logo?`<img src="${escapeHtml(AP.logo)}" alt="Logo SMARTLIB">`:`<img src="./icon-192.png" alt="Logo SMARTLIB">`;
+  ov.innerHTML=`<header class="tv-header"><div class="tv-brand"><div class="tv-logo">${logo}</div><div><div class="tv-brand-name">${escapeHtml(AP.nm||AP.nama||'SMARTLIB')}</div><div class="tv-school">${escapeHtml(AP.sch||AP.sekolah||'Pusat Sumber Sekolah')}</div></div></div><div class="tv-clock"><div class="tv-time" id="tv-time">00:00:00</div><div class="tv-day" id="tv-day"></div><div class="tv-date" id="tv-date"></div></div><div class="tv-actions"><button class="tv-btn" id="tv-fullscreen-btn" onclick="toggleTVFullscreen()">⛶ Skrin Penuh</button><button class="tv-btn" onclick="tutupTVMode()">Tutup TV</button></div></header><div class="tv-rotate-hint">📱 Putar peranti ke mod landskap untuk paparan TV terbaik.</div><main class="tv-content" id="tv-content"></main>`;
+  document.body.appendChild(ov);renderTVMode();updateTVClock();
+  _tvClockTimer=setInterval(updateTVClock,1000);
+  _tvSlideTimer=setInterval(advanceTVSlides,8000);
+  _tvRefreshTimer=setInterval(async()=>{if(!document.getElementById('tv-ov'))return;await muatSemua(true);renderTVMode()},45000);
   toast('📺 TV Mode aktif','ok');
 }
+document.addEventListener('fullscreenchange',updateTVFullscreenButton);
 
 async function boot(){
   const lo=document.getElementById('lo');
