@@ -242,6 +242,12 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 .bkn{font-size:8px;color:var(--mu);margin-top:1px;font-family:var(--mono)}
 .book-cover-img{width:88px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--bd);background:var(--bg2);box-shadow:0 4px 12px rgba(0,0,0,.08);flex-shrink:0}
 .book-cover-fallback{width:88px;height:120px;border-radius:8px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font-size:9px;font-weight:700;background:linear-gradient(135deg,#d1fae5,#cffafe);color:#064e3b;flex-shrink:0}
+.book-cover-box{position:relative;overflow:hidden;border:1px solid var(--bd);border-radius:7px;background:var(--bg2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.book-cover-box img{width:100%;height:100%;object-fit:cover;display:block}
+.book-cover-box .book-cover-fallback{width:100%;height:100%;border:0;border-radius:0;font-size:16px}
+.cover-small{width:40px;height:56px}
+.cover-search{width:24px;height:31px;border-radius:4px}
+.cover-opac{width:58px;height:82px}
 .new-book-card{flex-shrink:0;width:96px;cursor:pointer;transition:transform .2s}
 .new-book-card:hover{transform:translateY(-2px)}
 .new-book-title{font-size:9px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:var(--tx2);margin-top:4px}
@@ -613,6 +619,28 @@ async function muatBukuFast(force=false){
   }
   return null;
 }
+function escapeHtml(value){
+  return String(value==null?'':value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function normalizeDriveImageUrl(url,fileId=''){
+  let s=String(url||'').trim();
+  const id=String(fileId||'').trim();
+  if(!s&&id)s='https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w800';
+  if(!s||s.startsWith('blob:')||s.startsWith('data:'))return '';
+  const match=s.match(/\/file\/d\/([^/?#]+)/)||s.match(/[?&]id=([^&#]+)/);
+  if(match&&/drive\.google\.com/i.test(s))return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(decodeURIComponent(match[1]))+'&sz=w800';
+  s=s.replace(/^http:\/\//i,'https://');
+  return /^https:\/\//i.test(s)?s:'';
+}
+function getBookCover(buku){
+  const b=buku||{};
+  return normalizeDriveImageUrl(b.cover_url||b.thumbnail||b.image_url||b.gambar||'',b.cover_file_id||'');
+}
+function coverHtml(buku,className=''){
+  const src=getBookCover(buku),title=escapeHtml((buku&&buku.judul)||'buku');
+  if(!src)return `<div class="book-cover-box ${className}"><div class="book-cover-fallback">📚</div></div>`;
+  return `<div class="book-cover-box ${className}"><img src="${escapeHtml(src)}" alt="Cover ${title}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="book-cover-fallback" style="display:none">📚</div></div>`;
+}
 function mulaRF(){if(_rfT)clearInterval(_rfT);_rfT=setInterval(()=>muatSemua(true),30000)}
 function setDot(l){const d=document.getElementById('ri-dot');if(d)d.className='ri-dot'+(l?' ld':'')}
 function updLwBdg(){
@@ -735,7 +763,7 @@ function cariPantas(){
   const murid=(D.murid||[]).filter(m=>m.nama.toLowerCase().includes(q)||(m.nokad||'').includes(q)).slice(0,3);
   if(!buku.length&&!murid.length){if(dd)dd.style.display='none';return}
   let html='<div style="padding:7px 10px;font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase">Hasil Carian</div>';
-  if(buku.length)html+=buku.map(b=>`<div onclick="nav('perolehan')" style="padding:7px 12px;cursor:pointer;display:flex;gap:8px;align-items:center;border-bottom:.5px solid var(--bd)" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''"><div style="width:24px;height:31px;border-radius:3px;background:${wNP(b.no_panggilan)};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--mono)">${(b.no_panggilan||'').split(/[\s\/]/)[0]||'📖'}</div><div style="min-width:0"><div style="font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul||'–'}</div><div style="font-size:9.5px;color:var(--mu)">${b.pengarang||'–'} · No.${b.no_perolehan||'–'}</div></div></div>`).join('');
+  if(buku.length)html+=buku.map(b=>`<div onclick="nav('perolehan')" style="padding:7px 12px;cursor:pointer;display:flex;gap:8px;align-items:center;border-bottom:.5px solid var(--bd)" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">${coverHtml(b,'cover-search')}<div style="min-width:0"><div style="font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul||'–'}</div><div style="font-size:9.5px;color:var(--mu)">${b.pengarang||'–'} · No.${b.no_perolehan||'–'}</div></div></div>`).join('');
   if(murid.length)html+=murid.map(m=>`<div onclick="nav('murid')" style="padding:7px 12px;cursor:pointer;display:flex;gap:8px;align-items:center;border-bottom:.5px solid var(--bd)" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''"><div style="width:24px;height:24px;border-radius:50%;background:${avCol(m.nama)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">${ini(m.nama)}</div><div><div style="font-size:11.5px;font-weight:600">${m.nama||'–'}</div><div style="font-size:9.5px;color:var(--mu)">${m.tingkatan||'–'} · ${m.nokad||'–'}</div></div></div>`).join('');
   if(dd){dd.innerHTML=html;dd.style.display='block'}
 }
@@ -880,7 +908,7 @@ body.innerHTML=items.length?items.map(a=>`<div class="akt-it"><div class="akt-av
 }
 let _ocat='';
 function togOC(el,k){document.querySelectorAll('.ocat').forEach(c=>c.classList.remove('on'));el.classList.add('on');_ocat=k;cariOD()}
-function cariOD(){const q=(document.getElementById('opac-d-q')?.value||'').toLowerCase().trim(),div=document.getElementById('opac-d-r');if(!div)return;if(!q&&!_ocat){div.textContent='Taip untuk mencari...';return}const f=(D.buku||[]).filter(b=>{const qm=!q||(b.judul+b.pengarang+(b.isbn||'')+(b.no_panggilan||'')).toLowerCase().includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(_ocat==='F')km=isFik(np);else if(_ocat==='B')km=!isFik(np);else if(_ocat)km=np.charAt(0)===_ocat;return qm&&km}).slice(0,4);if(!f.length){div.innerHTML='<div style="color:var(--mu)">Tiada bahan dijumpai</div>';return}div.innerHTML=`<div style="font-size:9.5px;color:var(--mu);margin-bottom:5px">${f.length} dijumpai</div>`+f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return`<div style="display:flex;gap:7px;align-items:center;padding:5px 0;border-bottom:.5px solid var(--bd)"><div style="width:20px;height:26px;border-radius:3px;background:${wNP(b.no_panggilan)};display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--mono)">${(b.no_panggilan||'?').split(/[\s\/]/)[0]}</div><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul||'–'}</div><div style="font-size:9.5px;color:var(--mu)">${b.pengarang||'–'}</div></div><span class="bdg ${sp?'bg-am':'bg-em'}" style="font-size:9px">${sp?'Dipinjam':'Di Rak'}</span></div>`}).join('')}
+function cariOD(){const q=(document.getElementById('opac-d-q')?.value||'').toLowerCase().trim(),div=document.getElementById('opac-d-r');if(!div)return;if(!q&&!_ocat){div.textContent='Taip untuk mencari...';return}const f=(D.buku||[]).filter(b=>{const qm=!q||(b.judul+b.pengarang+(b.isbn||'')+(b.no_panggilan||'')).toLowerCase().includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(_ocat==='F')km=isFik(np);else if(_ocat==='B')km=!isFik(np);else if(_ocat)km=np.charAt(0)===_ocat;return qm&&km}).slice(0,4);if(!f.length){div.innerHTML='<div style="color:var(--mu)">Tiada bahan dijumpai</div>';return}div.innerHTML=`<div style="font-size:9.5px;color:var(--mu);margin-bottom:5px">${f.length} dijumpai</div>`+f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return`<div style="display:flex;gap:7px;align-items:center;padding:5px 0;border-bottom:.5px solid var(--bd)">${coverHtml(b,'cover-search')}<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul||'–'}</div><div style="font-size:9.5px;color:var(--mu)">${b.pengarang||'–'}</div></div><span class="bdg ${sp?'bg-am':'bg-em'}" style="font-size:9px">${sp?'Dipinjam':'Di Rak'}</span></div>`}).join('')}
 </script>
 
 <script>
@@ -916,15 +944,43 @@ function pgPerolehan(){_bFilt=[...D.buku];_bPg=1;sortB();document.getElementById
 function sortB(c){if(c){if(_bSort===c)_bAsc=!_bAsc;else{_bSort=c;_bAsc=true}}_bFilt.sort((a,b)=>{const va=String(a[_bSort]||'').toLowerCase(),vb=String(b[_bSort]||'').toLowerCase();if(!isNaN(parseFloat(va))&&!isNaN(parseFloat(vb)))return _bAsc?parseFloat(va)-parseFloat(vb):parseFloat(vb)-parseFloat(va);return _bAsc?va.localeCompare(vb):vb.localeCompare(va)});renderB()}
 function filtB(){const q=(document.getElementById('src-b')?.value||'').toLowerCase(),k=document.getElementById('flt-k')?.value||'',p=document.getElementById('flt-p')?.value||'';_bFilt=(D.buku||[]).filter(b=>{const qm=!q||(b.judul+b.no_panggilan+(b.isbn||'')+(b.no_perolehan||'')+(b.pengarang||'')).toLowerCase().includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(k==='F')km=isFik(np);else if(k)km=np.charAt(0)===k;return qm&&km&&(!p||b.punca===p)});_bPg=1;sortB()}
 function renderB(){const st=(_bPg-1)*_bPPg,en=Math.min(st+_bPPg,_bFilt.length),pg=_bFilt.slice(st,en);const tb=document.getElementById('tbody-b'),info=document.getElementById('b-info'),bar=document.getElementById('b-pgb');if(tb)tb.innerHTML=rowsB(pg);if(info)info.textContent=`${st+1}–${en} daripada ${_bFilt.length} (${D.buku.length} jumlah)`;if(bar){const tot=Math.ceil(_bFilt.length/_bPPg);let btn='';for(let i=1;i<=tot;i++){if(i<=2||i>tot-1||Math.abs(i-_bPg)<=1)btn+=`<button class="pgbn${_bPg===i?' on':''}" onclick="_bPg=${i};renderB()">${i}</button>`;else if(!btn.endsWith('...'))btn+=`<span style="color:var(--mu);padding:2px 4px">...</span>`}bar.innerHTML=btn}}
-function rowsB(buku){if(!buku.length)return`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--mu)">Tiada rekod.</td></tr>`;return buku.map(b=>{const cv=String(b.cover_url||'').replace(/"/g,'&quot;');return`<tr><td style="width:48px">${cv?`<img src="${cv}" alt="Cover" loading="lazy" style="width:40px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--bd);background:var(--bg2)" onerror="this.replaceWith(document.createTextNode('–'))">`:'–'}</td><td><span class="bdg bg-cy">${b.no_perolehan||'–'}</span></td><td><span style="font-family:var(--mono);font-size:10.5px;font-weight:700;color:${wNP(b.no_panggilan)};background:${wNP(b.no_panggilan)}18;padding:2px 5px;border-radius:4px">${b.no_panggilan||'–'}</span></td><td style="max-width:170px"><div style="font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul||'–'}</div><div style="font-size:9.5px;color:var(--mu)">${ddcKat(b.no_panggilan)}</div></td><td style="font-size:10.5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.pengarang||'–'}</td><td>${b.tahun||'–'}</td><td><span class="bdg bg-am">${b.punca||'–'}</span></td><td style="font-size:10.5px">${fmtRM(b.harga_rm,b.harga_sen)}</td><td><div style="display:flex;gap:3px"><button class="btn b-gh b-xs" onclick="editB(${b.id})">✏️</button><button class="btn b-gh b-xs" onclick="padamB(${b.id})" style="color:var(--red)">🗑️</button></div></td></tr>`}).join('')}
+function rowsB(buku){if(!buku.length)return`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--mu)">Tiada rekod.</td></tr>`;return buku.map(b=>`<tr><td style="width:48px">${coverHtml(b,'cover-small')}</td><td><span class="bdg bg-cy">${b.no_perolehan||'–'}</span></td><td><span style="font-family:var(--mono);font-size:10.5px;font-weight:700;color:${wNP(b.no_panggilan)};background:${wNP(b.no_panggilan)}18;padding:2px 5px;border-radius:4px">${b.no_panggilan||'–'}</span></td><td style="max-width:170px"><div style="font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.judul||'–'}</div><div style="font-size:9.5px;color:var(--mu)">${ddcKat(b.no_panggilan)}</div></td><td style="font-size:10.5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.pengarang||'–'}</td><td>${b.tahun||'–'}</td><td><span class="bdg bg-am">${b.punca||'–'}</span></td><td style="font-size:10.5px">${fmtRM(b.harga_rm,b.harga_sen)}</td><td><div style="display:flex;gap:3px"><button class="btn b-gh b-xs" onclick="editB(${b.id})">✏️</button><button class="btn b-gh b-xs" onclick="padamB(${b.id})" style="color:var(--red)">🗑️</button></div></td></tr>`).join('')}
 function eksCSV(){const h=['id','no_perolehan','no_panggilan','pengarang','judul','penerbit','tahun','jilid','tarikh_perolehan','no_invois','punca','isbn','harga_rm','harga_sen','muka_surat','catatan','cover_url','cover_file_id'];const rows=[h.join(','),...D.buku.map(b=>h.map(k=>`"${(b[k]||'').toString().replace(/"/g,'""')}"`).join(','))];const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='buku_'+today()+'.csv';a.click();toast('CSV dieksport!','ok')}
-function injectEditCoverUI(){const modal=document.querySelector('#m-edit-b .modal');if(!modal||document.getElementById('edit-cover-url'))return;const foot=modal.querySelector('.m-ft');if(!foot)return;foot.insertAdjacentHTML('beforebegin',`<div class="fg"><label>COVER BUKU</label><div class="cover-uploader"><div class="cover-preview-wrap"><img id="edit-cover-preview" src="" alt="Preview Cover Buku" style="display:none"><div id="edit-cover-placeholder" class="cover-placeholder">Tiada cover buku</div></div><div class="cover-actions"><button type="button" class="btn b-cy b-sm" onclick="document.getElementById('edit-cover-camera').click()">📸 Ambil Gambar</button><button type="button" class="btn b-gh b-sm" onclick="document.getElementById('edit-cover-upload').click()">🖼️ Upload Gambar</button><button type="button" class="btn b-re b-sm" onclick="clearEditCover()">🗑️ Buang Cover</button></div><input id="edit-cover-camera" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleEditCoverFile(this.files[0])"><input id="edit-cover-upload" type="file" accept="image/*" style="display:none" onchange="handleEditCoverFile(this.files[0])"><input id="edit-cover-url" type="hidden"><input id="edit-cover-file-id" type="hidden"><small id="edit-cover-status" style="color:var(--mu)">Cover belum dipilih.</small></div></div>`)}
+function injectEditCoverUI(){const modal=document.querySelector('#m-edit-b .modal');if(!modal||document.getElementById('edit-cover-url'))return;const foot=modal.querySelector('.m-ft');if(!foot)return;foot.insertAdjacentHTML('beforebegin',`<div class="fg"><label>COVER BUKU</label><div class="cover-uploader"><div class="cover-preview-wrap"><img id="edit-cover-preview" src="" alt="Preview Cover Buku" style="display:none"><div id="edit-cover-placeholder" class="cover-placeholder">Tiada cover buku</div></div><div class="cover-actions"><button type="button" class="btn b-cy b-sm" onclick="document.getElementById('edit-cover-camera').click()">📸 Ambil Gambar</button><button type="button" class="btn b-gh b-sm" onclick="document.getElementById('edit-cover-upload').click()">🖼️ Upload Gambar</button><button type="button" class="btn b-re b-sm" onclick="clearEditCover()">🗑️ Buang Cover</button></div><input id="edit-cover-camera" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" style="display:none" onchange="handleEditCoverFile(this.files[0])"><input id="edit-cover-upload" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" style="display:none" onchange="handleEditCoverFile(this.files[0])"><input id="edit-cover-url" type="hidden"><input id="edit-cover-file-id" type="hidden"><small id="edit-cover-status" style="color:var(--mu)">Cover belum dipilih.</small></div></div>`)}
 function setEditCoverPreview(url,fileId){const img=document.getElementById('edit-cover-preview'),placeholder=document.getElementById('edit-cover-placeholder'),hidden=document.getElementById('edit-cover-url'),hidFile=document.getElementById('edit-cover-file-id'),st=document.getElementById('edit-cover-status');if(hidden)hidden.value=url||'';if(hidFile)hidFile.value=fileId||'';if(img){if(url){img.src=url;img.style.display='block'}else{img.src='';img.style.display='none'}}if(placeholder)placeholder.style.display=url?'none':'flex';if(st)st.textContent=url?'Cover buku tersedia.':'Cover belum dipilih.'}
-function clearEditCover(){setEditCoverPreview('','');const cam=document.getElementById('edit-cover-camera'),up=document.getElementById('edit-cover-upload');if(cam)cam.value='';if(up)up.value='';toast('Cover dibuang. Klik Simpan untuk kemas kini rekod.','ok')}
+function clearEditCover(){editCoverPendingBase64='';editCoverPendingName='';editCoverOriginalUrl='';editCoverOriginalFileId='';setEditCoverPreview('','');const cam=document.getElementById('edit-cover-camera'),up=document.getElementById('edit-cover-upload');if(cam)cam.value='';if(up)up.value='';toast('Cover dibuang. Klik Simpan untuk kemas kini rekod.','ok')}
 function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})}
 async function handleEditCoverFile(file){const oldUrl=document.getElementById('edit-cover-url')?.value||'',oldFile=document.getElementById('edit-cover-file-id')?.value||'';try{if(!file)return;if(!file.type.startsWith('image/')){toast('Sila pilih fail gambar.','er');return}toast('Memuat naik cover buku...','wa');let dataUrl,base64,mimeType='image/jpeg';if(typeof compressImageToBase64==='function'){const r=await compressImageToBase64(file,900,.75);dataUrl=r.dataUrl;base64=r.base64;mimeType=r.mimeType||mimeType}else{dataUrl=await fileToDataUrl(file);base64=dataUrl.split(',')[1];mimeType=file.type||mimeType}setEditCoverPreview(dataUrl,'');const res=await api({action:'upload_cover_buku',fileName:file.name||('cover-'+Date.now()+'.jpg'),mimeType,base64});if(!res||!res.ok||!res.data||!res.data.cover_url)throw new Error((res&&res.error)||'Gagal upload cover.');setEditCoverPreview(res.data.cover_url,res.data.file_id||'');toast('Cover buku berjaya dimuat naik.','ok')}catch(err){console.error(err);setEditCoverPreview(oldUrl,oldFile);toast('Gagal memuat naik cover buku.','er')}}
-function editB(id){const b=(D.buku||[]).find(x=>String(x.id)===String(id));if(!b)return;injectEditCoverUI();document.getElementById('meb-ttl').textContent='Edit Rekod';const f={nop:'no_perolehan',npn:'no_panggilan',jdl:'judul',pgr:'pengarang',pnb:'penerbit',thn:'tahun',tp:'tarikh_perolehan',pnc:'punca',isbn:'isbn',hrm:'harga_rm',mk:'muka_surat'};Object.entries(f).forEach(([el,key])=>{const e=document.getElementById('eb-'+el);if(e)e.value=b[key]||''});document.getElementById('eb-id').value=id;setEditCoverPreview(b.cover_url||'',b.cover_file_id||'');openM('m-edit-b')}
-async function simpanEditB(){const nop=document.getElementById('eb-nop').value.trim(),npn=document.getElementById('eb-npn').value.trim(),jdl=document.getElementById('eb-jdl').value.trim();if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}const id=document.getElementById('eb-id').value;const data={no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('eb-pgr').value.trim(),penerbit:document.getElementById('eb-pnb').value.trim(),tahun:document.getElementById('eb-thn').value.trim(),jilid:document.getElementById('eb-jilid')?.value.trim()||'',tarikh_perolehan:document.getElementById('eb-tp').value.trim(),punca:document.getElementById('eb-pnc').value,isbn:document.getElementById('eb-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('eb-hrm').value)||0,muka_surat:document.getElementById('eb-mk').value.trim(),cover_url:document.getElementById('edit-cover-url')?.value||'',cover_file_id:document.getElementById('edit-cover-file-id')?.value||''};try{const res=await api({action:'kemaskini',sheet:'buku',id,data});if(!res?.ok)throw new Error(res?.error);toast('Dikemas kini!','ok');closeM('m-edit-b');await muatSemua(true);pgPerolehan()}catch(e){toast('Gagal: '+e.message,'er')}}
+function editB(id){const b=(D.buku||[]).find(x=>String(x.id)===String(id));if(!b)return;injectEditCoverUI();editCoverPendingBase64='';editCoverPendingName='';editCoverOriginalUrl=getBookCover(b);editCoverOriginalFileId=b.cover_file_id||'';document.getElementById('meb-ttl').textContent='Edit Rekod';const f={nop:'no_perolehan',npn:'no_panggilan',jdl:'judul',pgr:'pengarang',pnb:'penerbit',thn:'tahun',tp:'tarikh_perolehan',pnc:'punca',isbn:'isbn',hrm:'harga_rm',mk:'muka_surat'};Object.entries(f).forEach(([el,key])=>{const e=document.getElementById('eb-'+el);if(e)e.value=b[key]||''});document.getElementById('eb-id').value=id;setEditCoverPreview(editCoverOriginalUrl,editCoverOriginalFileId);openM('m-edit-b')}
+async function simpanEditB(){
+  const nop=document.getElementById('eb-nop').value.trim(),npn=document.getElementById('eb-npn').value.trim(),jdl=document.getElementById('eb-jdl').value.trim();
+  if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}
+  if(imageProcessing||coverProcessing){toast('Gambar belum selesai diproses.','wa');return}
+  const id=document.getElementById('eb-id').value;
+  const saveBtn=document.querySelector('#m-edit-b .m-ft .b-em'),saveBtnText=saveBtn?.textContent||'Simpan';if(saveBtn)saveBtn.disabled=true;
+  let finalCoverUrl=normalizeDriveImageUrl(document.getElementById('edit-cover-url')?.value||'',document.getElementById('edit-cover-file-id')?.value||'');
+  let finalCoverFileId=document.getElementById('edit-cover-file-id')?.value||'';
+  try{
+    if(editCoverPendingBase64){
+      if(saveBtn)saveBtn.textContent='Memuat naik cover...';
+      const up=await api({action:'upload_cover',fileName:editCoverPendingName||('cover_'+Date.now()+'.jpg'),mimeType:'image/jpeg',base64Data:editCoverPendingBase64,bookId:id,no_perolehan:nop,oldCoverFileId:editCoverOriginalFileId});
+      if(!up?.ok||!up.data?.cover_url)throw new Error((up&&up.error)||'Gagal memuat naik cover ke Google Drive.');
+      finalCoverFileId=up.data.cover_file_id||up.data.file_id||'';
+      finalCoverUrl=normalizeDriveImageUrl(up.data.cover_url,finalCoverFileId);
+    }
+    const data={no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('eb-pgr').value.trim(),penerbit:document.getElementById('eb-pnb').value.trim(),tahun:document.getElementById('eb-thn').value.trim(),jilid:document.getElementById('eb-jilid')?.value.trim()||'',tarikh_perolehan:document.getElementById('eb-tp').value.trim(),punca:document.getElementById('eb-pnc').value,isbn:document.getElementById('eb-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('eb-hrm').value)||0,muka_surat:document.getElementById('eb-mk').value.trim(),cover_url:finalCoverUrl,cover_file_id:finalCoverFileId};
+    if(saveBtn)saveBtn.textContent='Menyimpan...';
+    const res=await api({action:'kemaskini',sheet:'buku',id,data});
+    if(!res?.ok)throw new Error(res?.error||'Gagal mengemas kini rekod.');
+    const fresh=await muatBukuFast(true);if(!fresh)await muatSemua(true);
+    const reloaded=(D.buku||[]).find(b=>String(b.id)===String(id));
+    if(finalCoverUrl&&reloaded&&!getBookCover(reloaded))toast('Cover berjaya disimpan tetapi gagal dimuatkan semula.','wa');
+    else toast('Rekod dan cover berjaya dikemas kini!','ok');
+    editCoverPendingBase64='';editCoverPendingName='';
+    closeM('m-edit-b');pgPerolehan();
+  }catch(e){toast(e.message||'Gagal memuat naik cover ke Google Drive.','er')}
+  finally{if(saveBtn){saveBtn.textContent=saveBtnText;saveBtn.disabled=false}}
+}
 function focusEditISBNPhysicalScanner(){const input=document.getElementById('eb-isbn');if(!input)return;input.focus();input.select();toast('Sila scan barcode ISBN menggunakan scanner fizikal.','wa')}
 function handleEditISBNEnter(e){if(e.key==='Enter'){e.preventDefault();cariISBNEdit()}}
 async function cariISBNEdit(){
@@ -945,7 +1001,7 @@ async function cariISBNEdit(){
       if(b.penerbit)document.getElementById('eb-pnb').value=b.penerbit;
       if(b.tahun)document.getElementById('eb-thn').value=b.tahun;
       if(b.muka_surat&&document.getElementById('eb-mk'))document.getElementById('eb-mk').value=b.muka_surat;
-      if((b.cover_url||b.thumbnail)&&document.getElementById('edit-cover-url')&&!document.getElementById('edit-cover-url').value)setEditCoverPreview(b.cover_url||b.thumbnail,'');
+      if(getBookCover(b)&&document.getElementById('edit-cover-url')&&!document.getElementById('edit-cover-url').value)setEditCoverPreview(getBookCover(b),b.cover_file_id||'');
       if(typeof autoEditNoPanggilan==='function')autoEditNoPanggilan();
     }
     if(st)st.textContent='✅ Maklumat ISBN dijumpai.';
@@ -1408,6 +1464,13 @@ let currentBookCoverFileId = '';
 let selectedCoverFile = null;
 let processedCoverBase64 = '';
 let imageProcessing = false;
+let coverProcessing = false;
+let currentCoverUrl = '';
+let currentCoverFileId = '';
+let editCoverPendingBase64 = '';
+let editCoverPendingName = '';
+let editCoverOriginalUrl = '';
+let editCoverOriginalFileId = '';
 let _charts = (typeof _ch !== 'undefined') ? _ch : {};
 const GAS_URL = GAS;
 const CFG = {url: GAS, token: 'SISPUSAT2025SEKOLAHKU', refresh: 30000};
@@ -2392,7 +2455,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   window.renderOpacResults=function(rows){
     const div=document.getElementById('opac-result');if(!div)return;
     if(!rows.length){div.innerHTML='<div class="al a-wa">❌ Tiada bahan dijumpai.</div>';return}
-    div.innerHTML=`<div style="margin-bottom:9px;font-size:12px;color:var(--mu)">${rows.length} bahan dijumpai</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px">${rows.map(b=>{const st=String(b.status||'').toLowerCase();const sp=st==='pinjam'||st==='dipinjam';return`<div class="card" style="padding:12px"><div style="font-weight:700;font-size:12px;margin-bottom:3px;line-height:1.3">${b.judul||'–'}</div><div style="font-size:11px;color:var(--mu);margin-bottom:2px">${b.pengarang||'–'}</div><div style="font-size:10.5px;color:var(--mu);line-height:1.5">${b.penerbit?`<div>${b.penerbit}</div>`:''}${b.tahun?`<div>${b.tahun}</div>`:''}${b.isbn?`<div>ISBN: ${b.isbn}</div>`:''}</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px"><code style="font-size:10px">${b.no_panggilan||'–'}</code><span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Tersedia'}</span></div></div>`}).join('')}</div>`;
+    div.innerHTML=`<div style="margin-bottom:9px;font-size:12px;color:var(--mu)">${rows.length} bahan dijumpai</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px">${rows.map(b=>{const st=String(b.status||'').toLowerCase();const sp=st==='pinjam'||st==='dipinjam';return`<div class="card" style="padding:12px;display:flex;gap:10px;align-items:flex-start">${coverHtml(b,'cover-opac')}<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:12px;margin-bottom:3px;line-height:1.3">${b.judul||'–'}</div><div style="font-size:11px;color:var(--mu);margin-bottom:2px">${b.pengarang||'–'}</div><div style="font-size:10.5px;color:var(--mu);line-height:1.5">${b.penerbit?`<div>${b.penerbit}</div>`:''}${b.tahun?`<div>${b.tahun}</div>`:''}${b.isbn?`<div>ISBN: ${b.isbn}</div>`:''}</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px"><code style="font-size:10px">${b.no_panggilan||'–'}</code><span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Tersedia'}</span></div></div></div>`}).join('')}</div>`;
   };
 
   window.runOpac=async function(){
@@ -2413,7 +2476,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
       return;
     }
     const f=(D.buku||[]).filter(b=>{const qm=!q||(b.judul+b.pengarang+(b.isbn||'')+(b.no_panggilan||'')).toLowerCase().includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(window._opacCF==='F')km=isFik(np);else if(window._opacCF==='B')km=!isFik(np);else if(window._opacCF)km=np.charAt(0)===window._opacCF;return qm&&km});
-    renderOpacResults(f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return{no_panggilan:b.no_panggilan,judul:b.judul,pengarang:b.pengarang,penerbit:b.penerbit,tahun:b.tahun,isbn:b.isbn,status:sp?'dipinjam':(b.status||'')}}));
+    renderOpacResults(f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return{no_panggilan:b.no_panggilan,judul:b.judul,pengarang:b.pengarang,penerbit:b.penerbit,tahun:b.tahun,isbn:b.isbn,cover_url:b.cover_url,cover_file_id:b.cover_file_id,thumbnail:b.thumbnail,status:sp?'dipinjam':(b.status||'')}}));
   };
 
   window.togOCat=function(el,k){document.querySelectorAll('.ocat').forEach(c=>c.classList.remove('on'));el.classList.add('on');window._opacCF=k;runOpac()};
@@ -2455,21 +2518,21 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   window.renderScanBookResult=function(b){
     const div=document.getElementById('scan-result');if(!div)return;
     const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');
-    div.innerHTML=`<div class="al a-ok">Bahan dijumpai!</div><table style="width:100%;font-size:12px;border-collapse:collapse">${[['No. Perolehan',`<span class="bdg bg-cy">${b.no_perolehan||'-'}</span>`],['No. Panggilan',`<span class="mono">${b.no_panggilan||'-'}</span>`],['Judul',`<strong>${b.judul||'-'}</strong>`],['Pengarang',b.pengarang||'-'],['Penerbit',b.penerbit||'-'],['Tahun',b.tahun||'-'],['ISBN',b.isbn||'-'],['Status',`<span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Di Rak'}</span>`]].map(([k,v])=>`<tr><td style="color:var(--mu);padding:4px 0;width:38%;font-size:11px">${k}</td><td>${v}</td></tr>`).join('')}</table>`;
+    div.innerHTML=`<div class="al a-ok">Bahan dijumpai!</div><div style="display:flex;gap:10px;align-items:flex-start;text-align:left">${coverHtml(b,'cover-opac')}<table style="width:100%;font-size:12px;border-collapse:collapse">${[['No. Perolehan',`<span class="bdg bg-cy">${b.no_perolehan||'-'}</span>`],['No. Panggilan',`<span class="mono">${b.no_panggilan||'-'}</span>`],['Judul',`<strong>${b.judul||'-'}</strong>`],['Pengarang',b.pengarang||'-'],['Penerbit',b.penerbit||'-'],['Tahun',b.tahun||'-'],['ISBN',b.isbn||'-'],['Status',`<span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Di Rak'}</span>`]].map(([k,v])=>`<tr><td style="color:var(--mu);padding:4px 0;width:38%;font-size:11px">${k}</td><td>${v}</td></tr>`).join('')}</table></div>`;
     toast('Bahan dijumpai!','ok');
   };
 
   window.renderISBNLookupResult=function(b){
     window._scanISBNBook=b;
     const div=document.getElementById('scan-result');if(!div)return;
-    const cover=b.cover_url||b.thumbnail||'';
-    div.innerHTML=`<div class="al a-ok">Maklumat ISBN dijumpai.</div><div style="display:flex;gap:10px;text-align:left;align-items:flex-start">${cover?`<img src="${cover}" class="book-cover-img" style="width:68px;height:96px">`:''}<div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--tx)">${b.judul||'-'}</div><div style="font-size:11px;color:var(--mu);line-height:1.6">${b.pengarang||'-'}<br>${b.penerbit||'-'} · ${b.tahun||'-'}<br>ISBN: ${b.isbn||'-'}</div><button class="btn b-em b-sm" style="margin-top:8px" onclick="isiDaftarISBNLookup()">Daftar Buku Ini</button></div></div>`;
+    const cover=getBookCover(b);
+    div.innerHTML=`<div class="al a-ok">Maklumat ISBN dijumpai.</div><div style="display:flex;gap:10px;text-align:left;align-items:flex-start">${cover?`<img src="${escapeHtml(cover)}" class="book-cover-img" style="width:68px;height:96px" referrerpolicy="no-referrer">`:''}<div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--tx)">${b.judul||'-'}</div><div style="font-size:11px;color:var(--mu);line-height:1.6">${b.pengarang||'-'}<br>${b.penerbit||'-'} · ${b.tahun||'-'}<br>ISBN: ${b.isbn||'-'}</div><button class="btn b-em b-sm" style="margin-top:8px" onclick="isiDaftarISBNLookup()">Daftar Buku Ini</button></div></div>`;
   };
 
   window.isiDaftarISBNLookup=function(){
     const b=window._scanISBNBook;if(!b)return;
     nav('daftar');
-    setTimeout(()=>{if(document.getElementById('db-isbn'))document.getElementById('db-isbn').value=b.isbn||'';if(b.judul)document.getElementById('db-jdl').value=b.judul;if(b.pengarang)document.getElementById('db-pgr').value=b.pengarang;if(b.penerbit)document.getElementById('db-pnb').value=b.penerbit;if(b.tahun)document.getElementById('db-thn').value=b.tahun;if(b.muka_surat)document.getElementById('db-muka').value=b.muka_surat;if(b.cover_url||b.thumbnail){currentBookCoverUrl=b.cover_url||b.thumbnail;currentBookCoverBase64='';currentBookCoverFileId='';previewBookCover(currentBookCoverUrl)}autoNP()},80);
+    setTimeout(()=>{if(document.getElementById('db-isbn'))document.getElementById('db-isbn').value=b.isbn||'';if(b.judul)document.getElementById('db-jdl').value=b.judul;if(b.pengarang)document.getElementById('db-pgr').value=b.pengarang;if(b.penerbit)document.getElementById('db-pnb').value=b.penerbit;if(b.tahun)document.getElementById('db-thn').value=b.tahun;if(b.muka_surat)document.getElementById('db-muka').value=b.muka_surat;if(getBookCover(b)){currentBookCoverUrl=getBookCover(b);currentBookCoverBase64='';currentBookCoverFileId=b.cover_file_id||'';currentCoverUrl=currentBookCoverUrl;currentCoverFileId=currentBookCoverFileId;previewBookCover(currentBookCoverUrl)}autoNP()},80);
   };
 
   window.previewBookCover=function(src){
@@ -2478,14 +2541,14 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     if(empty)empty.style.display=src?'none':'block';
   };
   window.clearBookCover=function(){
-    currentBookCoverBase64='';currentBookCoverMime='';currentBookCoverName='';currentBookCoverUrl='';currentBookCoverFileId='';selectedCoverFile=null;processedCoverBase64='';
+    currentBookCoverBase64='';currentBookCoverMime='';currentBookCoverName='';currentBookCoverUrl='';currentBookCoverFileId='';currentCoverUrl='';currentCoverFileId='';selectedCoverFile=null;processedCoverBase64='';
     previewBookCover('');
     const file=document.getElementById('db-cover-file'),cam=document.getElementById('db-cover-camera');
     if(file)file.value='';if(cam)cam.value='';
     const st=document.getElementById('db-cover-status');if(st)st.textContent='Cover belum dipilih.';
   };
   function setCoverProcessing(on,msg){
-    imageProcessing=!!on;
+    imageProcessing=!!on;coverProcessing=!!on;
     const btn=document.getElementById('btn-db');
     if(btn){
       if(on){
@@ -2556,7 +2619,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     if(source.close)source.close();
     return canvas;
   }
-  window.compressImageToBase64=async function(file,maxWidth=800,quality=.78,maxHeight=1200){
+  window.compressImageToBase64=async function(file,maxWidth=900,quality=.75,maxHeight=900){
     const converted=await convertHeicIfNeeded(file);
     const canvas=await drawImageToCanvas(converted,maxWidth,maxHeight);
     let q=quality,dataUrl='',base64='',bytes=0;
@@ -2564,11 +2627,11 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
       dataUrl=await canvasToJpeg(canvas,q);
       base64=String(dataUrl).split(',')[1]||'';
       bytes=Math.round(base64.length*.75);
-      if(bytes<=500000||q<=.55)break;
+      if(bytes<=580000||q<=.5)break;
       q-=.06;
     }
     if(!base64)throw new Error('Gagal memproses gambar.');
-    if(bytes>850000)throw new Error('Gambar terlalu besar.');
+    if(bytes>620000)throw new Error('Gambar terlalu besar.');
     return {dataUrl,base64,mimeType:'image/jpeg',bytes,width:canvas.width,height:canvas.height};
   };
   window.handleBookCoverFile=async function(file){
@@ -2577,13 +2640,15 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     selectedCoverFile=file;processedCoverBase64='';currentBookCoverBase64='';currentBookCoverFileId='';
     setCoverProcessing(true,'Memproses gambar...');
     try{
-      const result=await compressImageToBase64(file,800,.78,1200);
+      const result=await compressImageToBase64(file,900,.75,900);
       processedCoverBase64=result.base64;
       currentBookCoverBase64=result.base64;
       currentBookCoverMime='image/jpeg';
       currentBookCoverName=safeCoverFileName(file.name);
       currentBookCoverUrl=result.dataUrl;
       currentBookCoverFileId='';
+      currentCoverUrl=result.dataUrl;
+      currentCoverFileId='';
       previewBookCover(result.dataUrl);
       const st=document.getElementById('db-cover-status');
       if(st)st.textContent='Cover siap diproses. Akan diupload semasa simpan buku.';
@@ -2599,23 +2664,27 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     }
   };
   window.handleEditCoverFile=async function(file){
-    const oldUrl=document.getElementById('edit-cover-url')?.value||'',oldFile=document.getElementById('edit-cover-file-id')?.value||'';
     try{
       if(!file)return;
       if(!isImageLikeFile(file)){toast('Sila pilih fail gambar.','er');return}
-      toast('Memproses cover buku...','wa');
-      const r=await compressImageToBase64(file,800,.78,1200);
-      setEditCoverPreview(r.dataUrl,'');
-      toast('Memuat naik cover buku...','wa');
-      const res=await api({action:'upload_cover_buku',fileName:safeCoverFileName(file.name),mimeType:'image/jpeg',base64:r.base64});
-      if(!res||!res.ok||!res.data||!res.data.cover_url)throw new Error((res&&res.error)||'Gagal upload cover.');
-      setEditCoverPreview(res.data.cover_url,res.data.file_id||'');
-      toast('Cover buku berjaya dimuat naik.','ok');
+      imageProcessing=true;coverProcessing=true;
+      const saveBtn=document.querySelector('#m-edit-b .m-ft .b-em');if(saveBtn)saveBtn.disabled=true;
+      const st=document.getElementById('edit-cover-status');if(st)st.textContent='Memproses gambar...';
+      const r=await compressImageToBase64(file,900,.75,900);
+      editCoverPendingBase64=r.base64;
+      editCoverPendingName=safeCoverFileName(file.name);
+      const img=document.getElementById('edit-cover-preview'),placeholder=document.getElementById('edit-cover-placeholder');
+      if(img){img.src=r.dataUrl;img.style.display='block'}if(placeholder)placeholder.style.display='none';
+      if(st)st.textContent='Cover siap diproses. Akan dimuat naik semasa Simpan.';
+      toast('Cover buku siap diproses.','ok');
     }catch(err){
       console.error(err);
-      setEditCoverPreview(oldUrl,oldFile);
       const msg=String(err&&err.message||'Gagal memuat naik cover buku.');
-      toast(msg.includes('HEIC')||msg.includes('besar')?msg:'Gagal memuat naik cover buku.','er');
+      toast(msg.includes('HEIC')||msg.includes('besar')?msg:'Gagal memproses gambar.','er');
+      setEditCoverPreview(editCoverOriginalUrl,editCoverOriginalFileId);
+    }finally{
+      imageProcessing=false;coverProcessing=false;
+      const saveBtn=document.querySelector('#m-edit-b .m-ft .b-em');if(saveBtn)saveBtn.disabled=false;
     }
   };
 
@@ -2627,7 +2696,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
       const btn=document.createElement('button');btn.type='button';btn.id='btn-scan-isbn-register';btn.className='btn b-cy b-sm';btn.textContent='Scan ISBN';btn.onclick=window.openISBNScannerForRegister;wrap.appendChild(btn);
     }
     const cat=document.getElementById('db-cat')?.closest('.fg');
-    if(cat&&!document.getElementById('db-cover-box'))cat.insertAdjacentHTML('afterend',`<div class="card" style="margin-top:12px;margin-bottom:12px"><div class="ct">Cover Buku</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div id="db-cover-box" class="book-cover-upload-box"><img id="db-cover-preview" src="" alt="Cover Buku" style="display:none"><div id="db-cover-empty">Cover belum dipilih</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn b-gh b-sm" onclick="document.getElementById('db-cover-file').click()">Upload</button><button type="button" class="btn b-cy b-sm" onclick="document.getElementById('db-cover-camera').click()">Ambil Gambar</button><button type="button" class="btn b-re b-sm" onclick="clearBookCover()">Buang</button></div></div><input type="file" id="db-cover-file" accept="image/*" style="display:none" onchange="handleBookCoverFile(this.files[0])"><input type="file" id="db-cover-camera" accept="image/*" capture="environment" style="display:none" onchange="handleBookCoverFile(this.files[0])"><small id="db-cover-status">Cover belum dipilih.</small></div>`);
+    if(cat&&!document.getElementById('db-cover-box'))cat.insertAdjacentHTML('afterend',`<div class="card" style="margin-top:12px;margin-bottom:12px"><div class="ct">Cover Buku</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div id="db-cover-box" class="book-cover-upload-box"><img id="db-cover-preview" src="" alt="Cover Buku" style="display:none"><div id="db-cover-empty">Cover belum dipilih</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn b-gh b-sm" onclick="document.getElementById('db-cover-file').click()">Upload</button><button type="button" class="btn b-cy b-sm" onclick="document.getElementById('db-cover-camera').click()">Ambil Gambar</button><button type="button" class="btn b-re b-sm" onclick="clearBookCover()">Buang</button></div></div><input type="file" id="db-cover-file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" style="display:none" onchange="handleBookCoverFile(this.files[0])"><input type="file" id="db-cover-camera" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" style="display:none" onchange="handleBookCoverFile(this.files[0])"><small id="db-cover-status">Cover belum dipilih.</small></div>`);
     if(!document.getElementById('m-scan-isbn'))document.getElementById('content').insertAdjacentHTML('beforeend',`<div class="mbg" id="m-scan-isbn"><div class="modal"><div class="m-hdr"><h3>Scan ISBN Buku</h3><button class="m-x" onclick="closeISBNScannerForRegister()">Tutup</button></div><div class="al a-in">Arahkan kamera belakang ke barcode ISBN pada belakang buku. Jika kamera gelap, gunakan Ambil Gambar ISBN.</div><div id="register-isbn-reader" style="width:100%;min-height:320px;background:#000;border-radius:14px;overflow:hidden"></div><div class="scan-fallback-actions" id="register-isbn-reader-fallback"><input type="file" id="register-isbn-reader-capture-file" accept="image/*" capture="environment" style="display:none" onchange="scanISBNFromImageFile(this.files[0])"><input type="file" id="register-isbn-reader-upload-file" accept="image/*" style="display:none" onchange="scanISBNFromImageFile(this.files[0])"><button type="button" class="btn b-cy b-sm" onclick="openISBNFallbackFile('register-isbn-reader-capture-file')">📸 Ambil Gambar ISBN</button><button type="button" class="btn b-gh b-sm" onclick="openISBNFallbackFile('register-isbn-reader-upload-file')">🖼️ Upload Gambar ISBN</button></div><div class="m-ft"><button class="btn b-gh" onclick="closeISBNScannerForRegister()">Henti</button></div></div></div>`);
     if(currentBookCoverUrl)previewBookCover(currentBookCoverUrl);
   }
@@ -2645,38 +2714,52 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     try{
       const res=await api({action:'isbn_lookup',isbn});
       const b=res&&res.ok?res.data:null;
-      if(b&&(b.cover_url||b.thumbnail)){currentBookCoverUrl=b.cover_url||b.thumbnail;currentBookCoverBase64='';currentBookCoverFileId='';previewBookCover(currentBookCoverUrl);const st=document.getElementById('db-cover-status');if(st)st.textContent='Cover diambil daripada Google Books. Anda boleh tukar jika mahu.'}
+      if(b&&(b.cover_url||b.thumbnail)){currentBookCoverUrl=normalizeDriveImageUrl(b.cover_url||b.thumbnail);currentBookCoverBase64='';currentBookCoverFileId='';currentCoverUrl=currentBookCoverUrl;currentCoverFileId='';previewBookCover(currentBookCoverUrl);const st=document.getElementById('db-cover-status');if(st)st.textContent='Cover diambil daripada Google Books. Anda boleh tukar jika mahu.'}
     }catch(e){}
   };
 
   window.simpanBB=async function(){
     const nop=document.getElementById('db-nop').value.trim(),npn=document.getElementById('db-npn').value.trim(),jdl=document.getElementById('db-jdl').value.trim();
     if(!nop||!npn||!jdl){toast('Sila isi medan *','er');return}
-    if(imageProcessing){toast('Gambar belum selesai diproses. Sila tunggu.','wa');return}
+    if(imageProcessing||coverProcessing){toast('Gambar belum selesai diproses.','wa');return}
     const btn=document.getElementById('btn-db');btn.textContent='Menyimpan...';btn.disabled=true;
-    let finalCoverUrl=currentBookCoverUrl||'',finalCoverFileId=currentBookCoverFileId||'';
-    if(finalCoverUrl.startsWith('blob:')||finalCoverUrl.startsWith('data:'))finalCoverUrl='';
-    if(currentBookCoverBase64){
-      try{
-        const up=await api({action:'upload_cover_buku',fileName:currentBookCoverName,mimeType:currentBookCoverMime,base64:currentBookCoverBase64});
-        if(up&&up.ok&&up.data&&up.data.cover_url){finalCoverUrl=up.data.cover_url||'';finalCoverFileId=up.data.file_id||''}
-        else throw new Error((up&&up.error)||'Gagal memuat naik cover.');
-      }catch(e){toast('Gagal memuat naik cover. Rekod belum disimpan.','er');btn.textContent='Simpan ke Sheets';btn.disabled=false;return}
-    }
-    const data={id:nxId(D.buku),no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),jilid:document.getElementById('db-jilid')?.value.trim()||'',tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim(),cover_url:finalCoverUrl,cover_file_id:finalCoverFileId};
-    try{const res=await api({action:'tambah',sheet:'buku',data});if(!res?.ok)throw new Error(res?.error);D.buku.push(data);toast('Bahan berjaya disimpan!','ok');document.getElementById('db-msg').innerHTML=`<div class="al a-ok"><strong>${jdl}</strong> (No.${nop}) disimpan.</div>`;resetDB();clearBookCover()}
-    catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='Simpan ke Sheets';btn.disabled=false}
+    const externalCover=currentBookCoverBase64?'':normalizeDriveImageUrl(currentBookCoverUrl||'');
+    if(currentBookCoverUrl&&!currentBookCoverBase64&&!externalCover){toast('URL cover tidak sah.','er');btn.textContent='Simpan ke Sheets';btn.disabled=false;return}
+    const data={no_perolehan:nop,no_panggilan:npn,judul:jdl,pengarang:document.getElementById('db-pgr').value.trim(),penerbit:document.getElementById('db-pnb').value.trim(),tahun:document.getElementById('db-thn').value.trim(),jilid:document.getElementById('db-jilid')?.value.trim()||'',tarikh_perolehan:document.getElementById('db-tper').value.trim(),punca:document.getElementById('db-pnc').value,isbn:document.getElementById('db-isbn').value.trim(),harga_rm:parseFloat(document.getElementById('db-hrm').value)||0,harga_sen:0,no_invois:document.getElementById('db-inv').value.trim(),muka_surat:document.getElementById('db-muka').value.trim(),catatan:document.getElementById('db-cat').value.trim(),cover_url:externalCover,cover_file_id:''};
+    try{
+      const saved=await api({action:'tambah',sheet:'buku',data});
+      if(!saved?.ok)throw new Error(saved?.error||'Gagal menyimpan rekod.');
+      const bookId=saved.data?.id;
+      let finalCoverUrl=externalCover,finalCoverFileId='',coverError='';
+      if(currentBookCoverBase64){
+        btn.textContent='Memuat naik cover...';
+        const up=await api({action:'upload_cover',fileName:currentBookCoverName,mimeType:'image/jpeg',base64Data:currentBookCoverBase64,bookId,no_perolehan:nop});
+        if(up?.ok&&up.data?.cover_url){
+          finalCoverUrl=normalizeDriveImageUrl(up.data.cover_url,up.data.cover_file_id||up.data.file_id||'');
+          finalCoverFileId=up.data.cover_file_id||up.data.file_id||'';
+          const updated=await api({action:'kemaskini',sheet:'buku',id:bookId,data:{cover_url:finalCoverUrl,cover_file_id:finalCoverFileId}});
+          if(!updated?.ok)coverError='Cover berjaya disimpan tetapi rekod gagal dikemas kini.';
+        }else coverError=(up&&up.error)||'Gagal memuat naik cover ke Google Drive.';
+      }
+      const fresh=await muatBukuFast(true);
+      if(!fresh)await muatSemua(true);
+      const reloaded=(D.buku||[]).find(b=>String(b.id)===String(bookId));
+      if(finalCoverUrl&&reloaded&&!getBookCover(reloaded))coverError='Cover berjaya disimpan tetapi gagal dimuatkan semula.';
+      document.getElementById('db-msg').innerHTML=`<div class="al ${coverError?'a-wa':'a-ok'}"><strong>${jdl}</strong> (No.${nop}) disimpan.${coverError?' '+escapeHtml(coverError):''}</div>`;
+      toast(coverError||'Bahan dan cover berjaya disimpan!',coverError?'wa':'ok');
+      resetDB();clearBookCover();
+    }catch(e){toast('Gagal: '+e.message,'er')}finally{btn.textContent='Simpan ke Sheets';btn.disabled=false}
   };
 
   const oldResetDB=window.resetDB;
   window.resetDB=function(){oldResetDB.apply(this,arguments);clearBookCover()};
 
   window.renderBookCover=function(b){
-    const cover=String(b.cover_url||b.thumbnail||'').replace(/"/g,'&quot;');
+    const cover=getBookCover(b);
     const w=wNP(b.no_panggilan);
     const p=String(b.no_panggilan||'').trim().split(/[\s\/]+/);
     const l1=p[0]||'BUKU',l2=p.slice(1).join(' ');
-    return `<div class="new-book-card" onclick="nav('perolehan')"><div style="position:relative;width:88px;height:120px">${cover?`<img src="${cover}" class="book-cover-img" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`:''}<div class="book-cover-fallback" style="display:${cover?'none':'flex'};background:linear-gradient(135deg,${w}22,${w}44);color:${w}"><div><div style="font-size:13px;font-weight:900;font-family:var(--mono)">${l1}</div>${l2?`<div style="font-size:10px;font-weight:700;font-family:var(--mono)">${l2}</div>`:''}<div style="width:60%;height:1px;background:${w};opacity:.35;margin:5px auto"></div><div style="font-size:7px;opacity:.7;line-height:1.2">${String(b.judul||'').substring(0,28)}</div></div></div><span style="position:absolute;top:4px;right:4px;background:#10b981;color:white;font-size:7px;font-weight:800;border-radius:99px;padding:1px 5px">BARU</span></div><div class="new-book-title">${b.judul||'-'}</div><div class="new-book-callno">${b.no_panggilan||'-'}</div></div>`;
+    return `<div class="new-book-card" onclick="nav('perolehan')"><div style="position:relative;width:88px;height:120px">${cover?`<img src="${escapeHtml(cover)}" class="book-cover-img" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`:''}<div class="book-cover-fallback" style="display:${cover?'none':'flex'};background:linear-gradient(135deg,${w}22,${w}44);color:${w}"><div><div style="font-size:13px;font-weight:900;font-family:var(--mono)">${l1}</div>${l2?`<div style="font-size:10px;font-weight:700;font-family:var(--mono)">${l2}</div>`:''}<div style="width:60%;height:1px;background:${w};opacity:.35;margin:5px auto"></div><div style="font-size:7px;opacity:.7;line-height:1.2">${String(b.judul||'').substring(0,28)}</div></div></div><span style="position:absolute;top:4px;right:4px;background:#10b981;color:white;font-size:7px;font-weight:800;border-radius:99px;padding:1px 5px">BARU</span></div><div class="new-book-title">${b.judul||'-'}</div><div class="new-book-callno">${b.no_panggilan||'-'}</div></div>`;
   };
   const oldPgDash=window.pgDash;
   window.pgDash=function(){
@@ -2895,7 +2978,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
       return;
     }
     const f=(D.buku||[]).filter(b=>{const text=(b.judul+b.pengarang+(b.isbn||'')+(b.no_panggilan||'')+(b.no_perolehan||'')).toLowerCase();const qm=!q||text.includes(q);const np=String(b.no_panggilan||'').trim().toUpperCase();let km=true;if(window._opacCF==='F')km=isFik(np);else if(window._opacCF==='B')km=!isFik(np);else if(window._opacCF)km=np.charAt(0)===window._opacCF;return qm&&km});
-    renderOpacResults(f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return{no_perolehan:b.no_perolehan,no_panggilan:b.no_panggilan,judul:b.judul,pengarang:b.pengarang,penerbit:b.penerbit,tahun:b.tahun,isbn:b.isbn,status:sp?'dipinjam':(b.status||'')}}));
+    renderOpacResults(f.map(b=>{const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');return{no_perolehan:b.no_perolehan,no_panggilan:b.no_panggilan,judul:b.judul,pengarang:b.pengarang,penerbit:b.penerbit,tahun:b.tahun,isbn:b.isbn,cover_url:b.cover_url,cover_file_id:b.cover_file_id,thumbnail:b.thumbnail,status:sp?'dipinjam':(b.status||'')}}));
   };
 })();
 </script>
