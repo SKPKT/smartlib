@@ -1411,7 +1411,7 @@ function cetakLabelA4(){
   }
 
   function genBarcode(b){
-    const np=String(b.no_perolehan||'0').padStart(10,'0');
+    const np=String(b.no_perolehan||'0').trim();
     return`<div class="sl-barcode-label" style="width:100%;min-width:0;min-height:${h}cm;border:1.5px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5mm;background:#fff;break-inside:avoid;box-sizing:border-box;gap:.7mm;overflow:hidden;font-family:'Century Gothic','Trebuchet MS',Arial,sans-serif"><div style="font-size:${fsch}pt;font-weight:700;text-align:center;color:#000;font-family:'Century Gothic','Trebuchet MS',Arial,sans-serif;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sch.substring(0,28)}</div><svg data-bc="${np}" style="width:100%;max-width:42mm;height:28px;display:block"></svg><div style="font-size:7.5pt;font-weight:700;color:#000;font-family:'Century Gothic','Trebuchet MS',Arial,sans-serif;line-height:1">${b.no_perolehan||'–'}</div>${b.no_panggilan?`<div class="sl-callno" style="font-size:${fcall}pt;font-weight:900;color:#000;font-family:'Century Gothic','Trebuchet MS',Arial,sans-serif;line-height:1.05;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.2px">${b.no_panggilan}</div>`:''}</div>`;
   }
 
@@ -1505,6 +1505,16 @@ const GAS_URL = GAS;
 const CFG = {url: GAS, token: 'SISPUSAT2025SEKOLAHKU', refresh: 30000};
 function isScannerReady(){return typeof Html5Qrcode!=='undefined'}
 function cleanBarcode(code){return String(code||'').replace(/[^0-9Xx]/g,'').trim()}
+function normalizeNoPerolehan(value){
+  const clean=cleanBarcode(value);
+  return /^\d+$/.test(clean)?clean.replace(/^0+(?=\d)/,''):clean;
+}
+function bookMatchesBarcode(b,value){
+  const clean=cleanBarcode(value),raw=String(value||'').trim().toLowerCase();
+  return normalizeNoPerolehan(b?.no_perolehan)===normalizeNoPerolehan(clean)||
+    String(b?.isbn||'').replace(/[^0-9Xx]/g,'')===clean||
+    String(b?.no_panggilan||'').trim().toLowerCase()===raw;
+}
 function isISBN(code){const c=cleanBarcode(code);return c.length===10||c.length===13}
 function scannerFormats(){const f=typeof Html5QrcodeSupportedFormats!=='undefined'?Html5QrcodeSupportedFormats:null;return f?[f.EAN_13,f.EAN_8,f.UPC_A,f.UPC_E,f.CODE_128,f.CODE_39,f.QR_CODE].filter(Boolean):undefined}
 async function startBarcodeScanner(targetId,onSuccess){
@@ -1912,7 +1922,7 @@ function pgScan(){document.getElementById('content').innerHTML=`<div class="g2">
 function mulaScanner(){const st=document.getElementById('scan-st'),btn=document.getElementById('btn-sc');if(st)st.style.display='block';if(btn)btn.textContent='🔄 Mengimbas...';try{_scanQ=new Html5Qrcode('scan-rd');Html5Qrcode.getCameras().then(cams=>{if(!cams?.length){toast('Tiada kamera','er');return}const cam=cams.find(c=>c.label.toLowerCase().includes('back'))||cams[0];_scanQ.start(cam.id,{fps:10,qrbox:{width:200,height:75}},(d)=>{const inp=document.getElementById('scan-man');if(inp)inp.value=d;hentiScanner();setTimeout(()=>cariScanWith(d),200)},()=>{}).catch(e=>{toast('Kamera: '+e.message,'er');hentiScanner()})}).catch(e=>{toast('Kamera: '+e.message,'er');hentiScanner()})}catch(e){toast('Error: '+e,'er')}}
 function hentiScanner(){if(_scanQ){try{_scanQ.stop().catch(()=>{}).finally(()=>{try{_scanQ.clear()}catch{}});_scanQ=null}catch{_scanQ=null}}const st=document.getElementById('scan-st'),btn=document.getElementById('btn-sc');if(st)st.style.display='none';if(btn)btn.textContent='📷 Mula Scan'}
 function cariScan(){const q=document.getElementById('scan-man').value.trim();if(!q)return;cariScanWith(q)}
-function cariScanWith(q){const buku=D.buku||[];const b=buku.find(x=>x.isbn===q||x.isbn?.replace(/-/g,'')===q.replace(/-/g,'')||x.no_panggilan===q||String(x.no_perolehan)===q);const div=document.getElementById('scan-result');if(!div)return;if(b){const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');div.innerHTML=`<div class="al a-ok">✅ Bahan dijumpai!</div><table style="width:100%;font-size:12px;border-collapse:collapse">${[['No. Perolehan',`<span class="bdg bg-cy">${b.no_perolehan||'–'}</span>`],['No. Panggilan',`<span class="mono">${b.no_panggilan||'–'}</span>`],['Judul',`<strong>${b.judul||'–'}</strong>`],['Pengarang',b.pengarang||'–'],['Status',`<span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Di Rak'}</span>`]].map(([k,v])=>`<tr><td style="color:var(--mu);padding:4px 0;width:38%;font-size:11px">${k}</td><td>${v}</td></tr>`).join('')}</table><div style="display:flex;gap:7px;margin-top:10px"><button class="btn b-em b-sm" onclick="nav('pinjam')">📤 Pinjaman</button><button class="btn b-gh b-sm" onclick="nav('pulang')">↩️ Pemulangan</button></div>`;toast('Bahan dijumpai!','ok')}else{div.innerHTML=`<div class="al a-wa">⚠️ ISBN <strong>${q}</strong> tidak dijumpai.</div><button class="btn b-em" onclick="nav('daftar')">➕ Daftar Bahan Baru</button>`;toast('Tidak dijumpai','wa')}}
+function cariScanWith(q){const buku=D.buku||[];const b=buku.find(x=>bookMatchesBarcode(x,q));const div=document.getElementById('scan-result');if(!div)return;if(b){const sp=(D.pinjaman||[]).some(p=>String(p.buku_id)===String(b.id)&&p.status==='pinjam');div.innerHTML=`<div class="al a-ok">✅ Bahan dijumpai!</div><table style="width:100%;font-size:12px;border-collapse:collapse">${[['No. Perolehan',`<span class="bdg bg-cy">${b.no_perolehan||'–'}</span>`],['No. Panggilan',`<span class="mono">${b.no_panggilan||'–'}</span>`],['Judul',`<strong>${b.judul||'–'}</strong>`],['Pengarang',b.pengarang||'–'],['Status',`<span class="bdg ${sp?'bg-am':'bg-em'}">${sp?'Dipinjam':'Di Rak'}</span>`]].map(([k,v])=>`<tr><td style="color:var(--mu);padding:4px 0;width:38%;font-size:11px">${k}</td><td>${v}</td></tr>`).join('')}</table><div style="display:flex;gap:7px;margin-top:10px"><button class="btn b-em b-sm" onclick="nav('pinjam')">📤 Pinjaman</button><button class="btn b-gh b-sm" onclick="nav('pulang')">↩️ Pemulangan</button></div>`;toast('Bahan dijumpai!','ok')}else{div.innerHTML=`<div class="al a-wa">⚠️ Barcode <strong>${q}</strong> tidak dijumpai.</div><button class="btn b-em" onclick="nav('daftar')">➕ Daftar Bahan Baru</button>`;toast('Tidak dijumpai','wa')}}
 
 function pgOpac(){document.getElementById('content').innerHTML=`<div class="card" style="background:linear-gradient(135deg,var(--eml),var(--cyl));border:1.5px solid rgba(16,185,129,.3);margin-bottom:12px"><div style="text-align:center;padding:8px 0"><div style="font-size:20px;font-weight:800;background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:7px">🔍 OPAC — Katalog Bahan Awam</div><div style="font-size:11px;color:var(--mu);margin-bottom:13px">Cari dalam ${(D.buku||[]).length} bahan</div><div style="display:flex;gap:7px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center"><input class="opac-in" id="opac-q" type="search" placeholder="Judul, pengarang, ISBN, kata kunci..." style="flex:1;min-width:200px" oninput="runOpac()"><button class="btn b-em" onclick="runOpac()">Cari</button></div><div class="opac-cats" style="justify-content:center;margin-top:8px"><span class="ocat on" onclick="togOCat(this,'')">Semua</span><span class="ocat" onclick="togOCat(this,'F')">Fiksyen</span><span class="ocat" onclick="togOCat(this,'B')">Bukan Fiksyen</span>${Object.entries(DDC).map(([k,v])=>`<span class="ocat" onclick="togOCat(this,'${k}')">${v}</span>`).join('')}</div></div></div><div id="opac-result" style="color:var(--mu);text-align:center;padding:24px">Taip untuk mencari...</div>`}
 let _opacCF='';
@@ -2601,8 +2611,14 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     if(!clean&&!String(code||'').trim()){toast('Barcode tidak sah.','er');return}
     const hasil=document.getElementById('scan-result');
     if(hasil)hasil.innerHTML='<div class="al a-in">Mencari maklumat...</div>';
+    if(!(D.buku||[]).length){
+      try{
+        if(typeof muatBukuFast==='function')await muatBukuFast(true);
+        else await muatSemua(true);
+      }catch(err){console.warn('Data buku belum dapat dimuatkan:',err)}
+    }
     const qRaw=String(code||'').trim();
-    const bukuLocal=(D.buku||[]).find(b=>String(b.isbn||'').replace(/[^0-9Xx]/g,'')===clean||String(b.no_perolehan||'')===clean||String(b.no_panggilan||'').toLowerCase()===qRaw.toLowerCase());
+    const bukuLocal=(D.buku||[]).find(b=>bookMatchesBarcode(b,qRaw));
     if(bukuLocal){renderScanBookResult(bukuLocal);return}
     if(isISBN(clean)){
       try{
@@ -2883,9 +2899,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     const clean=cleanBarcode(value);
     const raw=String(value||'').trim().toLowerCase();
     return (D.buku||[]).find(b=>
-      String(b.no_perolehan||'')===clean||
-      String(b.isbn||'').replace(/[^0-9Xx]/g,'')===clean||
-      String(b.no_panggilan||'').toLowerCase()===raw||
+      bookMatchesBarcode(b,value)||
       String(b.judul||'').toLowerCase().includes(raw)
     );
   }
