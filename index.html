@@ -446,7 +446,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 <aside id="sb">
   <div class="sb-hd">
     <div class="sb-logo">
-      <div class="sb-ic" id="sb-ic"><span id="sb-em">📚</span><img id="sb-img" src="" style="display:none"></div>
+      <div class="sb-ic" id="sb-ic"><span id="sb-em" style="display:none">📚</span><img id="sb-img" src="./icon-192.png" alt="Logo SMARTLIB" style="display:block"></div>
       <div style="min-width:0"><div class="sb-nm" id="sb-nm">SMARTLIB</div><div class="sb-sch" id="sb-sch">Pusat Sumber Sekolah</div></div>
     </div>
     <div class="sb-tag" id="sb-tag">✦ SISTEM PENGURUSAN PUSAT SUMBER SEKOLAH ✦</div>
@@ -492,7 +492,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
     </div>
     <div class="tb-r">
       <div class="srch"><span style="color:var(--mu);font-size:12px;flex-shrink:0">🔍</span><input type="search" id="tb-src" placeholder="Cari bahan / ahli..." oninput="cariPantas()" style="font-family:var(--fn)"></div>
-      <div class="tb-chip"><div class="tb-chip-ic"><span id="tb-em">📚</span><img id="tb-im" src="" style="display:none;width:100%;height:100%;object-fit:cover"></div><span id="tb-sch">PSS</span></div>
+      <div class="tb-chip"><div class="tb-chip-ic"><span id="tb-em" style="display:none">📚</span><img id="tb-im" src="./icon-192.png" alt="Logo SMARTLIB" style="display:block;width:100%;height:100%;object-fit:cover"></div><span id="tb-sch">PSS</span></div>
       <div class="bell" onclick="togNotif()" id="bell-btn">🔔<div class="bell-dot" id="bell-dot"></div></div>
       <button class="dk-btn" onclick="togDk()"><div class="tr"><div class="th"></div></div><span id="dk-lbl">Gelap</span></button>
       <div class="tb-av" id="tb-av" title="Profil" onclick="nav('admin')">?</div>
@@ -512,7 +512,9 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 const GAS='https://script.google.com/macros/s/AKfycbx7rWTKKzkIywz93hVKXV_BF-CNz9CR8KC-AXFIUynTk-yof3VPLB27sXm2A66e4lvR/exec';
 let _tok=null,_me=null,_mR='',_pg='dash',_ch={},_sq=null,_rfT=null,_tmp=[];
 const D={buku:[],murid:[],guru:[],pinjaman:[],pelupusan:[],tempahan_pss:[],ok:false};
+const DEFAULT_SMARTLIB_LOGO='./icon-192.png';
 const AP={nm:'SMARTLIB',tag:'✦ SISTEM PENGURUSAN PUSAT SUMBER SEKOLAH ✦',em:'📚',logo:'',sch:'Sekolah Kebangsaan Pendidikan Khas Taiping'};
+let pendingLogoUpload=null;
 const S={denda:.20,maks_hari:14,maks_pinjam:3};
 let _ann=[{id:1,ttl:'Selamat datang ke SMARTLIB',sub:'Sistem dimuatkan berjaya.',t:'Hari ini',w:'em'},{id:2,ttl:'Program Membaca 10 Minit',sub:'Setiap hari 8:00–8:10 pagi.',t:'20 Mei 2026',w:'cy'},{id:3,ttl:'Pulangkan Buku Lewat',sub:'Elak denda — pulangkan sebelum tarikh akhir.',t:'18 Mei 2026',w:'am'}];
 const DDC={'0':'Komputer','1':'Falsafah','2':'Agama','3':'Sosial','4':'Bahasa','5':'Sains','6':'Teknologi','7':'Seni','8':'Sastera','9':'Sejarah'};
@@ -682,11 +684,11 @@ function updLwBdg(){
 function applyAP(){
   const nm=AP.nm||'SMARTLIB',sch=AP.sch||'Pusat Sumber Sekolah';
   document.title=nm+' — '+sch;
-  const setL=(e1,e2)=>{if(!e1)return;if(AP.logo){e1.style.display='none';if(e2){e2.src=AP.logo;e2.style.display='block'}}else{e1.textContent=AP.em||'📚';e1.style.display='';if(e2)e2.style.display='none'}};
+  const logoSrc=AP.logo||DEFAULT_SMARTLIB_LOGO;
+  const setL=(e1,e2)=>{if(e1)e1.style.display='none';if(e2){e2.src=logoSrc;e2.style.display='block'}};
   setL(document.getElementById('sb-em'),document.getElementById('sb-img'));
   setL(document.getElementById('tb-em'),document.getElementById('tb-im'));
   setL(document.getElementById('l-em'),document.getElementById('l-img'));
-  if(!AP.logo){const em=document.getElementById('l-em'),img=document.getElementById('l-img');if(em)em.style.display='none';if(img){img.src='./icon-192.png';img.style.display='block'}}
   const els={'sb-nm':nm,'sb-sch':sch,'sb-tag':AP.tag,'tb-sch':sch.length>16?sch.substring(0,16)+'...':sch,'l-nm':nm,'l-tag':AP.tag,'l-sch':sch!=='Pusat Sumber Sekolah'?sch:''};
   Object.entries(els).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v});
 }
@@ -1665,7 +1667,7 @@ function pgKadAhli(){
       <div class="ct">🪪 Tetapan Kad Ahli</div>
       <div class="fg"><label>Nama Sekolah / PSS pada Kad</label><input id="kad-sch" type="text" value="${sch}" oninput="prevKad()"></div>
       <div class="fg"><label>Tarikh Sah Hingga</label><input id="kad-sah" type="text" value="${sah}" oninput="prevKad()"></div>
-      <div class="fg"><label>Logo Sekolah pada Kad</label><div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><div id="kad-logo-pv" style="width:44px;height:44px;border-radius:10px;background:var(--bg2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;overflow:hidden">${AP.logo?`<img src="${AP.logo}" style="width:100%;height:100%;object-fit:contain">`:AP.em||'📚'}</div><input type="file" id="kad-logo-file" accept="image/*" style="display:none" onchange="hdlKadLogo(event)"><button class="btn b-gh b-sm" onclick="document.getElementById('kad-logo-file').click()">🖼️ Upload Logo</button>${AP.logo?`<button class="btn b-re b-sm" onclick="padamKadLogo()">🗑️ Buang</button>`:''}</div><small style="color:var(--mu)">Logo ini juga digunakan pada paparan SMARTLIB.</small></div>
+      <div class="fg"><label>Logo Sekolah pada Kad</label><div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><div id="kad-logo-pv" style="width:44px;height:44px;border-radius:10px;background:var(--bg2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="${AP.logo||DEFAULT_SMARTLIB_LOGO}" style="width:100%;height:100%;object-fit:contain" alt="Logo SMARTLIB"></div><input type="file" id="kad-logo-file" accept="image/*" style="display:none" onchange="hdlKadLogo(event)"><button class="btn b-gh b-sm" onclick="document.getElementById('kad-logo-file').click()">🖼️ Upload Logo</button>${AP.logo?`<button class="btn b-re b-sm" onclick="padamKadLogo()">🗑️ Buang</button>`:''}</div><small style="color:var(--mu)">Logo ini juga digunakan pada paparan SMARTLIB.</small></div>
       <div class="fg"><label>Pilih Ahli (cetak satu)</label>
         <select id="kad-sel" onchange="prevKad()">
           <option value="">– Pilih Ahli –</option>
@@ -1757,20 +1759,20 @@ function genKadPrintHTML(a,jenis,sch,sah,isPreview=false){
   const kelas=jenis==='murid'?(a.tingkatan||'–'):(a.jawatan||'–');
   const code=no;
   const jenisLabel=jenis==='murid'?'PELAJAR':(String(kelas).toLowerCase().includes('staf')?'STAF':'GURU / STAF');
-  const logo=AP.logo?`<img src="${AP.logo}" alt="Logo">`:(AP.em||'📚');
+  const logo=`<img src="${AP.logo||DEFAULT_SMARTLIB_LOGO}" alt="Logo SMARTLIB">`;
   return `<div class="member-card-print${isPreview?' member-card-preview':''}"><div class="member-card-header"><div class="member-card-logo">${logo}</div><div class="member-card-system">${AP.nama||'SMARTLIB'}</div><div class="member-card-school">${sch||'Sekolah Kebangsaan Pendidikan Khas Taiping'}</div></div><div class="member-card-body"><div class="member-card-type">${jenisLabel}</div><div class="member-card-name">${a.nama||'Nama Ahli'}</div><div class="member-card-meta"><div>ID: ${no}</div><div>No. Kad/Ahli: ${a.nokad||a.no_ahli||'–'}</div><div>${jenis==='murid'?'Kelas':'Jawatan'}: ${kelas||'–'}</div><div>Sah Hingga: ${sah||'–'}</div></div></div><div class="member-card-footer"><svg class="member-card-barcode" data-bc="${code}"></svg><div class="member-card-code">${code}</div><div class="member-card-copy">© 2026 SMARTLIB |Syahida Suffian</div></div></div>`;
 }
 function renderKadBarcodes(scope=document){
   setTimeout(()=>{scope.querySelectorAll('.member-card-barcode[data-bc]').forEach(svg=>{try{JsBarcode(svg,svg.getAttribute('data-bc'),{format:'CODE128',width:1.15,height:30,displayValue:false,margin:0})}catch(e){console.warn(e)}})},60);
 }
-function hdlKadLogo(e){
+async function hdlKadLogo(e){
   const f=e.target.files[0];if(!f)return;
-  if(f.size>500000){toast('Imej terlalu besar! Maks 500KB.','er');return}
-  const r=new FileReader();
-  r.onload=async ev=>{AP.logo=ev.target.result;applyAP();try{await saveSetting('logo_url',AP.logo)}catch(err){}toast('Logo sekolah dikemaskini.','ok');pgKadAhli()};
-  r.readAsDataURL(f);
+  try{
+    await uploadLogoPermanen(f);
+    toast('Logo sekolah dikemaskini.','ok');pgKadAhli();
+  }catch(err){console.error(err);toast(err.message||'Gagal memuat naik logo.','er')}
 }
-function padamKadLogo(){AP.logo='';applyAP();saveSetting('logo_url','');toast('Logo dibuang','ok');pgKadAhli()}
+function padamKadLogo(){AP.logo='';pendingLogoUpload=null;applyAP();saveSetting('logo_url','');toast('Logo dibuang. Logo default SMARTLIB digunakan.','ok');pgKadAhli()}
 function prevKad(){
   const sel=document.getElementById('kad-sel')?.value||'';
   const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
@@ -1951,7 +1953,7 @@ function pgAdmin(){const isAdminPw=_mR==='admin'||String(_me?.peranan||'').toLow
       <div class="ct">🎨 Preview</div>
       <div style="background:var(--sb);border-radius:var(--r);padding:14px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:17px" id="ap-pv-ic">${AP.logo?`<img src="${AP.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:9px">`:AP.em||'📚'}</div>
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:17px" id="ap-pv-ic"><img src="${AP.logo||DEFAULT_SMARTLIB_LOGO}" style="width:100%;height:100%;object-fit:cover;border-radius:9px" alt="Logo SMARTLIB"></div>
           <div><div id="ap-pv-nm" style="font-size:13px;font-weight:800;color:#fff">${AP.nama||'SMARTLIB'}</div><div id="ap-pv-sch" style="font-size:8px;color:rgba(255,255,255,.35)">${AP.sekolah||'Pusat Sumber Sekolah'}</div></div>
         </div>
       </div>
@@ -2017,11 +2019,44 @@ async function simpanKataLaluanAdmin(){
 function renderAnn(){return(_ann||[]).map(a=>`<div class="ann-it ${a.w}" style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="ann-ttl">${a.ttl}</div><div class="ann-sub">${a.sub}</div><div class="ann-dt">${a.tarikh}</div></div><button onclick="padamAnn(${a.id})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:15px;flex-shrink:0">✕</button></div>`).join('')}
 function tambahAnn(){const ttl=document.getElementById('ann-ttl').value.trim(),sub=document.getElementById('ann-sub').value.trim();if(!ttl){toast('Masukkan judul','er');return}_ann.push({id:Date.now(),ttl,sub,tarikh:document.getElementById('ann-td').value||new Date().toLocaleDateString('ms-MY'),w:document.getElementById('ann-w').value});saveSetting('ann',JSON.stringify(_ann));document.getElementById('ann-list').innerHTML=renderAnn();document.getElementById('ann-ttl').value='';document.getElementById('ann-sub').value='';toast('Pengumuman ditambah!','ok')}
 function padamAnn(id){_ann=_ann.filter(a=>a.id!==id);saveSetting('ann',JSON.stringify(_ann));document.getElementById('ann-list').innerHTML=renderAnn();toast('Pengumuman dipadam','ok')}
-function setLogoPreview(src){const ic=document.getElementById('ap-pv-ic');if(!ic)return;if(src){ic.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:9px">`}else{ic.textContent=document.getElementById('ap-em')?.value||AP.em||'📚'}}
+function setLogoPreview(src){const ic=document.getElementById('ap-pv-ic');if(!ic)return;ic.innerHTML=`<img src="${src||DEFAULT_SMARTLIB_LOGO}" style="width:100%;height:100%;object-fit:cover;border-radius:9px" alt="Logo SMARTLIB">`}
 function pilihEm(e){const el=document.getElementById('ap-em');if(el)el.value=e;if(!AP.logo)setLogoPreview('')}
-function hdlLogo(e){const f=e.target.files[0];if(!f)return;if(f.size>500000){toast('Imej terlalu besar! Maks 500KB.','er');return}const r=new FileReader();r.onload=ev=>{AP.logo=ev.target.result;setLogoPreview(AP.logo);applyAP();toast('Logo dimuatnaik!','ok')};r.readAsDataURL(f)}
-function padamLogo(){AP.logo='';applyAP();saveSetting('logo_url','');toast('Logo dibuang','ok');pgAdmin()}
-async function simpanAP(){const nm=document.getElementById('ap-nm').value.trim()||'SMARTLIB';const tag=document.getElementById('ap-tag').value.trim();const sch=document.getElementById('ap-sch').value.trim();const em=document.getElementById('ap-em').value.trim()||'📚';AP.nama=nm;AP.tag=tag;AP.em=em;AP.sekolah=sch;applyAP();try{await Promise.all([saveSetting('nama_app',nm),saveSetting('tagline',tag),saveSetting('sekolah',sch),saveSetting('logo_emoji',em)]);if(AP.logo)await saveSetting('logo_url',AP.logo);toast('✅ Penampilan disimpan!','ok');pgAdmin()}catch(e){toast('Gagal: '+e.message,'er')}}
+async function uploadLogoPermanen(file){
+  if(!file||!file.type.startsWith('image/'))throw new Error('Sila pilih fail imej.');
+  const result=await compressImageToBase64(file,512,.82,512);
+  const up=await api({action:'upload_cover',fileName:'smartlib_logo_'+Date.now()+'.jpg',mimeType:'image/jpeg',base64Data:result.base64});
+  if(!up?.ok||!up.data?.cover_url)throw new Error(up?.error||'Gagal memuat naik logo.');
+  AP.logo=up.data.cover_url;pendingLogoUpload=null;
+  await saveSetting('logo_url',AP.logo);
+  try{sessionStorage.removeItem('SMARTLIB_BOOT_CACHE_V4')}catch(ignore){}
+  applyAP();
+  return AP.logo;
+}
+async function hdlLogo(e){
+  const f=e.target.files[0];if(!f)return;
+  if(!f.type.startsWith('image/')){toast('Sila pilih fail imej.','er');return}
+  try{
+    const result=await compressImageToBase64(f,512,.82,512);
+    pendingLogoUpload={fileName:'smartlib_logo_'+Date.now()+'.jpg',mimeType:'image/jpeg',base64Data:result.base64};
+    AP.logo=result.dataUrl;setLogoPreview(AP.logo);applyAP();
+    toast('Logo sedia. Klik Simpan Penampilan untuk menyimpannya.','ok');
+  }catch(err){console.error(err);toast('Gagal memproses logo.','er')}
+}
+function padamLogo(){AP.logo='';pendingLogoUpload=null;applyAP();saveSetting('logo_url','');toast('Logo dibuang. Logo default SMARTLIB digunakan.','ok');pgAdmin()}
+async function simpanAP(){
+  const nm=document.getElementById('ap-nm').value.trim()||'SMARTLIB';const tag=document.getElementById('ap-tag').value.trim();const sch=document.getElementById('ap-sch').value.trim();const em=document.getElementById('ap-em').value.trim()||'📚';
+  AP.nm=nm;AP.tag=tag;AP.em=em;AP.sch=sch;applyAP();
+  try{
+    if(pendingLogoUpload){
+      const up=await api({action:'upload_cover',...pendingLogoUpload});
+      if(!up?.ok||!up.data?.cover_url)throw new Error(up?.error||'Gagal memuat naik logo.');
+      AP.logo=up.data.cover_url;pendingLogoUpload=null;applyAP();
+    }
+    await Promise.all([saveSetting('nama_app',nm),saveSetting('tagline',tag),saveSetting('sekolah',sch),saveSetting('logo_emoji',em),saveSetting('logo_url',AP.logo||'')]);
+    try{sessionStorage.removeItem('SMARTLIB_BOOT_CACHE_V4')}catch(ignore){}
+    toast('✅ Penampilan disimpan!','ok');pgAdmin();
+  }catch(e){toast('Gagal: '+e.message,'er')}
+}
 async function simpanTetapan(){S.maks_hari=parseInt(document.getElementById('set-mh').value)||14;S.maks_pinjam=parseInt(document.getElementById('set-mp').value)||3;S.denda=parseFloat(document.getElementById('set-dn').value)||0.20;try{await Promise.all([saveSetting('maks_hari',S.maks_hari),saveSetting('maks_pinjam',S.maks_pinjam),saveSetting('denda_sehari',S.denda)]);toast('✅ Tetapan disimpan!','ok')}catch(e){toast('Gagal: '+e.message,'er')}}
 async function muatSemula(){toast('🔄 Menyinkron...','ok');if(_pg==='perolehan'){await muatBukuFast(true);toast('✅ Rekod perolehan disinkron!','ok');return}await muatSemua(false);toast('✅ Data disinkron!','ok')}
 function eksportBackup(){const data=JSON.stringify({buku:D.buku,murid:D.murid,guru:D.guru,pinjaman:D.pinjaman,tarikh:new Date().toISOString()},null,2);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='smartlib_backup_'+today()+'.json';a.click();toast('Backup dieksport!','ok')}
