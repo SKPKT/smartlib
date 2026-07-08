@@ -294,7 +294,8 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 .member-card-body{padding:8px 10px 6px;text-align:center}
 .member-card-type{font-size:11px;font-weight:800;text-transform:uppercase;color:#fff;margin-bottom:6px;letter-spacing:.4px;text-shadow:0 1px 2px rgba(0,0,0,.18)}
 .member-card-name{background:#fff;color:#111827;font-size:11px;font-weight:800;border-radius:8px;padding:6px 8px;line-height:1.25;margin-bottom:6px;min-height:28px;display:flex;align-items:center;justify-content:center}
-.member-card-meta{font-size:8.5px;line-height:1.4;color:#0f172a;font-weight:700}
+.member-card-meta{font-size:8.5px;line-height:1.32;color:#0f172a;font-weight:700}
+.kad-email{font-size:8px;font-weight:600;line-height:1.2;word-break:break-all;max-width:100%;opacity:.95}
 .member-card-footer{background:#fff;padding:6px 8px 8px;text-align:center}
 .member-card-barcode{width:100%;height:34px;display:block}
 .member-card-code{margin-top:3px;font-size:8px;font-weight:700;color:#111;font-family:var(--mono)}
@@ -1722,6 +1723,25 @@ function semuaAhliKad(){
     ...(D.guru||[]).map(g=>({...g,jenis_pengguna:'guru'}))
   ];
 }
+function isStafPSS(ahli){
+  const jawatan=String(ahli?.jawatan||ahli?.kategori||'').toLowerCase();
+  return jawatan.includes('staf')||
+    jawatan.includes('staff')||
+    jawatan.includes('akp')||
+    jawatan.includes('ppm')||
+    jawatan.includes('pembantu')||
+    jawatan.includes('kerani')||
+    jawatan.includes('operasi')||
+    jawatan.includes('pengawal')||
+    jawatan.includes('pembersihan')||
+    jawatan.includes('swasta');
+}
+function bolehPaparEmailKad(ahli){
+  const jenis=String(ahli?.jenis_pengguna||ahli?.jenis||'').toLowerCase();
+  if(jenis==='murid')return true;
+  if(jenis==='guru')return !isStafPSS(ahli);
+  return false;
+}
 function formatIdKadAhli(jenis,a){
   const pref=jenis==='guru'?'G':'M';
   const pad=2;
@@ -1761,7 +1781,7 @@ function memberCardPrintCss(){return `
 .member-card-print,.member-card-print *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
 .member-card-print-grid{display:grid;grid-template-columns:repeat(3,54mm);gap:6mm;padding:8mm;align-items:start}
 .member-card-print{width:54mm;height:86mm;border-radius:12px;overflow:hidden;background-color:#7be0c9!important;background-image:linear-gradient(180deg,#dff8f3 0%,#7be0c9 45%,#11b98e 100%)!important;border:1.5px solid rgba(0,0,0,.08);box-shadow:0 4px 12px rgba(0,0,0,.12);display:flex;flex-direction:column;justify-content:space-between;color:#123;font-family:'Plus Jakarta Sans',Arial,sans-serif;break-inside:avoid;position:relative}
-.member-card-header{text-align:center;padding:10px 8px 6px}.member-card-logo{width:44px;height:44px;object-fit:contain;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.74);color:#0b7f65;font-size:22px;font-weight:900}.member-card-logo img{width:100%;height:100%;object-fit:contain;display:block}.member-card-system{font-size:12px;font-weight:800;color:#0b7f65;letter-spacing:.2px}.member-card-school{font-size:8.8px;line-height:1.25;font-weight:700;color:#234;margin-top:2px}.member-card-body{padding:8px 10px 6px;text-align:center}.member-card-type{font-size:11px;font-weight:800;text-transform:uppercase;color:#fff;margin-bottom:6px;letter-spacing:.4px;text-shadow:0 1px 2px rgba(0,0,0,.18)}.member-card-name{background:#fff;color:#111827;font-size:11px;font-weight:800;border-radius:8px;padding:6px 8px;line-height:1.25;margin-bottom:6px;min-height:28px;display:flex;align-items:center;justify-content:center}.member-card-meta{font-size:8.5px;line-height:1.4;color:#0f172a;font-weight:700}.member-card-footer{background:#fff;padding:6px 8px 8px;text-align:center}.member-card-barcode{width:100%;height:34px;display:block}.member-card-code{margin-top:3px;font-size:8px;font-weight:700;color:#111;font-family:Arial,monospace}.member-card-copy{margin-top:3px;font-size:5.5px;color:#64748b}
+ .member-card-header{text-align:center;padding:10px 8px 6px}.member-card-logo{width:44px;height:44px;object-fit:contain;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.74);color:#0b7f65;font-size:22px;font-weight:900}.member-card-logo img{width:100%;height:100%;object-fit:contain;display:block}.member-card-system{font-size:12px;font-weight:800;color:#0b7f65;letter-spacing:.2px}.member-card-school{font-size:8.8px;line-height:1.25;font-weight:700;color:#234;margin-top:2px}.member-card-body{padding:8px 10px 6px;text-align:center}.member-card-type{font-size:11px;font-weight:800;text-transform:uppercase;color:#fff;margin-bottom:6px;letter-spacing:.4px;text-shadow:0 1px 2px rgba(0,0,0,.18)}.member-card-name{background:#fff;color:#111827;font-size:11px;font-weight:800;border-radius:8px;padding:6px 8px;line-height:1.25;margin-bottom:6px;min-height:28px;display:flex;align-items:center;justify-content:center}.member-card-meta{font-size:8.5px;line-height:1.32;color:#0f172a;font-weight:700}.kad-email{font-size:8px;font-weight:600;line-height:1.2;word-break:break-all;max-width:100%;opacity:.95}.member-card-footer{background:#fff;padding:6px 8px 8px;text-align:center}.member-card-barcode{width:100%;height:34px;display:block}.member-card-code{margin-top:3px;font-size:8px;font-weight:700;color:#111;font-family:Arial,monospace}.member-card-copy{margin-top:3px;font-size:5.5px;color:#64748b}
 @media print{html,body,.pc,.member-card-print-grid,.member-card-print,.member-card-print *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.member-card-print{background-color:#7be0c9!important;background-image:linear-gradient(180deg,#dff8f3 0%,#7be0c9 45%,#11b98e 100%)!important;box-shadow:none}.member-card-logo{background-color:rgba(255,255,255,.74)!important}.member-card-name,.member-card-footer{background-color:#fff!important}}`}
 function genKadPrintHTML(a,jenis,sch,sah,isPreview=false){
   jenis=jenis||a.jenis_pengguna||a.jenis||'murid';
@@ -1769,8 +1789,11 @@ function genKadPrintHTML(a,jenis,sch,sah,isPreview=false){
   const kelas=jenis==='murid'?(a.tingkatan||'–'):(a.jawatan||'–');
   const code=no;
   const jenisLabel=jenis==='murid'?'PELAJAR':(String(kelas).toLowerCase().includes('staf')?'STAF':'GURU / STAF');
+  const emailAhli=String(a.email||'').trim();
+  const paparEmail=emailAhli&&bolehPaparEmailKad({...a,jenis_pengguna:jenis});
+  const emailHtml=paparEmail?`<div class="kad-email">Email: ${escapeHtml(emailAhli)}</div>`:'';
   const logo=`<img src="${AP.logo||DEFAULT_SMARTLIB_LOGO}" alt="Logo SMARTLIB">`;
-  return `<div class="member-card-print${isPreview?' member-card-preview':''}"><div class="member-card-header"><div class="member-card-logo">${logo}</div><div class="member-card-system">${AP.nama||'SMARTLIB'}</div><div class="member-card-school">${sch||'Sekolah Kebangsaan Pendidikan Khas Taiping'}</div></div><div class="member-card-body"><div class="member-card-type">${jenisLabel}</div><div class="member-card-name">${a.nama||'Nama Ahli'}</div><div class="member-card-meta"><div>ID: ${no}</div><div>No. Kad/Ahli: ${a.nokad||a.no_ahli||'–'}</div><div>${jenis==='murid'?'Kelas':'Jawatan'}: ${kelas||'–'}</div><div>Sah Hingga: ${sah||'–'}</div></div></div><div class="member-card-footer"><svg class="member-card-barcode" data-bc="${code}"></svg><div class="member-card-code">${code}</div><div class="member-card-copy">© 2026 SMARTLIB |Syahida Suffian</div></div></div>`;
+  return `<div class="member-card-print${isPreview?' member-card-preview':''}"><div class="member-card-header"><div class="member-card-logo">${logo}</div><div class="member-card-system">${AP.nama||'SMARTLIB'}</div><div class="member-card-school">${sch||'Sekolah Kebangsaan Pendidikan Khas Taiping'}</div></div><div class="member-card-body"><div class="member-card-type">${jenisLabel}</div><div class="member-card-name">${a.nama||'Nama Ahli'}</div><div class="member-card-meta"><div>ID: ${no}</div><div>No. Kad/Ahli: ${a.nokad||a.no_ahli||'–'}</div><div>${jenis==='murid'?'Kelas':'Jawatan'}: ${kelas||'–'}</div>${emailHtml}<div>Sah Hingga: ${sah||'–'}</div></div></div><div class="member-card-footer"><svg class="member-card-barcode" data-bc="${code}"></svg><div class="member-card-code">${code}</div><div class="member-card-copy">© 2026 SMARTLIB |Syahida Suffian</div></div></div>`;
 }
 function renderKadBarcodes(scope=document){
   setTimeout(()=>{scope.querySelectorAll('.member-card-barcode[data-bc]').forEach(svg=>{try{JsBarcode(svg,svg.getAttribute('data-bc'),{format:'CODE128',width:1.15,height:30,displayValue:false,margin:0})}catch(e){console.warn(e)}})},60);
