@@ -369,6 +369,10 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 .lp-actions{display:flex;gap:5px;flex-wrap:wrap}
 .lp-book-picked{padding:10px;border:1.5px solid var(--bd2);border-radius:var(--rs);background:var(--bg2);display:none}
 .lp-status{white-space:nowrap}
+.lp-select-col{width:42px;min-width:42px;text-align:center!important;padding:0!important}
+.lp-check-target{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.lp-select-check{width:17px;height:17px;margin:0;accent-color:var(--em);cursor:pointer}
+.lp-usang-search{min-width:190px;padding:6px 9px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--inp);color:var(--tx)}
 .borang-preview-shell{background:#e5e7eb;padding:12px;max-height:70vh;overflow:auto}
 .borang-arkib-page{width:210mm;min-height:297mm;background:#fff;color:#000;padding:15mm;margin:0 auto 12px;font-family:"Times New Roman",serif;font-size:12px;page-break-after:always;box-shadow:0 2px 10px rgba(15,23,42,.14);box-sizing:border-box}
 .borang-arkib-page:last-child{page-break-after:auto}
@@ -389,7 +393,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 /* RESPONSIVE */
 @media(max-width:1100px){.sg{grid-template-columns:repeat(3,1fr)}.pnt-g{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.fr.c2,.fr.c3{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.cover-preview-wrap{width:100px;height:136px}.cover-actions .btn{flex:1;justify-content:center;min-height:40px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}.isbn-row{grid-template-columns:42px 42px auto;gap:6px}.isbn-edit-row{align-items:stretch}.isbn-edit-row input{width:100%;flex-basis:100%}.isbn-edit-row .btn{min-height:40px}.icon-btn{width:42px;height:42px;min-width:42px;font-size:17px}.scan-action-row{gap:6px}.scan-fallback-actions .btn{flex:1;justify-content:center;min-height:40px}.borang-preview-shell{padding:6px}.borang-arkib-page{transform-origin:top left}.lp-actions .btn{flex:1}}
+@media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.cover-preview-wrap{width:100px;height:136px}.cover-actions .btn{flex:1;justify-content:center;min-height:40px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}.isbn-row{grid-template-columns:42px 42px auto;gap:6px}.isbn-edit-row{align-items:stretch}.isbn-edit-row input{width:100%;flex-basis:100%}.isbn-edit-row .btn{min-height:40px}.icon-btn{width:42px;height:42px;min-width:42px;font-size:17px}.scan-action-row{gap:6px}.scan-fallback-actions .btn{flex:1;justify-content:center;min-height:40px}.borang-preview-shell{padding:6px}.borang-arkib-page{transform-origin:top left}.lp-actions .btn{flex:1}.lp-usang-search{width:100%;min-width:0;flex-basis:100%}.lp-select-col{width:40px;min-width:40px}}
 </style>
 </head>
 <body>
@@ -2142,7 +2146,9 @@ function rowsLpBLegacy(){return''}
 function filtLpBLegacy(){}
 async function prosesLupusLegacy(){return false}
 
-let _lpTab='cadang',_lpPicked=null,_lpStatusFilter='semua',_arkib9Html='',_lpSearchTimer=null,_lpSearchSeq=0,_lpSearchResults=[];
+let _lpTab='cadang',_lpPicked=null,_lpStatusFilter='semua',_lpUsangSearch='',_arkib9Html='',_lpSearchTimer=null,_lpSearchSeq=0,_lpSearchResults=[];
+const selectedPelupusanIds=new Set();
+window.selectedPelupusanIds=selectedPelupusanIds;
 const LP_STATUS_AKTIF=['Untuk Semakan','Disyorkan Lupus','Diluluskan Untuk Pelupusan'];
 const LP_STATUS_BORANG=['Untuk Semakan','Disyorkan Lupus','Diluluskan Untuk Pelupusan'];
 
@@ -2213,7 +2219,10 @@ async function loadDisposalData(showError=true){
 }
 function renderLpPanel(){
   const p=document.getElementById('lp-panel');if(!p)return;
-  if(_lpTab==='senarai')p.innerHTML=panelSenaraiUsang();
+  if(_lpTab==='senarai'){
+    p.innerHTML=panelSenaraiUsang();
+    setTimeout(updatePelupusanSelectionUI,0);
+  }
   else if(_lpTab==='rekod')p.innerHTML=panelRekodPelupusan();
   else p.innerHTML=panelCadangUsang();
 }
@@ -2316,20 +2325,57 @@ async function simpanCadanganUsang(){
 function panelSenaraiUsang(){
   const rows=filteredUsangRows();
   return`<div class="card">
-    <div class="lp-toolbar"><div><div class="ct" style="margin:0">Senarai Bahan Usang / Rosak</div><div style="font-size:10px;color:var(--mu)">${rows.length} rekod</div></div><div class="lp-actions"><select id="lp-status-filter" onchange="_lpStatusFilter=this.value;renderLpPanel()" style="padding:6px 9px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--inp);color:var(--tx)"><option value="semua" ${_lpStatusFilter==='semua'?'selected':''}>Semua Status</option>${['Untuk Semakan','Disyorkan Lupus','Tidak Diluluskan','Diluluskan Untuk Pelupusan','Telah Dilupuskan'].map(s=>`<option ${_lpStatusFilter===s?'selected':''}>${s}</option>`).join('')}</select><button class="btn b-gh b-sm" onclick="cetakSenaraiUsang()">Cetak Senarai</button><button class="btn b-gh b-sm" onclick="exportUsangCSV()">Export CSV</button><button class="btn b-em b-sm" onclick="openArkib9Filter()">Jana Borang 9 Pelupusan</button></div></div>
-    <div class="tw"><table><thead><tr><th>No. Perolehan</th><th>No. Panggilan</th><th>Judul</th><th>Pengarang</th><th>Keadaan</th><th>Sebab</th><th>Status</th><th>Tarikh</th><th>Tindakan</th></tr></thead><tbody>${rowsUsangHtml(rows)}</tbody></table></div>
+    <div class="lp-toolbar"><div><div class="ct" style="margin:0">Senarai Bahan Usang / Rosak</div><div id="lp-selection-info" style="font-size:10px;color:var(--mu)">${pelupusanSelectionSummary(rows.length)}</div></div><div class="lp-actions"><input type="search" id="lp-usang-search" class="lp-usang-search" value="${escapeHtml(_lpUsangSearch)}" placeholder="Cari no. perolehan / judul..." oninput="setLpUsangSearch(this.value)"><select id="lp-status-filter" onchange="setLpStatusFilter(this.value)" style="padding:6px 9px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--inp);color:var(--tx)"><option value="semua" ${_lpStatusFilter==='semua'?'selected':''}>Semua Status</option>${['Untuk Semakan','Disyorkan Lupus','Tidak Diluluskan','Diluluskan Untuk Pelupusan','Telah Dilupuskan'].map(s=>`<option ${_lpStatusFilter===s?'selected':''}>${s}</option>`).join('')}</select><button class="btn b-gh b-sm" onclick="cetakSenaraiUsang()">Cetak Senarai</button><button class="btn b-gh b-sm" onclick="exportUsangCSV()">Export CSV</button><button class="btn b-em b-sm" onclick="openArkib9Filter()">Jana Borang 9 Pelupusan</button></div></div>
+    <div class="tw"><table><thead><tr><th class="lp-select-col"><label class="lp-check-target" title="Pilih semua rekod dipaparkan"><input type="checkbox" id="lp-select-all" class="lp-select-check" onchange="toggleAllPelupusanVisible(this.checked)" aria-label="Pilih semua rekod dipaparkan"></label></th><th>No. Perolehan</th><th>No. Panggilan</th><th>Judul</th><th>Pengarang</th><th>Keadaan</th><th>Sebab</th><th>Status</th><th>Tarikh</th><th>Tindakan</th></tr></thead><tbody id="lp-usang-tbody">${rowsUsangHtml(rows)}</tbody></table></div>
   </div>`;
 }
 function filteredUsangRows(){
-  const rows=[...(D.bahan_usang_rosak||[])].sort((a,b)=>String(b.tarikh_cadang||'').localeCompare(String(a.tarikh_cadang||'')));
-  return _lpStatusFilter==='semua'?rows:rows.filter(r=>r.status===_lpStatusFilter);
+  let rows=[...(D.bahan_usang_rosak||[])].sort((a,b)=>String(b.tarikh_cadang||'').localeCompare(String(a.tarikh_cadang||'')));
+  if(_lpStatusFilter!=='semua')rows=rows.filter(r=>r.status===_lpStatusFilter);
+  const query=String(_lpUsangSearch||'').trim().toLowerCase();
+  if(query)rows=rows.filter(r=>[r.no_perolehan,r.no_panggilan,r.judul,r.pengarang,r.isbn,r.keadaan_bahan,r.sebab_dicadang,r.status].join(' ').toLowerCase().includes(query));
+  return rows;
 }
+function pelupusanSelectionId(record){return String(record?.id||record?.no_perolehan||'').trim()}
+function getSelectedPelupusanIds(){return Array.from(selectedPelupusanIds)}
+function pelupusanSelectionSummary(visibleCount){return `${visibleCount} rekod${selectedPelupusanIds.size?` • ${selectedPelupusanIds.size} bahan dipilih`:''}`}
+function pruneSelectedPelupusanIds(){
+  const valid=new Set((D.bahan_usang_rosak||[]).map(pelupusanSelectionId).filter(Boolean));
+  selectedPelupusanIds.forEach(id=>{if(!valid.has(id))selectedPelupusanIds.delete(id)});
+}
+function updatePelupusanSelectionUI(){
+  pruneSelectedPelupusanIds();
+  const rows=filteredUsangRows(),visibleIds=[...new Set(rows.map(pelupusanSelectionId).filter(Boolean))];
+  const selectedVisible=visibleIds.filter(id=>selectedPelupusanIds.has(id)).length;
+  const selectAll=document.getElementById('lp-select-all');
+  if(selectAll){selectAll.disabled=!visibleIds.length;selectAll.checked=!!visibleIds.length&&selectedVisible===visibleIds.length;selectAll.indeterminate=selectedVisible>0&&selectedVisible<visibleIds.length}
+  document.querySelectorAll('#lp-usang-tbody .lp-row-check').forEach(box=>{box.checked=selectedPelupusanIds.has(box.dataset.id)});
+  const info=document.getElementById('lp-selection-info');if(info)info.textContent=pelupusanSelectionSummary(rows.length);
+}
+function togglePelupusanRow(id,checked){
+  id=String(id||'').trim();if(!id)return;
+  if(checked)selectedPelupusanIds.add(id);else selectedPelupusanIds.delete(id);
+  updatePelupusanSelectionUI();
+}
+function toggleAllPelupusanVisible(checked){
+  const ids=[...new Set(filteredUsangRows().map(pelupusanSelectionId).filter(Boolean))];
+  ids.forEach(id=>checked?selectedPelupusanIds.add(id):selectedPelupusanIds.delete(id));
+  updatePelupusanSelectionUI();
+}
+function refreshSenaraiUsangView(){
+  const rows=filteredUsangRows(),body=document.getElementById('lp-usang-tbody');
+  if(body)body.innerHTML=rowsUsangHtml(rows);
+  updatePelupusanSelectionUI();
+}
+function setLpStatusFilter(value){_lpStatusFilter=value||'semua';refreshSenaraiUsangView()}
+function setLpUsangSearch(value){_lpUsangSearch=String(value||'');refreshSenaraiUsangView()}
 function rowsUsangHtml(rows){
-  if(!rows.length)return'<tr><td colspan="9" style="text-align:center;padding:22px;color:var(--mu)">Tiada rekod bahan usang / rosak.</td></tr>';
+  if(!rows.length)return'<tr><td colspan="10" style="text-align:center;padding:22px;color:var(--mu)">Tiada rekod bahan usang / rosak.</td></tr>';
   return rows.map(r=>{
     const done=r.status==='Telah Dilupuskan';
     const approved=r.status==='Diluluskan Untuk Pelupusan';
-    return`<tr><td><span class="bdg bg-cy">${escapeHtml(r.no_perolehan||'–')}</span></td><td class="no-panggilan">${escapeHtml(r.no_panggilan||'–')}</td><td style="max-width:170px"><strong>${escapeHtml(r.judul||'–')}</strong></td><td>${escapeHtml(r.pengarang||'–')}</td><td>${escapeHtml(r.keadaan_bahan||'–')}</td><td>${escapeHtml(r.sebab_dicadang||'–')}</td><td>${lpBadge(r.status)}</td><td>${escapeHtml(fmtD(r.tarikh_cadang)||'–')}</td><td><div class="lp-actions">${!done?`<button class="btn b-gh b-xs" onclick="openEditUsang('${r.id}')">Edit</button>`:''}${r.status==='Untuk Semakan'?`<button class="btn b-gh b-xs" style="color:var(--am)" onclick="ubahStatusUsang('${r.id}','Disyorkan Lupus')">Syor</button>`:''}${!done&&!approved?`<button class="btn b-gh b-xs" style="color:var(--red)" onclick="ubahStatusUsang('${r.id}','Tidak Diluluskan')">Tidak Lulus</button>`:''}${!done&&!approved?`<button class="btn b-cy b-xs" onclick="ubahStatusUsang('${r.id}','Diluluskan Untuk Pelupusan')">Lulus</button>`:''}${approved?`<button class="btn b-re b-xs" onclick="openSahkanLupus('${r.id}')">Sahkan Dilupuskan</button>`:''}${!done?`<button class="btn b-gh b-xs" onclick="padamCadanganUsang('${r.id}')">Padam</button>`:''}</div></td></tr>`;
+    const selectId=pelupusanSelectionId(r),checked=selectedPelupusanIds.has(selectId)?' checked':'';
+    return`<tr><td class="lp-select-col"><label class="lp-check-target" title="Pilih ${escapeHtml(r.judul||'bahan')}"><input type="checkbox" class="lp-select-check lp-row-check" data-id="${escapeHtml(selectId)}" onchange="togglePelupusanRow(this.dataset.id,this.checked)" aria-label="Pilih rekod ${escapeHtml(r.no_perolehan||r.judul||'bahan')}"${checked}></label></td><td><span class="bdg bg-cy">${escapeHtml(r.no_perolehan||'–')}</span></td><td class="no-panggilan">${escapeHtml(r.no_panggilan||'–')}</td><td style="max-width:170px"><strong>${escapeHtml(r.judul||'–')}</strong></td><td>${escapeHtml(r.pengarang||'–')}</td><td>${escapeHtml(r.keadaan_bahan||'–')}</td><td>${escapeHtml(r.sebab_dicadang||'–')}</td><td>${lpBadge(r.status)}</td><td>${escapeHtml(fmtD(r.tarikh_cadang)||'–')}</td><td><div class="lp-actions">${!done?`<button class="btn b-gh b-xs" onclick="openEditUsang('${r.id}')">Edit</button>`:''}${r.status==='Untuk Semakan'?`<button class="btn b-gh b-xs" style="color:var(--am)" onclick="ubahStatusUsang('${r.id}','Disyorkan Lupus')">Syor</button>`:''}${!done&&!approved?`<button class="btn b-gh b-xs" style="color:var(--red)" onclick="ubahStatusUsang('${r.id}','Tidak Diluluskan')">Tidak Lulus</button>`:''}${!done&&!approved?`<button class="btn b-cy b-xs" onclick="ubahStatusUsang('${r.id}','Diluluskan Untuk Pelupusan')">Lulus</button>`:''}${approved?`<button class="btn b-re b-xs" onclick="openSahkanLupus('${r.id}')">Sahkan Dilupuskan</button>`:''}${!done?`<button class="btn b-gh b-xs" onclick="padamCadanganUsang('${r.id}')">Padam</button>`:''}</div></td></tr>`;
   }).join('');
 }
 function panelRekodPelupusan(){
