@@ -373,6 +373,11 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 .lp-check-target{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .lp-select-check{width:17px;height:17px;margin:0;accent-color:var(--em);cursor:pointer}
 .lp-usang-search{min-width:190px;padding:6px 9px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--inp);color:var(--tx)}
+.lp-bulk-toolbar{display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 10px;margin:0 0 10px;border:1.5px solid rgba(16,185,129,.28);border-radius:var(--rs);background:var(--eml)}
+.lp-bulk-toolbar.show{display:flex}
+.lp-bulk-count{font-size:11px;font-weight:800;color:var(--em)}
+.lp-bulk-actions{display:flex;gap:5px;flex-wrap:wrap}
+.lp-bulk-actions .btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
 .borang-preview-shell{background:#e5e7eb;padding:12px;max-height:70vh;overflow:auto}
 .borang-arkib-page{width:210mm;min-height:297mm;background:#fff;color:#000;padding:15mm;margin:0 auto 12px;font-family:"Times New Roman",serif;font-size:12px;page-break-after:always;box-shadow:0 2px 10px rgba(15,23,42,.14);box-sizing:border-box}
 .borang-arkib-page:last-child{page-break-after:auto}
@@ -386,6 +391,7 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 #sb-overlay{display:none}
 @media(max-width:640px){#sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:90;display:none}#sb-overlay.show{display:block}#sb{z-index:100}.smartlib-copyright{left:0;right:0;text-align:center;bottom:6px;font-size:9px}}
+@media(max-width:640px){.lp-bulk-toolbar{align-items:stretch}.lp-bulk-count{width:100%}.lp-bulk-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.lp-bulk-actions .btn{width:100%;justify-content:center;min-height:40px}.lp-bulk-actions .btn:last-child:nth-child(odd){grid-column:1/-1}}
 /* PRINT */
 @media print{#sb,#tb,#lo,#tbox,.np{display:none!important}body{background:#fff}#content{padding:0}#pz{display:block!important}}
 #pz{display:none}
@@ -2150,7 +2156,7 @@ let _lpTab='cadang',_lpPicked=null,_lpStatusFilter='semua',_lpUsangSearch='',_ar
 const selectedPelupusanIds=new Set();
 window.selectedPelupusanIds=selectedPelupusanIds;
 const LP_STATUS_AKTIF=['Untuk Semakan','Disyorkan Lupus','Diluluskan Untuk Pelupusan'];
-const LP_STATUS_BORANG=['Untuk Semakan','Disyorkan Lupus','Diluluskan Untuk Pelupusan'];
+const LP_STATUS_BORANG=['Diluluskan Untuk Pelupusan'];
 
 function aksesPelupusan(){
   const u=window._me||_me||{};
@@ -2193,6 +2199,8 @@ function pgLupus(){
     </div>
     <div id="lp-panel"></div>
     ${modalEditUsangHtml()}
+    ${modalBulkConfirmHtml()}
+    ${modalBulkTidakLulusHtml()}
     ${modalSahkanLupusHtml()}
     ${modalArkib9Html()}`;
   renderLpPanel();
@@ -2326,6 +2334,7 @@ function panelSenaraiUsang(){
   const rows=filteredUsangRows();
   return`<div class="card">
     <div class="lp-toolbar"><div><div class="ct" style="margin:0">Senarai Bahan Usang / Rosak</div><div id="lp-selection-info" style="font-size:10px;color:var(--mu)">${pelupusanSelectionSummary(rows.length)}</div></div><div class="lp-actions"><input type="search" id="lp-usang-search" class="lp-usang-search" value="${escapeHtml(_lpUsangSearch)}" placeholder="Cari no. perolehan / judul..." oninput="setLpUsangSearch(this.value)"><select id="lp-status-filter" onchange="setLpStatusFilter(this.value)" style="padding:6px 9px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--inp);color:var(--tx)"><option value="semua" ${_lpStatusFilter==='semua'?'selected':''}>Semua Status</option>${['Untuk Semakan','Disyorkan Lupus','Tidak Diluluskan','Diluluskan Untuk Pelupusan','Telah Dilupuskan'].map(s=>`<option ${_lpStatusFilter===s?'selected':''}>${s}</option>`).join('')}</select><button class="btn b-gh b-sm" onclick="cetakSenaraiUsang()">Cetak Senarai</button><button class="btn b-gh b-sm" onclick="exportUsangCSV()">Export CSV</button><button class="btn b-em b-sm" onclick="openArkib9Filter()">Jana Borang 9 Pelupusan</button></div></div>
+    <div id="lp-bulk-toolbar" class="lp-bulk-toolbar" aria-live="polite"><div id="lp-bulk-count" class="lp-bulk-count">0 bahan dipilih</div><div class="lp-bulk-actions"><button type="button" class="btn b-gh b-sm" onclick="bulkSyorPelupusan()">Syor</button><button type="button" class="btn b-cy b-sm" onclick="bulkLulusPelupusan()">Lulus</button><button type="button" class="btn b-gh b-sm" style="color:var(--red)" onclick="openBulkTidakLulus()">Tidak Lulus</button><button type="button" id="lp-bulk-edit" class="btn b-gh b-sm" onclick="bulkEditPelupusan()" disabled title="Edit hanya boleh digunakan untuk satu bahan pada satu masa.">Edit</button><button type="button" class="btn b-re b-sm" onclick="bulkPadamPelupusan()">Padam</button></div></div>
     <div class="tw"><table><thead><tr><th class="lp-select-col"><label class="lp-check-target" title="Pilih semua rekod dipaparkan"><input type="checkbox" id="lp-select-all" class="lp-select-check" onchange="toggleAllPelupusanVisible(this.checked)" aria-label="Pilih semua rekod dipaparkan"></label></th><th>No. Perolehan</th><th>No. Panggilan</th><th>Judul</th><th>Pengarang</th><th>Keadaan</th><th>Sebab</th><th>Status</th><th>Tarikh</th><th>Tindakan</th></tr></thead><tbody id="lp-usang-tbody">${rowsUsangHtml(rows)}</tbody></table></div>
   </div>`;
 }
@@ -2337,10 +2346,10 @@ function filteredUsangRows(){
   return rows;
 }
 function pelupusanSelectionId(record){return String(record?.id||record?.no_perolehan||'').trim()}
-function getSelectedPelupusanIds(){return Array.from(selectedPelupusanIds)}
+function getSelectedPelupusanIds(){pruneSelectedPelupusanIds();return Array.from(selectedPelupusanIds)}
 function pelupusanSelectionSummary(visibleCount){return `${visibleCount} rekod${selectedPelupusanIds.size?` • ${selectedPelupusanIds.size} bahan dipilih`:''}`}
 function pruneSelectedPelupusanIds(){
-  const valid=new Set((D.bahan_usang_rosak||[]).map(pelupusanSelectionId).filter(Boolean));
+  const valid=new Set(filteredUsangRows().map(pelupusanSelectionId).filter(Boolean));
   selectedPelupusanIds.forEach(id=>{if(!valid.has(id))selectedPelupusanIds.delete(id)});
 }
 function updatePelupusanSelectionUI(){
@@ -2351,6 +2360,10 @@ function updatePelupusanSelectionUI(){
   if(selectAll){selectAll.disabled=!visibleIds.length;selectAll.checked=!!visibleIds.length&&selectedVisible===visibleIds.length;selectAll.indeterminate=selectedVisible>0&&selectedVisible<visibleIds.length}
   document.querySelectorAll('#lp-usang-tbody .lp-row-check').forEach(box=>{box.checked=selectedPelupusanIds.has(box.dataset.id)});
   const info=document.getElementById('lp-selection-info');if(info)info.textContent=pelupusanSelectionSummary(rows.length);
+  const toolbar=document.getElementById('lp-bulk-toolbar'),count=document.getElementById('lp-bulk-count'),edit=document.getElementById('lp-bulk-edit');
+  if(toolbar)toolbar.classList.toggle('show',selectedPelupusanIds.size>0);
+  if(count)count.textContent=`${selectedPelupusanIds.size} bahan dipilih`;
+  if(edit){edit.disabled=selectedPelupusanIds.size!==1;edit.title=selectedPelupusanIds.size===1?'Edit bahan dipilih.':'Edit hanya boleh digunakan untuk satu bahan pada satu masa.'}
 }
 function togglePelupusanRow(id,checked){
   id=String(id||'').trim();if(!id)return;
@@ -2367,16 +2380,105 @@ function refreshSenaraiUsangView(){
   if(body)body.innerHTML=rowsUsangHtml(rows);
   updatePelupusanSelectionUI();
 }
-function setLpStatusFilter(value){_lpStatusFilter=value||'semua';refreshSenaraiUsangView()}
-function setLpUsangSearch(value){_lpUsangSearch=String(value||'');refreshSenaraiUsangView()}
+function setLpStatusFilter(value){_lpStatusFilter=value||'semua';selectedPelupusanIds.clear();refreshSenaraiUsangView()}
+function setLpUsangSearch(value){_lpUsangSearch=String(value||'');selectedPelupusanIds.clear();refreshSenaraiUsangView()}
 function rowsUsangHtml(rows){
   if(!rows.length)return'<tr><td colspan="10" style="text-align:center;padding:22px;color:var(--mu)">Tiada rekod bahan usang / rosak.</td></tr>';
   return rows.map(r=>{
     const done=r.status==='Telah Dilupuskan';
     const approved=r.status==='Diluluskan Untuk Pelupusan';
     const selectId=pelupusanSelectionId(r),checked=selectedPelupusanIds.has(selectId)?' checked':'';
-    return`<tr><td class="lp-select-col"><label class="lp-check-target" title="Pilih ${escapeHtml(r.judul||'bahan')}"><input type="checkbox" class="lp-select-check lp-row-check" data-id="${escapeHtml(selectId)}" onchange="togglePelupusanRow(this.dataset.id,this.checked)" aria-label="Pilih rekod ${escapeHtml(r.no_perolehan||r.judul||'bahan')}"${checked}></label></td><td><span class="bdg bg-cy">${escapeHtml(r.no_perolehan||'–')}</span></td><td class="no-panggilan">${escapeHtml(r.no_panggilan||'–')}</td><td style="max-width:170px"><strong>${escapeHtml(r.judul||'–')}</strong></td><td>${escapeHtml(r.pengarang||'–')}</td><td>${escapeHtml(r.keadaan_bahan||'–')}</td><td>${escapeHtml(r.sebab_dicadang||'–')}</td><td>${lpBadge(r.status)}</td><td>${escapeHtml(fmtD(r.tarikh_cadang)||'–')}</td><td><div class="lp-actions">${!done?`<button class="btn b-gh b-xs" onclick="openEditUsang('${r.id}')">Edit</button>`:''}${r.status==='Untuk Semakan'?`<button class="btn b-gh b-xs" style="color:var(--am)" onclick="ubahStatusUsang('${r.id}','Disyorkan Lupus')">Syor</button>`:''}${!done&&!approved?`<button class="btn b-gh b-xs" style="color:var(--red)" onclick="ubahStatusUsang('${r.id}','Tidak Diluluskan')">Tidak Lulus</button>`:''}${!done&&!approved?`<button class="btn b-cy b-xs" onclick="ubahStatusUsang('${r.id}','Diluluskan Untuk Pelupusan')">Lulus</button>`:''}${approved?`<button class="btn b-re b-xs" onclick="openSahkanLupus('${r.id}')">Sahkan Dilupuskan</button>`:''}${!done?`<button class="btn b-gh b-xs" onclick="padamCadanganUsang('${r.id}')">Padam</button>`:''}</div></td></tr>`;
+    const inProcess=r.status==='Untuk Semakan'||r.status==='Disyorkan Lupus';
+    return`<tr><td class="lp-select-col"><label class="lp-check-target" title="Pilih ${escapeHtml(r.judul||'bahan')}"><input type="checkbox" class="lp-select-check lp-row-check" data-id="${escapeHtml(selectId)}" onchange="togglePelupusanRow(this.dataset.id,this.checked)" aria-label="Pilih rekod ${escapeHtml(r.no_perolehan||r.judul||'bahan')}"${checked}></label></td><td><span class="bdg bg-cy">${escapeHtml(r.no_perolehan||'–')}</span></td><td class="no-panggilan">${escapeHtml(r.no_panggilan||'–')}</td><td style="max-width:170px"><strong>${escapeHtml(r.judul||'–')}</strong></td><td>${escapeHtml(r.pengarang||'–')}</td><td>${escapeHtml(r.keadaan_bahan||'–')}</td><td>${escapeHtml(r.sebab_dicadang||'–')}</td><td>${lpBadge(r.status)}</td><td>${escapeHtml(fmtD(r.tarikh_cadang)||'–')}</td><td><div class="lp-actions">${!done?`<button class="btn b-gh b-xs" onclick="openEditUsang('${r.id}')">Edit</button>`:''}${r.status==='Untuk Semakan'?`<button class="btn b-gh b-xs" style="color:var(--am)" onclick="ubahStatusUsang('${r.id}','Disyorkan Lupus')">Syor</button>`:''}${inProcess?`<button class="btn b-gh b-xs" style="color:var(--red)" onclick="ubahStatusUsang('${r.id}','Tidak Diluluskan')">Tidak Lulus</button>`:''}${r.status==='Disyorkan Lupus'?`<button class="btn b-cy b-xs" onclick="ubahStatusUsang('${r.id}','Diluluskan Untuk Pelupusan')">Lulus</button>`:''}${approved?`<button class="btn b-re b-xs" onclick="openSahkanLupus('${r.id}')">Sahkan Dilupuskan</button>`:''}${!done?`<button class="btn b-gh b-xs" onclick="padamCadanganUsang('${r.id}')">Padam</button>`:''}</div></td></tr>`;
   }).join('');
+}
+function selectedPelupusanRows(){
+  const ids=new Set(getSelectedPelupusanIds());
+  return(D.bahan_usang_rosak||[]).filter(r=>ids.has(pelupusanSelectionId(r)));
+}
+function bulkSyorPelupusan(){
+  const ids=getSelectedPelupusanIds();
+  if(!ids.length){toast('Sila pilih bahan terlebih dahulu.','wa');return}
+  openPelupusanBulkConfirm('syor',`Anda pasti mahu mengesyorkan ${ids.length} bahan yang dipilih?`,'Ya, Syor');
+}
+function bulkLulusPelupusan(){
+  const ids=getSelectedPelupusanIds();
+  if(!ids.length){toast('Sila pilih bahan terlebih dahulu.','wa');return}
+  openPelupusanBulkConfirm('lulus',`Anda pasti mahu meluluskan bahan yang layak daripada ${ids.length} bahan dipilih?`,'Ya, Lulus');
+}
+function openBulkTidakLulus(){
+  const ids=getSelectedPelupusanIds();
+  if(!ids.length){toast('Sila pilih bahan terlebih dahulu.','wa');return}
+  const count=document.getElementById('lp-bulk-reject-count'),note=document.getElementById('lp-bulk-reject-note');
+  if(count)count.textContent=ids.length;
+  if(note)note.value='';
+  openM('m-bulk-tidak-lulus');
+}
+function submitBulkTidakLulus(){
+  const ids=getSelectedPelupusanIds();
+  if(!ids.length){closeM('m-bulk-tidak-lulus');toast('Tiada bahan dipilih.','wa');return}
+  const catatan=document.getElementById('lp-bulk-reject-note')?.value.trim()||'';
+  closeM('m-bulk-tidak-lulus');
+  runPelupusanBulkAction('tidak_lulus',catatan);
+}
+function bulkEditPelupusan(){
+  const ids=getSelectedPelupusanIds();
+  if(ids.length!==1){toast('Edit hanya boleh digunakan untuk satu bahan pada satu masa.','wa');return}
+  openEditUsang(ids[0]);
+}
+function bulkPadamPelupusan(){
+  const ids=getSelectedPelupusanIds();
+  if(!ids.length){toast('Sila pilih bahan terlebih dahulu.','wa');return}
+  openPelupusanBulkConfirm('padam',`Anda pasti mahu mengeluarkan ${ids.length} bahan yang dipilih daripada Senarai Bahan Usang / Rosak? Rekod Perolehan Buku tidak akan dipadam.`,'Ya, Padam');
+}
+function openPelupusanBulkConfirm(action,message,buttonText){
+  const modal=document.getElementById('m-bulk-pelupusan-confirm'),actionInput=document.getElementById('lp-bulk-confirm-action'),messageBox=document.getElementById('lp-bulk-confirm-message'),submit=document.getElementById('lp-bulk-confirm-submit');
+  if(!modal||!actionInput||!messageBox||!submit)return;
+  actionInput.value=action;messageBox.textContent=message;submit.textContent=buttonText;
+  submit.className=`btn ${action==='padam'?'b-re':'b-em'}`;
+  openM('m-bulk-pelupusan-confirm');
+}
+function submitPelupusanBulkConfirm(){
+  const action=document.getElementById('lp-bulk-confirm-action')?.value||'';
+  closeM('m-bulk-pelupusan-confirm');
+  if(action)runPelupusanBulkAction(action);
+}
+function setPelupusanBulkBusy(busy){
+  document.querySelectorAll('#lp-bulk-toolbar .btn').forEach(btn=>{btn.disabled=!!busy||btn.id==='lp-bulk-edit'&&selectedPelupusanIds.size!==1});
+}
+function bulkPelupusanMessage(action,updated,skipped,failed){
+  const first=action==='syor'?`${updated} bahan berjaya disyorkan.`:action==='lulus'?`${updated} bahan berjaya diluluskan.`:action==='tidak_lulus'?`${updated} bahan ditandakan sebagai Tidak Diluluskan.`:`${updated} bahan berjaya dikeluarkan daripada senarai.`;
+  let second='';
+  if(skipped)second=action==='lulus'?`${skipped} bahan tidak boleh diluluskan kerana belum berstatus Disyorkan.`:`${skipped} bahan tidak diproses kerana status tidak sesuai.`;
+  if(failed)second+=`${second?' ':''}${failed} bahan gagal diproses.`;
+  return`${first}${second?' '+second:''}`;
+}
+async function runPelupusanBulkAction(action,catatan=''){
+  const ids=getSelectedPelupusanIds();
+  if(!ids.length){toast('Sila pilih bahan terlebih dahulu.','wa');return}
+  setPelupusanBulkBusy(true);
+  try{
+    const res=await api({action:'bulk_bahan_usang',ids,bulk_action:action,data:{catatan_semakan:catatan,tarikh_semak:today(),disemak_oleh:_me?.nama||'Pentadbir'}},0);
+    if(!res?.ok)throw new Error(res?.error||'Tindakan pukal gagal.');
+    const out=res.data||{},deleted=new Set((out.deletedIds||[]).map(String));
+    if(action==='padam'){
+      D.bahan_usang_rosak=(D.bahan_usang_rosak||[]).filter(r=>!deleted.has(String(r.id)));
+    }else{
+      const changed=new Map((out.items||[]).map(item=>[String(item.id),item]));
+      D.bahan_usang_rosak=(D.bahan_usang_rosak||[]).map(r=>changed.has(String(r.id))?{...r,...changed.get(String(r.id))}:r);
+    }
+    selectedPelupusanIds.clear();
+    refreshSenaraiUsangView();
+    const updated=Number(out.updated||0),skipped=Number(out.skipped||0),failed=Number(out.failed||0);
+    toast(bulkPelupusanMessage(action,updated,skipped,failed),skipped||failed?'wa':'ok');
+  }catch(e){toast(e.message||'Tindakan pukal gagal.','er')}
+  finally{setPelupusanBulkBusy(false);updatePelupusanSelectionUI()}
+}
+function modalBulkTidakLulusHtml(){
+  return`<div class="mbg" id="m-bulk-tidak-lulus"><div class="modal" style="max-width:480px"><div class="m-hdr"><h3>Tidak Lulus Bahan Dipilih</h3><button class="m-x" onclick="closeM('m-bulk-tidak-lulus')">✕</button></div><div class="al a-wa">Anda pasti mahu menandakan <strong id="lp-bulk-reject-count">0</strong> bahan sebagai Tidak Diluluskan?</div><div class="fg"><label>Sebab / Catatan</label><textarea id="lp-bulk-reject-note" rows="4" placeholder="Catatan semakan (pilihan)"></textarea></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-bulk-tidak-lulus')">Batal</button><button class="btn b-re" onclick="submitBulkTidakLulus()">Ya, Tidak Lulus</button></div></div></div>`;
+}
+function modalBulkConfirmHtml(){
+  return`<div class="mbg" id="m-bulk-pelupusan-confirm"><div class="modal" style="max-width:460px"><div class="m-hdr"><h3>Tindakan Bahan Dipilih</h3><button class="m-x" onclick="closeM('m-bulk-pelupusan-confirm')">✕</button></div><input type="hidden" id="lp-bulk-confirm-action"><div id="lp-bulk-confirm-message" class="al a-wa"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-bulk-pelupusan-confirm')">Batal</button><button id="lp-bulk-confirm-submit" class="btn b-em" onclick="submitPelupusanBulkConfirm()">Teruskan</button></div></div></div>`;
 }
 function panelRekodPelupusan(){
   const rows=[...(D.pelupusan||[])].sort((a,b)=>String(b.tarikh_lupus||'').localeCompare(String(a.tarikh_lupus||'')));
@@ -2429,12 +2531,15 @@ const LP_REPORT_CSS='body{font-family:Arial,sans-serif;color:#111;font-size:10px
 function cetakSenaraiUsang(){const h=[{key:'no_perolehan',label:'No. Perolehan'},{key:'no_panggilan',label:'No. Panggilan'},{key:'judul',label:'Judul'},{key:'keadaan_bahan',label:'Keadaan'},{key:'sebab_dicadang',label:'Sebab'},{key:'status',label:'Status'}];openPrintWindow('Senarai Bahan Usang / Rosak',reportTableHtml('Senarai Bahan Usang / Rosak',h,filteredUsangRows()),LP_REPORT_CSS)}
 function cetakRekodPelupusan(){const h=[{key:'no_perolehan',label:'No. Perolehan'},{key:'no_panggilan',label:'No. Panggilan'},{key:'judul',label:'Judul'},{key:'tarikh_lupus',label:'Tarikh Lupus'},{key:'kaedah',label:'Kaedah'},{key:'no_rujukan',label:'No. Rujukan'},{key:'pegawai',label:'Pegawai'}];openPrintWindow('Rekod Pelupusan',reportTableHtml('Rekod Pelupusan',h,D.pelupusan||[]),LP_REPORT_CSS)}
 function modalArkib9Html(){
-  return`<div class="mbg" id="m-arkib9-filter"><div class="modal" style="max-width:460px"><div class="m-hdr"><h3>Jana Borang 9 Pelupusan</h3><button class="m-x" onclick="closeM('m-arkib9-filter')">✕</button></div><div class="fg"><label>Status Bahan</label><select id="arkib9-status"><option value="Diluluskan Untuk Pelupusan">Diluluskan Untuk Pelupusan</option><option value="semua">Semua Bahan Usang / Rosak</option><option>Untuk Semakan</option><option>Disyorkan Lupus</option></select></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-arkib9-filter')">Batal</button><button class="btn b-em" onclick="janaBorangPelupusanArkib9(document.getElementById('arkib9-status').value)">Jana Borang</button></div></div></div><div class="mbg" id="m-arkib9-preview"><div class="modal" style="width:96vw;max-width:1100px;max-height:94vh"><div class="m-hdr"><h3>Preview Borang 9 / Arkib 9/08</h3><button class="m-x" onclick="closeM('m-arkib9-preview')">✕</button></div><div id="preview-borang-arkib9" class="borang-preview-shell"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-arkib9-preview')">Tutup</button><button class="btn b-em" onclick="cetakBorangArkib9()">Cetak Borang</button></div></div></div>`;
+  return`<div class="mbg" id="m-arkib9-filter"><div class="modal" style="max-width:460px"><div class="m-hdr"><h3>Jana Borang 9 Pelupusan</h3><button class="m-x" onclick="closeM('m-arkib9-filter')">✕</button></div><div class="al a-in">Hanya bahan berstatus Diluluskan Untuk Pelupusan akan dimasukkan dalam Borang 9.</div><input type="hidden" id="arkib9-status" value="Diluluskan Untuk Pelupusan"><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-arkib9-filter')">Batal</button><button class="btn b-em" onclick="janaBorangPelupusanArkib9('Diluluskan Untuk Pelupusan')">Jana Borang</button></div></div></div><div class="mbg" id="m-arkib9-preview"><div class="modal" style="width:96vw;max-width:1100px;max-height:94vh"><div class="m-hdr"><h3>Preview Borang 9 / Arkib 9/08</h3><button class="m-x" onclick="closeM('m-arkib9-preview')">✕</button></div><div id="preview-borang-arkib9" class="borang-preview-shell"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-arkib9-preview')">Tutup</button><button class="btn b-em" onclick="cetakBorangArkib9()">Cetak Borang</button></div></div></div>`;
 }
-function openArkib9Filter(){openM('m-arkib9-filter')}
+function openArkib9Filter(){if(getSelectedPelupusanIds().length)janaBorangPelupusanArkib9('Diluluskan Untuk Pelupusan');else openM('m-arkib9-filter')}
 function janaBorangPelupusanArkib9(statusFilter){
-  const rows=(D.bahan_usang_rosak||[]).filter(r=>statusFilter==='semua'?LP_STATUS_BORANG.includes(r.status):r.status===statusFilter);
+  const selected=new Set(getSelectedPelupusanIds());
+  const approved=(D.bahan_usang_rosak||[]).filter(r=>r.status==='Diluluskan Untuk Pelupusan');
+  const rows=selected.size?approved.filter(r=>selected.has(pelupusanSelectionId(r))):approved;
   if(!rows.length){toast('Tiada bahan untuk dijana dalam borang.','wa');return}
+  if(selected.size>rows.length)toast(`${selected.size-rows.length} bahan tidak dimasukkan kerana belum berstatus Diluluskan.`, 'wa');
   _arkib9Html=renderBorangArkib9(rows);const out=document.getElementById('preview-borang-arkib9');if(out)out.innerHTML=_arkib9Html;closeM('m-arkib9-filter');openM('m-arkib9-preview');
 }
 function renderBorangArkib9(rows){
