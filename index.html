@@ -755,6 +755,7 @@ async function apiGet(params,retry=2){
 // DATA
 // ═══════════════════════════════════════════════
 function prosesD(data){
+  if(data.stock_stats)D.stock_stats=data.stock_stats;
   if(Array.isArray(data.buku))D.buku=data.buku;
   if(Array.isArray(data.murid))D.murid=data.murid;
   if(Array.isArray(data.guru))D.guru=data.guru;
@@ -965,6 +966,7 @@ function normalizePrintCss(extraCss=''){
 function printUsingIframe(title,bodyHtml,extraCss=''){
   const old=document.getElementById('smartlib-print-frame');if(old)old.remove();
   const cfg=normalizePrintCss(extraCss);
+  const barcodeScript=/data-(?:bc|barcode)=/.test(bodyHtml)?'<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>':'';
   const iframe=document.createElement('iframe');
   iframe.id='smartlib-print-frame';
   iframe.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
@@ -972,7 +974,7 @@ function printUsingIframe(title,bodyHtml,extraCss=''){
   const doc=iframe.contentWindow.document;
   doc.open();
   doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>
+${barcodeScript}
 <style>*{box-sizing:border-box}body{margin:0;background:#fff;font-family:Arial,sans-serif}@page{size:A4;margin:${cfg.pad}}${cfg.css||''}.borang-rekod-table{table-layout:fixed;background:#fff;color:#000;font-family:"Times New Roman",serif;font-size:10.5pt;border-radius:0;box-shadow:none}.borang-rekod-table th,.borang-rekod-table td{padding:4px 5px;white-space:normal;overflow-wrap:anywhere;word-break:normal;background:#fff;color:#000;line-height:1.2}.borang-rekod-table th{height:15mm;vertical-align:middle;font-size:9pt;font-weight:bold;line-height:1.15;text-align:center}.borang-rekod-table tbody tr{height:22mm}.borang-rekod-table tr{break-inside:avoid;page-break-inside:avoid}.borang-rekod-table thead{display:table-header-group}.borang-rekod-table tfoot{display:table-footer-group}.borang-rekod-table .arkib-catatan{font-size:9.5pt;line-height:1.25}.borang-info-table{table-layout:fixed;background:#fff;color:#000}.borang-info-table td{background:#fff;color:#000}.borang-footer{break-inside:avoid}</style></head><body>${bodyHtml}
 <script>window.addEventListener('load',function(){setTimeout(function(){document.querySelectorAll('[data-bc],[data-barcode]').forEach(function(el){try{var code=el.getAttribute('data-barcode')||el.getAttribute('data-bc');var member=el.classList.contains('member-card-barcode');JsBarcode(el,code,member?{format:'CODE128',width:1.5,height:38,displayValue:false,margin:8,background:'#ffffff',lineColor:'#000000'}:{format:'CODE128',width:1.4,height:34,displayValue:false,margin:0})}catch(e){console.error(e)}});setTimeout(function(){window.focus();window.print()},700)},500)});<\/script>
 </body></html>`);
@@ -980,11 +982,12 @@ function printUsingIframe(title,bodyHtml,extraCss=''){
 }
 function openPrintWindow(title,bodyHtml,extraCss=''){
   const cfg=normalizePrintCss(extraCss);
+  const barcodeScript=/data-(?:bc|barcode)=/.test(bodyHtml)?'<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>':'';
   const printWindow=window.open('','_blank','width=900,height=700,scrollbars=yes,resizable=yes');
   if(!printWindow){printUsingIframe(title,bodyHtml,extraCss);return null;}
   printWindow.document.open();
   printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>
+${barcodeScript}
 <style>*{box-sizing:border-box}body{margin:0;background:#fff;font-family:Arial,sans-serif}.ptb{position:fixed;top:0;left:0;right:0;background:#064e3b;color:#fff;padding:8px 14px;z-index:9999;font-size:12px}.pbtn{margin-left:8px;padding:5px 12px;border:0;border-radius:6px;color:#fff;font-weight:bold;cursor:pointer}.p-g{background:#10b981}.p-gr{background:#334155}.pc{padding:${cfg.pad};padding-top:42px}@page{size:A4;margin:${cfg.pad}}@media print{.ptb{display:none!important}.pc{padding:${cfg.pad};padding-top:0}body{background:#fff}}${cfg.css||''}.borang-rekod-table{table-layout:fixed;background:#fff;color:#000;font-family:"Times New Roman",serif;font-size:10.5pt;border-radius:0;box-shadow:none}.borang-rekod-table th,.borang-rekod-table td{padding:4px 5px;white-space:normal;overflow-wrap:anywhere;word-break:normal;background:#fff;color:#000;line-height:1.2}.borang-rekod-table th{height:15mm;vertical-align:middle;font-size:9pt;font-weight:bold;line-height:1.15;text-align:center}.borang-rekod-table tbody tr{height:22mm}.borang-rekod-table tr{break-inside:avoid;page-break-inside:avoid}.borang-rekod-table thead{display:table-header-group}.borang-rekod-table tfoot{display:table-footer-group}.borang-rekod-table .arkib-catatan{font-size:9.5pt;line-height:1.25}.borang-info-table{table-layout:fixed;background:#fff;color:#000}.borang-info-table td{background:#fff;color:#000}.borang-footer{break-inside:avoid}</style></head><body>
 <div class="ptb"><span>SMARTLIB Print Preview</span><button class="pbtn p-g" onclick="window.print()">Print</button><button class="pbtn p-gr" onclick="window.close()">Tutup</button></div>
 <main class="pc">${bodyHtml}</main>
@@ -1003,10 +1006,31 @@ function bukaPW(title,body,css=''){return openPrintWindow(title,body,css)}
 // ═══════════════════════════════════════════════
 function isBukuAktifUntukStok(b){
   const status=String(b?.status||'').trim().toLowerCase();
-  if(['dilupuskan','telah dilupuskan','hilang','rosak teruk','tidak aktif','batal'].includes(status))return false;
+  if(['dilupuskan','telah dilupuskan','hilang','rosak teruk','tidak aktif','batal','pelupusan','deleted','dipadam','padam'].includes(status))return false;
   return Boolean(String(b?.judul||'').trim()||String(b?.no_perolehan||'').trim()||String(b?.no_panggilan||'').trim());
 }
-function kiraStokBukuPSS(){return (D.buku||[]).filter(isBukuAktifUntukStok).length}
+function kiraStokBukuPSS(){
+  if(D.stock_stats&&Number.isFinite(Number(D.stock_stats.jumlah_buku)))return Number(D.stock_stats.jumlah_buku);
+  return D.bukuLengkap?(D.buku||[]).filter(isBukuAktifUntukStok).length:'–';
+}
+function ringkasanStokBukuPSS(){
+  const s=D.stock_stats;
+  return s?`${Number(s.jumlah_rekod_perolehan||0).toLocaleString()} rekod · ${Number(s.jumlah_dilupuskan||0).toLocaleString()} dilupuskan`:'Stok aktif PSS';
+}
+let _stockRequest=null,_stockRevision=0;
+async function refreshStokBukuPSS(force=false){
+  if(_stockRequest&&!force)return _stockRequest;
+  const revision=++_stockRevision;
+  const request=api({action:'get_dashboard_stats'},0).then(res=>{
+    if(!res?.ok)throw new Error(res?.error||'Gagal memuat statistik stok.');
+    if(revision!==_stockRevision)return;
+    D.stock_stats=res.data;
+    document.querySelectorAll('[data-stock-active]').forEach(el=>{el.textContent=kiraStokBukuPSS().toLocaleString()});
+    document.querySelectorAll('[data-stock-summary]').forEach(el=>{el.textContent=ringkasanStokBukuPSS()});
+  }).finally(()=>{if(_stockRequest===request)_stockRequest=null});
+  _stockRequest=request;
+  return request;
+}
 function pgDash(){
   const B=D.buku||[],M=D.murid||[],G=D.guru||[],P=D.pinjaman||[];
   const aktif=P.filter(p=>p.status==='pinjam'),lewat=aktif.filter(p=>today()>p.tarikh_patut);
@@ -1040,7 +1064,7 @@ function pgDash(){
     </svg>
   </div>
   <div class="sg">
-    <div class="stat s-em"><div class="s-ic">📖</div><div class="s-lb">Jumlah Bahan</div><div class="s-vl">${kiraStokBukuPSS().toLocaleString()}</div><div class="s-sb">No.${noP.length?Math.min(...noP):'-'}–${noP.length?Math.max(...noP):'-'}</div></div>
+    <div class="stat s-em"><div class="s-ic">📖</div><div class="s-lb">Jumlah Stok Aktif</div><div class="s-vl" data-stock-active>${kiraStokBukuPSS().toLocaleString()}</div><div class="s-sb">No.${noP.length?Math.min(...noP):'-'}–${noP.length?Math.max(...noP):'-'}</div></div>
     <div class="stat s-cy"><div class="s-ic">👥</div><div class="s-lb">Jumlah Ahli</div><div class="s-vl">${M.length+G.length}</div><div class="s-sb">${M.length} murid · ${G.length} guru</div></div>
     <div class="stat s-am"><div class="s-ic">🔄</div><div class="s-lb">Buku Dipinjam</div><div class="s-vl">${aktif.length}</div><div class="s-sb">Sedang dipinjam</div></div>
     <div class="stat s-re"><div class="s-ic">⏰</div><div class="s-lb">Lewat Dipulangkan</div><div class="s-vl">${lewat.length}</div><div class="s-sb">${lewat.length?'Perlu tindakan!':'Semua OK ✅'}</div></div>
@@ -2211,11 +2235,13 @@ function rowsLpBLegacy(){return''}
 function filtLpBLegacy(){}
 async function prosesLupusLegacy(){return false}
 
-let _lpTab='cadang',_lpPicked=null,_lpStatusFilter='semua',_lpUsangSearch='',_arkib9Html='',_lpSearchTimer=null,_lpSearchSeq=0,_lpSearchResults=[];
+let _lpTab='cadang',_lpPicked=null,_lpStatusFilter='semua',_lpUsangSearch='',_arkib9Html='',_arkib9Ids=[],_lpSearchTimer=null,_lpSearchSeq=0,_lpSearchResults=[];
 const selectedPelupusanIds=new Set();
 window.selectedPelupusanIds=selectedPelupusanIds;
 const LP_STATUS_AKTIF=['Untuk Semakan','Disyorkan Lupus','Diluluskan Untuk Pelupusan'];
 const LP_STATUS_BORANG=['Diluluskan Untuk Pelupusan'];
+const LP_CADANGAN=['Pembakaran','Penanaman','Jualan Sisa'];
+function cadanganPelupusanLabel(r){return LP_CADANGAN.includes(r.cadangan_pelupusan)?r.cadangan_pelupusan:'Belum Ditetapkan'}
 
 function aksesPelupusan(){
   const u=window._me||_me||{};
@@ -2307,7 +2333,7 @@ function panelCadangUsang(){
     <div class="card">
       <div class="ct">Maklumat Cadangan</div>
       <div id="lp-picked" class="lp-book-picked"></div>
-      <div class="fg"><label>Keadaan Bahan *</label><select id="lp-keadaan"><option>Rosak</option><option>Usang</option><option>Hilang muka surat</option><option>Tidak relevan</option><option>Edisi lama</option><option>Kandungan tidak sesuai</option><option>Lain-lain</option></select></div><div class="fg"><label>Cadangan Pelupusan *</label><select id="bur-cadangan-pelupusan" required><option value="">Pilih cadangan</option><option value="Jualan">Jualan</option><option value="Pembakaran">Pembakaran</option><option value="Penanaman">Penanaman</option></select></div>
+      <div class="fg"><label>Keadaan Bahan *</label><select id="lp-keadaan"><option>Rosak</option><option>Usang</option><option>Hilang muka surat</option><option>Tidak relevan</option><option>Edisi lama</option><option>Kandungan tidak sesuai</option><option>Lain-lain</option></select></div><div class="fg"><label>Cadangan Pelupusan</label><select id="bur-cadangan-pelupusan"><option value="">Belum Ditetapkan</option><option value="Pembakaran">Pembakaran</option><option value="Penanaman">Penanaman</option><option value="Jualan Sisa">Jualan Sisa</option></select></div>
       <div class="fg"><label>Sebab Dicadang *</label><input id="lp-sebab" placeholder="Contoh: Rosak / Usang"></div>
       <div class="fg"><label>Catatan Semakan</label><textarea id="lp-catatan" rows="3" style="resize:vertical"></textarea></div>
       <button class="btn b-em" onclick="simpanCadanganUsang()">Masukkan ke Senarai Usang / Rosak</button>
@@ -2381,7 +2407,7 @@ async function simpanCadanganUsang(){
   if(!sebab){toast('Sila isi sebab bahan dicadangkan.','er');return}
   const lama=(D.bahan_usang_rosak||[]).find(r=>String(r.buku_id)===String(_lpPicked.id)&&r.status==='Tidak Diluluskan');
   if(lama&&!confirm('Bahan ini pernah tidak diluluskan. Cadangkan semula?'))return;
-  const cadangan=document.getElementById('bur-cadangan-pelupusan').value;if(!['Jualan','Pembakaran','Penanaman'].includes(cadangan)){toast('Sila pilih cadangan pelupusan.','er');return}
+  const cadangan=document.getElementById('bur-cadangan-pelupusan').value;if(cadangan&&!LP_CADANGAN.includes(cadangan)){toast('Sila pilih cadangan pelupusan.','er');return}
   const data={cadangan_pelupusan:cadangan,buku_id:_lpPicked.id,keadaan_bahan:document.getElementById('lp-keadaan')?.value||'Rosak',sebab_dicadang:sebab,catatan_semakan:document.getElementById('lp-catatan')?.value.trim()||'',tarikh_cadang:today(),dicadang_oleh:_me?.nama||'Sistem'};
   try{
     const r=await api({action:'cadang_bahan_usang',data});
@@ -2394,7 +2420,7 @@ function panelSenaraiUsang(){
   const rows=filteredUsangRows();
   return`<div class="card">
     <div class="lp-toolbar"><div><div class="ct" style="margin:0">Senarai Bahan Usang / Rosak</div><div id="lp-selection-info" style="font-size:10px;color:var(--mu)">${pelupusanSelectionSummary(rows.length)}</div></div><div class="lp-actions"><input type="search" id="lp-usang-search" class="lp-usang-search" value="${escapeHtml(_lpUsangSearch)}" placeholder="Cari no. perolehan / judul..." oninput="setLpUsangSearch(this.value)"><select id="lp-status-filter" onchange="setLpStatusFilter(this.value)" style="padding:6px 9px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--inp);color:var(--tx)"><option value="semua" ${_lpStatusFilter==='semua'?'selected':''}>Semua Status</option>${['Untuk Semakan','Disyorkan Lupus','Tidak Diluluskan','Diluluskan Untuk Pelupusan','Telah Dilupuskan'].map(s=>`<option ${_lpStatusFilter===s?'selected':''}>${s}</option>`).join('')}</select><button class="btn b-gh b-sm" onclick="cetakSenaraiUsang()">Cetak Senarai</button><button class="btn b-gh b-sm" onclick="exportUsangCSV()">Export CSV</button><button class="btn b-em b-sm" onclick="openArkib9Filter()">Jana Borang 9 Pelupusan</button></div></div>
-    <div id="lp-bulk-toolbar" class="lp-bulk-toolbar" aria-live="polite"><div id="lp-bulk-count" class="lp-bulk-count">0 bahan dipilih</div><div class="lp-bulk-actions"><label for="lp-bulk-cadangan">Tetapkan Cadangan Pelupusan</label><select id="lp-bulk-cadangan"><option value="">Pilih cadangan</option><option value="Jualan">Jualan</option><option value="Pembakaran">Pembakaran</option><option value="Penanaman">Penanaman</option></select><button type="button" class="btn b-em b-sm" onclick="bulkCadanganPelupusan()">Tetapkan</button><button type="button" class="btn b-gh b-sm" onclick="bulkSyorPelupusan()">Syor</button><button type="button" class="btn b-cy b-sm" onclick="bulkLulusPelupusan()">Lulus</button><button type="button" class="btn b-gh b-sm" style="color:var(--red)" onclick="openBulkTidakLulus()">Tidak Lulus</button><button type="button" id="lp-bulk-edit" class="btn b-gh b-sm" onclick="bulkEditPelupusan()" disabled title="Edit hanya boleh digunakan untuk satu bahan pada satu masa.">Edit</button><button type="button" class="btn b-re b-sm" onclick="bulkPadamPelupusan()">Padam</button></div></div>
+    <div id="lp-bulk-toolbar" class="lp-bulk-toolbar" aria-live="polite"><div id="lp-bulk-count" class="lp-bulk-count">0 bahan dipilih</div><div class="lp-bulk-actions"><label for="lp-bulk-cadangan">Tetapkan Cadangan Pelupusan</label><select id="lp-bulk-cadangan"><option value="">Belum Ditetapkan</option><option value="Pembakaran">Pembakaran</option><option value="Penanaman">Penanaman</option><option value="Jualan Sisa">Jualan Sisa</option></select><button type="button" class="btn b-em b-sm" onclick="bulkCadanganPelupusan()">Tetapkan</button><button type="button" class="btn b-gh b-sm" onclick="bulkSyorPelupusan()">Syor</button><button type="button" class="btn b-cy b-sm" onclick="bulkLulusPelupusan()">Lulus</button><button type="button" class="btn b-gh b-sm" style="color:var(--red)" onclick="openBulkTidakLulus()">Tidak Lulus</button><button type="button" id="lp-bulk-edit" class="btn b-gh b-sm" onclick="bulkEditPelupusan()" disabled title="Edit hanya boleh digunakan untuk satu bahan pada satu masa.">Edit</button><button type="button" class="btn b-re b-sm" onclick="bulkPadamPelupusan()">Padam</button></div></div>
     <div class="tw"><table><thead><tr><th class="lp-select-col"><label class="lp-check-target" title="Pilih semua rekod dipaparkan"><input type="checkbox" id="lp-select-all" class="lp-select-check" onchange="toggleAllPelupusanVisible(this.checked)" aria-label="Pilih semua rekod dipaparkan"></label></th><th>No. Perolehan</th><th>No. Panggilan</th><th>Judul</th><th>Pengarang</th><th>Keadaan</th><th>Sebab</th><th>Cadangan Pelupusan</th><th>Status</th><th>Tarikh</th><th>Tindakan</th></tr></thead><tbody id="lp-usang-tbody">${rowsUsangHtml(rows)}</tbody></table></div>
   </div>`;
 }
@@ -2449,7 +2475,7 @@ function rowsUsangHtml(rows){
     const approved=r.status==='Diluluskan Untuk Pelupusan';
     const selectId=pelupusanSelectionId(r),checked=selectedPelupusanIds.has(selectId)?' checked':'';
     const inProcess=r.status==='Untuk Semakan'||r.status==='Disyorkan Lupus';
-    return`<tr><td class="lp-select-col"><label class="lp-check-target" title="Pilih ${escapeHtml(r.judul||'bahan')}"><input type="checkbox" class="lp-select-check lp-row-check" data-id="${escapeHtml(selectId)}" onchange="togglePelupusanRow(this.dataset.id,this.checked)" aria-label="Pilih rekod ${escapeHtml(r.no_perolehan||r.judul||'bahan')}"${checked}></label></td><td><span class="bdg bg-cy">${escapeHtml(r.no_perolehan||'–')}</span></td><td class="no-panggilan">${escapeHtml(r.no_panggilan||'–')}</td><td style="max-width:170px"><strong>${escapeHtml(r.judul||'–')}</strong></td><td>${escapeHtml(r.pengarang||'–')}</td><td>${escapeHtml(r.keadaan_bahan||'–')}</td><td>${escapeHtml(r.sebab_dicadang||'–')}</td><td><span class="bdg bg-cy">${escapeHtml(r.cadangan_pelupusan||'-')}</span></td><td>${lpBadge(r.status)}</td><td>${escapeHtml(fmtD(r.tarikh_cadang)||'–')}</td><td><div class="lp-actions">${!done?`<button class="btn b-gh b-xs" onclick="openEditUsang('${r.id}')">Edit</button>`:''}${r.status==='Untuk Semakan'?`<button class="btn b-gh b-xs" style="color:var(--am)" onclick="ubahStatusUsang('${r.id}','Disyorkan Lupus')">Syor</button>`:''}${inProcess?`<button class="btn b-gh b-xs" style="color:var(--red)" onclick="ubahStatusUsang('${r.id}','Tidak Diluluskan')">Tidak Lulus</button>`:''}${r.status==='Disyorkan Lupus'?`<button class="btn b-cy b-xs" onclick="ubahStatusUsang('${r.id}','Diluluskan Untuk Pelupusan')">Lulus</button>`:''}${approved?`<button class="btn b-re b-xs" onclick="openSahkanLupus('${r.id}')">Sahkan Dilupuskan</button>`:''}${!done?`<button class="btn b-gh b-xs" onclick="padamCadanganUsang('${r.id}')">Padam</button>`:''}</div></td></tr>`;
+    return`<tr><td class="lp-select-col"><label class="lp-check-target" title="Pilih ${escapeHtml(r.judul||'bahan')}"><input type="checkbox" class="lp-select-check lp-row-check" data-id="${escapeHtml(selectId)}" onchange="togglePelupusanRow(this.dataset.id,this.checked)" aria-label="Pilih rekod ${escapeHtml(r.no_perolehan||r.judul||'bahan')}"${checked}></label></td><td><span class="bdg bg-cy">${escapeHtml(r.no_perolehan||'–')}</span></td><td class="no-panggilan">${escapeHtml(r.no_panggilan||'–')}</td><td style="max-width:170px"><strong>${escapeHtml(r.judul||'–')}</strong></td><td>${escapeHtml(r.pengarang||'–')}</td><td>${escapeHtml(r.keadaan_bahan||'–')}</td><td>${escapeHtml(r.sebab_dicadang||'–')}</td><td><span class="bdg bg-cy">${escapeHtml(cadanganPelupusanLabel(r))}</span></td><td>${lpBadge(r.status)}</td><td>${escapeHtml(fmtD(r.tarikh_cadang)||'–')}</td><td><div class="lp-actions">${!done?`<button class="btn b-gh b-xs" onclick="openEditUsang('${r.id}')">Edit</button>`:''}${r.status==='Untuk Semakan'?`<button class="btn b-gh b-xs" style="color:var(--am)" onclick="ubahStatusUsang('${r.id}','Disyorkan Lupus')">Syor</button>`:''}${inProcess?`<button class="btn b-gh b-xs" style="color:var(--red)" onclick="ubahStatusUsang('${r.id}','Tidak Diluluskan')">Tidak Lulus</button>`:''}${r.status==='Disyorkan Lupus'?`<button class="btn b-cy b-xs" onclick="ubahStatusUsang('${r.id}','Diluluskan Untuk Pelupusan')">Lulus</button>`:''}${approved?`<button class="btn b-re b-xs" onclick="openSahkanLupus('${r.id}')">Sahkan Dilupuskan</button>`:''}${!done?`<button class="btn b-gh b-xs" onclick="padamCadanganUsang('${r.id}')">Padam</button>`:''}</div></td></tr>`;
   }).join('');
 }
 function selectedPelupusanRows(){
@@ -2457,8 +2483,12 @@ function selectedPelupusanRows(){
   return(D.bahan_usang_rosak||[]).filter(r=>ids.has(pelupusanSelectionId(r)));
 }
 function bulkCadanganPelupusan(){
+  if(!aksesPelupusan().penuh){toast('Akses semakan hanya untuk pentadbir / GPM.','er');return}
   const value=document.getElementById('lp-bulk-cadangan').value;
-  if(!['Jualan','Pembakaran','Penanaman'].includes(value)){toast('Sila pilih cadangan pelupusan.','er');return}
+  if(!['Pembakaran','Penanaman','Jualan Sisa'].includes(value)){toast('Sila pilih cadangan pelupusan.','er');return}
+  const ids=getSelectedPelupusanIds();
+  if(!ids.length){toast('Sila pilih bahan terlebih dahulu.','wa');return}
+  if(!confirm(`Tetapkan Cadangan Pelupusan kepada ${value} untuk ${ids.length} bahan dipilih?`))return;
   runPelupusanBulkAction('cadangan',value);
 }
 function bulkSyorPelupusan(){
@@ -2519,6 +2549,7 @@ function bulkPelupusanMessage(action,updated,skipped,failed){
   return`${first}${second?' '+second:''}`;
 }
 async function runPelupusanBulkAction(action,catatan=''){
+  if(!aksesPelupusan().penuh){toast('Akses semakan hanya untuk pentadbir / GPM.','er');return}
   const ids=getSelectedPelupusanIds();
   if(!ids.length){toast('Sila pilih bahan terlebih dahulu.','wa');return}
   setPelupusanBulkBusy(true);
@@ -2546,21 +2577,31 @@ function modalBulkConfirmHtml(){
   return`<div class="mbg" id="m-bulk-pelupusan-confirm"><div class="modal" style="max-width:460px"><div class="m-hdr"><h3>Tindakan Bahan Dipilih</h3><button class="m-x" onclick="closeM('m-bulk-pelupusan-confirm')">✕</button></div><input type="hidden" id="lp-bulk-confirm-action"><div id="lp-bulk-confirm-message" class="al a-wa"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-bulk-pelupusan-confirm')">Batal</button><button id="lp-bulk-confirm-submit" class="btn b-em" onclick="submitPelupusanBulkConfirm()">Teruskan</button></div></div></div>`;
 }
 function panelRekodPelupusan(){
-  const rows=[...(D.pelupusan||[])].sort((a,b)=>String(b.tarikh_lupus||'').localeCompare(String(a.tarikh_lupus||'')));
+  const rows=[...(D.pelupusan||[])].filter(r=>r.status_pelupusan!=='Menunggu Pengesahan').sort((a,b)=>String(b.tarikh_lupus||'').localeCompare(String(a.tarikh_lupus||'')));
   return`<div class="card"><div class="lp-toolbar"><div><div class="ct" style="margin:0">Rekod Pelupusan</div><div style="font-size:10px;color:var(--mu)">${rows.length} rekod akhir</div></div><div class="lp-actions"><button class="btn b-gh b-sm" onclick="cetakRekodPelupusan()">Cetak Rekod</button><button class="btn b-gh b-sm" onclick="exportPelupusanCSV()">Export CSV</button></div></div><div class="tw"><table><thead><tr><th>No. Perolehan</th><th>No. Panggilan</th><th>Judul</th><th>Tarikh Lupus</th><th>Kaedah</th><th>No. Rujukan</th><th>Pegawai</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td><span class="bdg bg-cy">${escapeHtml(r.no_perolehan||'–')}</span></td><td class="no-panggilan">${escapeHtml(r.no_panggilan||'–')}</td><td>${escapeHtml(r.judul||'–')}</td><td>${escapeHtml(fmtD(r.tarikh_lupus)||'–')}</td><td>${escapeHtml(r.kaedah||'–')}</td><td>${escapeHtml(r.no_rujukan||'–')}</td><td>${escapeHtml(r.pegawai||'–')}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:22px;color:var(--mu)">Tiada rekod pelupusan akhir.</td></tr>'}</tbody></table></div></div>`;
 }
 function modalEditUsangHtml(){
-  return`<div class="mbg" id="m-edit-usang"><div class="modal"><div class="m-hdr"><h3>Edit Semakan Bahan</h3><button class="m-x" onclick="closeM('m-edit-usang')">✕</button></div><input type="hidden" id="le-id"><div class="fg"><label>Keadaan Bahan</label><select id="le-keadaan"><option>Rosak</option><option>Usang</option><option>Hilang muka surat</option><option>Tidak relevan</option><option>Edisi lama</option><option>Kandungan tidak sesuai</option><option>Lain-lain</option></select></div><div class="fg"><label>Cadangan Pelupusan *</label><select id="le-cadangan-pelupusan" required><option value="">Pilih cadangan</option><option value="Jualan">Jualan</option><option value="Pembakaran">Pembakaran</option><option value="Penanaman">Penanaman</option></select></div><div class="fg"><label>Sebab Dicadang</label><input id="le-sebab"></div><div class="fg"><label>Catatan Semakan</label><textarea id="le-catatan" rows="3"></textarea></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-edit-usang')">Batal</button><button class="btn b-em" onclick="simpanEditUsang()">Simpan</button></div></div></div>`;
+  return`<div class="mbg" id="m-edit-usang"><div class="modal"><div class="m-hdr"><h3>Edit Semakan Bahan</h3><button class="m-x" onclick="closeM('m-edit-usang')">✕</button></div><input type="hidden" id="le-id"><div id="le-rekod-info" class="al a-in"></div><div class="fg"><label>Keadaan Bahan</label><select id="le-keadaan"><option>Rosak</option><option>Usang</option><option>Hilang muka surat</option><option>Tidak relevan</option><option>Edisi lama</option><option>Kandungan tidak sesuai</option><option>Lain-lain</option></select></div><div class="fg"><label>Cadangan Pelupusan *</label><select id="le-cadangan-pelupusan" required><option value="">Belum Ditetapkan</option><option value="Pembakaran">Pembakaran</option><option value="Penanaman">Penanaman</option><option value="Jualan Sisa">Jualan Sisa</option></select><small style="color:var(--mu)">Cadangan kaedah tertakluk kepada kelulusan dan tatacara pihak berkuasa.</small></div><div class="fg"><label>Sebab Dicadang</label><input id="le-sebab"></div><div class="fg"><label>Catatan Semakan</label><textarea id="le-catatan" rows="3"></textarea></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-edit-usang')">Batal</button><button class="btn b-em" onclick="simpanEditUsang()">Simpan</button></div></div></div>`;
 }
 function openEditUsang(id){
+  if(!aksesPelupusan().penuh){toast('Akses semakan hanya untuk pentadbir / GPM.','er');return}
   const r=(D.bahan_usang_rosak||[]).find(x=>String(x.id)===String(id));if(!r)return;
+  if(r.status==='Telah Dilupuskan'){toast('Rekod yang telah dilupuskan tidak boleh diubah.','wa');return}
+  document.getElementById('le-rekod-info').textContent=`No. Perolehan: ${r.no_perolehan||'–'} · Judul: ${r.judul||'–'} · Status Semakan: ${r.status||'Untuk Semakan'}`;
   document.getElementById('le-cadangan-pelupusan').value=r.cadangan_pelupusan||'';document.getElementById('le-id').value=id;document.getElementById('le-keadaan').value=r.keadaan_bahan||'Rosak';document.getElementById('le-sebab').value=r.sebab_dicadang||'';document.getElementById('le-catatan').value=r.catatan_semakan||'';openM('m-edit-usang');
 }
 async function simpanEditUsang(){
+  if(!aksesPelupusan().penuh){toast('Akses semakan hanya untuk pentadbir / GPM.','er');return}
   const id=document.getElementById('le-id').value,r=(D.bahan_usang_rosak||[]).find(x=>String(x.id)===String(id));if(!r)return;
-  const cadangan=document.getElementById('le-cadangan-pelupusan').value;if(!['Jualan','Pembakaran','Penanaman'].includes(cadangan)){toast('Sila pilih cadangan pelupusan.','er');return}
+  const cadangan=document.getElementById('le-cadangan-pelupusan').value;if(!['Pembakaran','Penanaman','Jualan Sisa'].includes(cadangan)){toast('Sila pilih cadangan pelupusan.','er');return}
   const data={cadangan_pelupusan:cadangan,keadaan_bahan:document.getElementById('le-keadaan').value,sebab_dicadang:document.getElementById('le-sebab').value.trim(),catatan_semakan:document.getElementById('le-catatan').value.trim(),disemak_oleh:_me?.nama||'Pentadbir'};
-  const res=await api({action:'status_bahan_usang',id,status:r.status,data});if(!res?.ok){toast(res?.error||'Gagal kemas kini.','er');return}closeM('m-edit-usang');await loadDisposalData();renderLpPanel();toast('Semakan dikemas kini.','ok');
+  try{
+    const res=await api({action:'status_bahan_usang',id,status:r.status,data},0);
+    if(!res?.ok)throw new Error(res?.error||'Gagal kemas kini.');
+    const index=D.bahan_usang_rosak.findIndex(x=>String(x.id)===String(id));
+    if(index>=0)D.bahan_usang_rosak[index]={...r,...res.data.item};
+    closeM('m-edit-usang');renderLpPanel();toast('Semakan dikemas kini.','ok');
+  }catch(e){toast(e.message,'er')}
 }
 async function ubahStatusUsang(id,status){
   const mesej=status==='Diluluskan Untuk Pelupusan'?'Luluskan bahan ini untuk proses pelupusan?':`Tukar status kepada ${status}?`;
@@ -2573,14 +2614,28 @@ async function padamCadanganUsang(id){
   const r=await api({action:'padam',sheet:'bahan_usang_rosak',id});if(!r?.ok){toast(r?.error||'Gagal padam cadangan.','er');return}await loadDisposalData();renderLpPanel();toast('Cadangan dipadam.','ok');
 }
 function modalSahkanLupusHtml(){
-  return`<div class="mbg" id="m-sah-lupus"><div class="modal"><div class="m-hdr"><h3>Sahkan Dilupuskan</h3><button class="m-x" onclick="closeM('m-sah-lupus')">✕</button></div><input type="hidden" id="ls-id"><div class="al a-wa">Pengesahan ini akan mencipta Rekod Pelupusan dan menukar status buku asal kepada Dilupuskan. Buku asal tidak dipadam.</div><div class="fr c2"><div class="fg"><label>Tarikh Lupus *</label><input type="date" id="ls-tarikh" value="${today()}"></div><div class="fg"><label>Kaedah Pelupusan *</label><select id="ls-kaedah" disabled><option value="">Pilih cadangan</option><option value="Jualan">Jualan</option><option value="Pembakaran">Pembakaran</option><option value="Penanaman">Penanaman</option></select></div></div><div class="fg"><label>No. Rujukan / Surat Kelulusan</label><input id="ls-rujukan"></div><div class="fg"><label>Pegawai Bertanggungjawab *</label><input id="ls-pegawai"></div><div class="fg"><label>Catatan Akhir</label><textarea id="ls-catatan" rows="3"></textarea></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-sah-lupus')">Batal</button><button class="btn b-re" onclick="sahkanPelupusanAkhir()">Sahkan Dilupuskan</button></div></div></div>`;
+  return`<div class="mbg" id="m-sah-lupus"><div class="modal"><div class="m-hdr"><h3>Sahkan Dilupuskan</h3><button class="m-x" onclick="closeM('m-sah-lupus')">✕</button></div><input type="hidden" id="ls-id"><div class="al a-wa">Pengesahan ini akan mencipta Rekod Pelupusan dan menukar status buku asal kepada Dilupuskan. Buku asal tidak dipadam.</div><div class="fr c2"><div class="fg"><label>Tarikh Lupus *</label><input type="date" id="ls-tarikh" value="${today()}"></div><div class="fg"><label>Kaedah Pelupusan *</label><select id="ls-kaedah" required><option value="">Belum Ditetapkan</option><option value="Pembakaran">Pembakaran</option><option value="Penanaman">Penanaman</option><option value="Jualan Sisa">Jualan Sisa</option></select></div></div><div class="fg"><label>No. Rujukan / Surat Kelulusan</label><input id="ls-rujukan"></div><div class="fg"><label>Pegawai Bertanggungjawab *</label><input id="ls-pegawai"></div><div class="fg"><label>Catatan Akhir</label><textarea id="ls-catatan" rows="3"></textarea></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-sah-lupus')">Batal</button><button class="btn b-re" onclick="sahkanPelupusanAkhir()">Sahkan Dilupuskan</button></div></div></div>`;
 }
-function openSahkanLupus(id){const r=(D.bahan_usang_rosak||[]).find(r=>String(r.id)===String(id));if(!r||!['Jualan','Pembakaran','Penanaman'].includes(r.cadangan_pelupusan)){toast('Sila lengkapkan cadangan pelupusan terlebih dahulu.','wa');return}document.getElementById('ls-kaedah').value=r.cadangan_pelupusan;document.getElementById('ls-id').value=id;document.getElementById('ls-tarikh').value=today();document.getElementById('ls-pegawai').value=_me?.nama||'';openM('m-sah-lupus')}
+function openSahkanLupus(id){const r=(D.bahan_usang_rosak||[]).find(r=>String(r.id)===String(id));if(!r||!['Pembakaran','Penanaman','Jualan Sisa'].includes(r.cadangan_pelupusan)){toast('Sila lengkapkan cadangan pelupusan terlebih dahulu.','wa');return}document.getElementById('ls-kaedah').value=r.cadangan_pelupusan;document.getElementById('ls-id').value=id;document.getElementById('ls-tarikh').value=today();document.getElementById('ls-pegawai').value=_me?.nama||'';openM('m-sah-lupus')}
 async function sahkanPelupusanAkhir(){
+  if(!aksesPelupusan().penuh){toast('Akses pengesahan hanya untuk pentadbir / GPM.','er');return}
   const id=document.getElementById('ls-id').value,pegawai=document.getElementById('ls-pegawai').value.trim();if(!pegawai){toast('Sila isi pegawai bertanggungjawab.','er');return}
   if(!confirm('Sahkan bahan ini telah dilupuskan?'))return;
   const data={tarikh_lupus:document.getElementById('ls-tarikh').value||today(),kaedah:document.getElementById('ls-kaedah').value,no_rujukan:document.getElementById('ls-rujukan').value.trim(),pegawai,catatan:document.getElementById('ls-catatan').value.trim(),dilupus_oleh:_me?.nama||'Pentadbir'};
-  const r=await api({action:'sahkan_pelupusan',id,data});if(!r?.ok){toast(r?.error||'Gagal mengesahkan pelupusan.','er');return}closeM('m-sah-lupus');await loadDisposalData();renderLpPanel();toast('Bahan telah disahkan dilupuskan dan direkodkan.','ok');
+  try{
+    const r=await api({action:'sahkan_pelupusan',id,data},0);
+    if(!r?.ok)throw new Error(r?.error||'Gagal mengesahkan pelupusan.');
+    const out=r.data,bookIndex=(D.buku||[]).findIndex(b=>String(b.id)===String(out.buku_id));
+    if(bookIndex>=0)D.buku[bookIndex]={...D.buku[bookIndex],...out.buku};
+    const reviewIndex=(D.bahan_usang_rosak||[]).findIndex(row=>String(row.id)===String(id));
+    if(reviewIndex>=0)D.bahan_usang_rosak[reviewIndex]={...D.bahan_usang_rosak[reviewIndex],...out.bahan_usang};
+    if(out.pelupusan){
+      const historyIndex=(D.pelupusan||[]).findIndex(row=>String(row.id)===String(out.pelupusan.id));
+      if(historyIndex>=0)D.pelupusan[historyIndex]=out.pelupusan;else D.pelupusan.push(out.pelupusan);
+    }
+    if(out.buku&&window.upsertBookIndex)window.upsertBookIndex(out.buku);
+    closeM('m-sah-lupus');renderLpPanel();toast('Bahan telah disahkan dilupuskan dan direkodkan.','ok');
+  }catch(e){toast(e.message,'er')}
 }
 function csvDownload(name,headers,rows){
   const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
@@ -2600,15 +2655,18 @@ function modalArkib9Html(){
   return`<div class="mbg" id="m-arkib9-filter"><div class="modal" style="max-width:460px"><div class="m-hdr"><h3>Jana Borang 9 Pelupusan</h3><button class="m-x" onclick="closeM('m-arkib9-filter')">✕</button></div><div class="al a-in">Hanya bahan berstatus Diluluskan Untuk Pelupusan akan dimasukkan dalam Borang 9.</div><input type="hidden" id="arkib9-status" value="Diluluskan Untuk Pelupusan"><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-arkib9-filter')">Batal</button><button class="btn b-em" onclick="janaBorangPelupusanArkib9('Diluluskan Untuk Pelupusan')">Jana Borang</button></div></div></div><div class="mbg" id="m-arkib9-preview"><div class="modal" style="width:96vw;max-width:1100px;max-height:94vh"><div class="m-hdr"><h3>Preview Borang 9 / Arkib 9/08</h3><button class="m-x" onclick="closeM('m-arkib9-preview')">✕</button></div><div id="preview-borang-arkib9" class="borang-preview-shell"></div><div class="m-ft"><button class="btn b-gh" onclick="closeM('m-arkib9-preview')">Tutup</button><button class="btn b-em" onclick="cetakBorangArkib9()">Cetak Borang</button></div></div></div>`;
 }
 function openArkib9Filter(){if(getSelectedPelupusanIds().length)janaBorangPelupusanArkib9('Diluluskan Untuk Pelupusan');else openM('m-arkib9-filter')}
-function janaBorangPelupusanArkib9(statusFilter){
+async function janaBorangPelupusanArkib9(statusFilter){
+  if(!aksesPelupusan().penuh){toast('Akses semakan hanya untuk pentadbir / GPM.','er');return}
   const selected=new Set(getSelectedPelupusanIds());
-  const approved=(D.bahan_usang_rosak||[]).filter(r=>r.status==='Diluluskan Untuk Pelupusan');
-  const rows=selected.size?approved.filter(r=>selected.has(pelupusanSelectionId(r))):approved;
-  if(!rows.length){toast('Tiada bahan untuk dijana dalam borang.','wa');return}
-  const missing=rows.filter(r=>!['Jualan','Pembakaran','Penanaman'].includes(r.cadangan_pelupusan));
-  if(missing.length){_arkib9Html='';toast('Terdapat bahan yang belum mempunyai Cadangan Pelupusan. Sila lengkapkan sebelum menjana Borang 9.','wa');alert('Cadangan pelupusan belum diisi / tidak sah:\n'+missing.map(r=>'No. Perolehan '+(r.no_perolehan||r.id)).join('\n'));return}
+  _arkib9Html='';_arkib9Ids=[];
+  try{
+  const res=await api({action:'get_borang9_data',ids:Array.from(selected)},0);
+  if(!res?.ok)throw new Error(res?.error||'Gagal menjana Borang 9.');
+  const rows=res.data.items||[];
   if(selected.size>rows.length)toast(`${selected.size-rows.length} bahan tidak dimasukkan kerana belum berstatus Diluluskan.`, 'wa');
+  _arkib9Ids=rows.map(r=>String(r.id));
   _arkib9Html=renderBorangArkib9(rows);const out=document.getElementById('preview-borang-arkib9');if(out)out.innerHTML=_arkib9Html;closeM('m-arkib9-filter');openM('m-arkib9-preview');
+  }catch(e){toast(e.message.split('\n')[0],'wa');alert(e.message)}
 }
 function renderBorangArkib9(rows){
   return `<section class="borang-arkib-page">${renderHeaderBorangArkib9(rows.length)}${renderTableBorangArkib9(rows,1)}${renderFooterBorangArkib9()}</section>`;
@@ -2623,7 +2681,16 @@ function renderFooterBorangArkib9(){
   return`<div class="borang-footer"><p>(11) Mengikut Seksyen 25 dan 26, Akta Arkib Negara 2003 [Akta 629], saya mengemukakan permohonan ini bagi pelupusan rekod di atas:</p><div class="sign-row"><div>Nama Pegawai: _______________________________<br><br>Jawatan: ___________________________________<br><br>Tarikh: _____________________________________</div><div>Tandatangan dan Meterai/Cap Jabatan:<br><br><br>_____________________________________________</div></div></div>`;
 }
 const ARKIB9_PRINT_CSS='body{background:#fff!important;color:#000;font-family:"Times New Roman",serif}.pc{padding:0!important}.borang-arkib-page{width:210mm;min-height:297mm;padding:15mm;margin:0;box-shadow:none;page-break-after:always;box-sizing:border-box;font-size:12px}.borang-arkib-page:last-child{page-break-after:auto}.borang-info-table,.borang-rekod-table{width:100%;border-collapse:collapse;margin-top:8px}.borang-info-table td,.borang-rekod-table th,.borang-rekod-table td{border:1px solid #000;padding:5px;vertical-align:top;color:#000}.borang-rekod-table th{text-align:center}.borang-footer{margin-top:18px}.sign-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}@page{size:A4 portrait;margin:15mm}.borang-rekod-table{table-layout:fixed;background:#fff;color:#000;font-family:"Times New Roman",serif;font-size:10.5pt;border-radius:0;box-shadow:none}.borang-rekod-table th,.borang-rekod-table td{padding:4px 5px;white-space:normal;overflow-wrap:anywhere;word-break:normal;background:#fff;color:#000;line-height:1.2}.borang-rekod-table th{height:15mm;vertical-align:middle;font-size:9pt;font-weight:bold;line-height:1.15;text-align:center}.borang-rekod-table tbody tr{height:22mm}.borang-rekod-table tr{break-inside:avoid;page-break-inside:avoid}.borang-rekod-table thead{display:table-header-group}.borang-rekod-table tfoot{display:table-footer-group}.borang-rekod-table .arkib-catatan{font-size:9.5pt;line-height:1.25}.borang-info-table{table-layout:fixed;background:#fff;color:#000}.borang-info-table td{background:#fff;color:#000}.borang-footer{break-inside:avoid}@media print{.borang-arkib-page{width:auto;min-height:0;padding:0;margin:0;box-shadow:none}}';
-function cetakBorangArkib9(){if(!_arkib9Html){toast('Tiada borang untuk dicetak.','wa');return}openPrintWindow('Borang 9 Pelupusan Rekod Terbitan dan Bahan Bercetak',_arkib9Html,ARKIB9_PRINT_CSS)}
+async function cetakBorangArkib9(){
+  if(!_arkib9Html||!_arkib9Ids.length){toast('Tiada borang untuk dicetak.','wa');return}
+  try{
+    const res=await api({action:'get_borang9_data',ids:_arkib9Ids},0);
+    if(!res?.ok)throw new Error(res?.error||'Gagal menyemak Borang 9.');
+    if(res.data.items.length!==_arkib9Ids.length)throw new Error('Status bahan telah berubah. Sila jana semula Borang 9.');
+    _arkib9Html=renderBorangArkib9(res.data.items);
+    openPrintWindow('Borang 9 Pelupusan Rekod Terbitan dan Bahan Bercetak',_arkib9Html,ARKIB9_PRINT_CSS);
+  }catch(e){toast(e.message.split('\n')[0],'wa');alert(e.message)}
+}
 
 function pgNilam(){document.getElementById('content').innerHTML=`<div class="al a-in">📝 NILAM — Nilaian Amalan Membaca. Modul ini akan dibangunkan sepenuhnya.</div><div class="card"><div class="ct">📝 Program NILAM — Rekod Membaca Murid</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">${['Jumlah Rekod','Murid Aktif','Buku Bulan Ini','Sasaran'].map((l,i)=>`<div class="stat s-pu" style="border-radius:var(--rs)"><div class="s-lb">${l}</div><div class="s-vl">${['0','0','0','–'][i]}</div></div>`).join('')}</div><div class="al a-wa">⚠️ Modul NILAM sedang dalam pembangunan. Akan tersedia dalam versi akan datang.</div><button class="btn b-em" onclick="nav('pinjam')">← Kembali ke Pinjaman</button></div>`}
 
@@ -4021,6 +4088,14 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
       const txt = await r.text();
       let j; try{j=JSON.parse(txt)}catch(e){throw new Error('Backend bukan JSON: '+txt.slice(0,90))}
       if(!j.ok && /sesi tidak sah/i.test(j.error||'')){window._tok=null;toast('Sesi tamat. Sila log masuk semula.','er');showLogin();}
+      const stockChanged=j.ok&&(body.action==='sahkan_pelupusan'||body.action==='add_book_fast'||
+        (body.sheet==='buku'&&['tambah','kemaskini','padam','import'].includes(body.action)));
+      if(stockChanged){
+        D.stock_stats=null;
+        try{await refreshStokBukuPSS(true)}catch(e){
+          toast('Rekod disimpan. Statistik stok akan dimuat semula apabila Dashboard dibuka.','wa');
+        }
+      }
       return j;
     }catch(e){
       if(retry>0){await delay(900);return window.api(payload,retry-1)}
@@ -4135,6 +4210,8 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   window.muatBukuFast=async function(force=false){return loadBooks({page:state.books.page||1,force});};
 
   function applyDashboardStats(s){
+    D.stock_stats=s;
+    D.bukuLengkap=false;
     D.buku = Array.isArray(s?.latest_books)?s.latest_books:D.buku;
     D.murid = D.murid || [];
     D.guru = D.guru || [];
@@ -4686,6 +4763,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     }finally{clearTimeout(timeout)}
     if(!res?.ok)throw new Error(res?.error||'Gagal memuatkan data SMARTLIB.');
     prosesD(res.data||{});
+    D.bukuLengkap=true;
     window.BOOK_INDEX=(D.buku||[]).map(b=>({...b}));
     authDataLoaded=true;
     updLwBdg();
@@ -4726,6 +4804,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
 
   const previousLogout=window.doLogout;
   window.doLogout=async function(){
+    D.stock_stats=null;D.bukuLengkap=false;_stockRevision++;
     authDataLoaded=false;loadAllPromise=null;window.PUBLIC_BOOKS=[];publicBooksPromise=null;
     const result=typeof previousLogout==='function'?await previousLogout.apply(this,arguments):undefined;
     window._tok=null;window._me=null;window._mR='';
@@ -4769,6 +4848,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   };
 
   window.pgDash=function(){
+    refreshStokBukuPSS().catch(e=>toast(e.message,'wa'));
     const books=D.buku||[],students=D.murid||[],teachers=D.guru||[],loans=D.pinjaman||[];
     const active=loans.filter(p=>window.normalizeSearchText(p.status)==='pinjam');
     const overdue=active.filter(p=>p.tarikh_patut&&today()>p.tarikh_patut);
@@ -4780,8 +4860,8 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     const recent=active.slice().sort((a,b)=>String(b.tarikh_pinjam||'').localeCompare(String(a.tarikh_pinjam||''))).slice(0,5).map(enrichedLoan);
     const now=new Date(),month=now.toLocaleDateString('ms-MY',{month:'long',year:'numeric'});
     document.getElementById('content').innerHTML=`
-      <div class="wb"><div class="wb-l"><div class="wb-gr">Selamat Datang</div><div class="wb-nm">${_me?_me.nama.split(' ').slice(0,2).join(' '):'Admin'}! 👋</div><div class="wb-su">Sistem Automasi Pusat Sumber Sekolah</div><div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap"><span style="background:rgba(255,255,255,.13);color:#fff;font-size:9px;padding:2px 8px;border-radius:99px;font-weight:600">${kiraStokBukuPSS().toLocaleString()} Bahan</span><span style="background:rgba(255,255,255,.13);color:#fff;font-size:9px;padding:2px 8px;border-radius:99px;font-weight:600">${(students.length+teachers.length).toLocaleString()} Ahli</span>${overdue.length?`<span style="background:rgba(239,68,68,.28);color:#fff;font-size:9px;padding:2px 8px;border-radius:99px;font-weight:600">⚠️ ${overdue.length} Lewat</span>`:''}</div></div><div class="wb-r"><div class="wb-sn">${AP.sch||'Pusat Sumber Sekolah'}</div><div class="wb-ss">${now.toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div></div></div>
-      <div class="sg"><div class="stat s-em"><div class="s-ic">📖</div><div class="s-lb">Jumlah Bahan</div><div class="s-vl">${kiraStokBukuPSS().toLocaleString()}</div><div class="s-sb">No. seterusnya ${next}</div></div><div class="stat s-cy"><div class="s-ic">👥</div><div class="s-lb">Jumlah Ahli</div><div class="s-vl">${(students.length+teachers.length).toLocaleString()}</div><div class="s-sb">${students.length} murid · ${teachers.length} guru</div></div><div class="stat s-am"><div class="s-ic">🔄</div><div class="s-lb">Buku Dipinjam</div><div class="s-vl">${active.length}</div><div class="s-sb">Sedang dipinjam</div></div><div class="stat s-re"><div class="s-ic">⏰</div><div class="s-lb">Lewat Dipulangkan</div><div class="s-vl">${overdue.length}</div><div class="s-sb">${overdue.length?'Perlu tindakan!':'Semua OK ✅'}</div></div><div class="stat s-pu"><div class="s-ic">🔖</div><div class="s-lb">Tempahan Hari Ini</div><div class="s-vl">${todayBookings.length}</div><div class="s-sb">PSS / Ruang PSS</div></div></div>
+      <div class="wb"><div class="wb-l"><div class="wb-gr">Selamat Datang</div><div class="wb-nm">${_me?_me.nama.split(' ').slice(0,2).join(' '):'Admin'}! 👋</div><div class="wb-su">Sistem Automasi Pusat Sumber Sekolah</div><div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap"><span style="background:rgba(255,255,255,.13);color:#fff;font-size:9px;padding:2px 8px;border-radius:99px;font-weight:600"><span data-stock-active>${kiraStokBukuPSS().toLocaleString()}</span> Bahan</span><span style="background:rgba(255,255,255,.13);color:#fff;font-size:9px;padding:2px 8px;border-radius:99px;font-weight:600">${(students.length+teachers.length).toLocaleString()} Ahli</span>${overdue.length?`<span style="background:rgba(239,68,68,.28);color:#fff;font-size:9px;padding:2px 8px;border-radius:99px;font-weight:600">⚠️ ${overdue.length} Lewat</span>`:''}</div></div><div class="wb-r"><div class="wb-sn">${AP.sch||'Pusat Sumber Sekolah'}</div><div class="wb-ss">${now.toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div></div></div>
+      <div class="sg"><div class="stat s-em"><div class="s-ic">📖</div><div class="s-lb">Jumlah Stok Aktif</div><div class="s-vl" data-stock-active>${kiraStokBukuPSS().toLocaleString()}</div><div class="s-sb" data-stock-summary>${ringkasanStokBukuPSS()}</div></div><div class="stat s-cy"><div class="s-ic">👥</div><div class="s-lb">Jumlah Ahli</div><div class="s-vl">${(students.length+teachers.length).toLocaleString()}</div><div class="s-sb">${students.length} murid · ${teachers.length} guru</div></div><div class="stat s-am"><div class="s-ic">🔄</div><div class="s-lb">Buku Dipinjam</div><div class="s-vl">${active.length}</div><div class="s-sb">Sedang dipinjam</div></div><div class="stat s-re"><div class="s-ic">⏰</div><div class="s-lb">Lewat Dipulangkan</div><div class="s-vl">${overdue.length}</div><div class="s-sb">${overdue.length?'Perlu tindakan!':'Semua OK ✅'}</div></div><div class="stat s-pu"><div class="s-ic">🔖</div><div class="s-lb">Tempahan Hari Ini</div><div class="s-vl">${todayBookings.length}</div><div class="s-sb">PSS / Ruang PSS</div></div></div>
       <div class="pnt-g">${[{ic:'📖',lb:'Perolehan',fn:"nav('perolehan')"},{ic:'📤',lb:'Pinjaman',fn:"nav('pinjam')"},{ic:'👥',lb:'Ahli',fn:"nav('murid')"},{ic:'🪪',lb:'Kad Ahli',fn:"nav('kad')"},{ic:'🔍',lb:'OPAC',fn:"nav('opac')"},{ic:'🏷️',lb:'Label',fn:"nav('label')"}].map(p=>`<div class="pnt" onclick="${p.fn}"><div class="pnt-ic">${p.ic}</div><div class="pnt-lb">${p.lb}</div></div>`).join('')}</div>
       <div style="display:grid;grid-template-columns:1.2fr 1fr .82fr;gap:12px;margin-bottom:12px"><div class="card"><div class="ct">📋 Aktiviti Terkini</div><div id="akt-body">${recent.length?recent.map(p=>`<div class="akt-it"><div class="akt-av" style="background:${avCol(p.pengguna.nama||'A')}">${ini(p.pengguna.nama||'A')}</div><div class="akt-in"><div class="akt-nm">${esc(p.pengguna.nama||'-')}</div><div class="akt-bk">${esc(p.buku.judul||'-')}</div></div><div class="akt-tm">${fmtD(p.tarikh_pinjam)}</div></div>`).join(''):'<div style="text-align:center;padding:18px;color:var(--mu)">Tiada aktiviti</div>'}</div><div style="text-align:center;margin-top:8px"><button class="btn b-gh b-sm" onclick="nav('pinjam')">Lihat semua →</button></div></div><div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div class="ct" style="margin:0">📢 Pengumuman</div><button class="btn b-gh b-xs" onclick="nav('admin')">+ Tambah</button></div>${(_ann||[]).map(a=>`<div class="ann-it ${a.w}"><div class="ann-ttl">${a.ttl}</div><div class="ann-sub">${a.sub}</div><div class="ann-dt">${a.t}</div></div>`).join('')}</div><div class="card"><div class="ct">📅 ${month}</div>${typeof buatKal==='function'?buatKal():''}</div></div>
       <div class="g2" style="margin-bottom:12px"><div class="card"><div class="opac-dash"><div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--emd)">🔍 OPAC Carian Buku</div><div style="display:flex;gap:7px"><input class="opac-in" id="opac-d-q" type="search" placeholder="Tajuk, pengarang, ISBN..." oninput="cariDashboardLocal()"><button class="btn b-em b-sm" onclick="nav('opac')">Cari</button></div></div><div id="opac-d-r" style="margin-top:8px;font-size:11px;color:var(--mu);text-align:center;padding:7px">Taip untuk mencari...</div></div><div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div class="ct" style="margin:0">📚 Bahan Baharu</div><button class="btn b-gh b-xs" onclick="nav('perolehan')">Lihat semua</button></div><div class="bsk">${latest.map(b=>typeof renderBookCover==='function'?renderBookCover(b):`<div class="new-book-card">${esc(b.judul||'-')}</div>`).join('')||'<div style="text-align:center;padding:18px;color:var(--mu)">Tiada bahan baharu</div>'}</div></div></div>
@@ -5021,7 +5101,6 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   window.prosesKbali=async function(id){if(!confirm('Sahkan pemulangan?'))return;try{const res=await api({action:'return_loan_fast',id:String(id),data:{tarikh_pulang:today()}},0);if(!res?.ok)throw new Error(res?.error||'Gagal proses pemulangan');const i=(D.pinjaman||[]).findIndex(p=>String(p.id)===String(id));if(i>=0)D.pinjaman[i]={...D.pinjaman[i],status:'pulang',tarikh_pulang:res.data.tarikh_pulang||today(),denda:res.data.denda||0};toast(res.data.hari_lewat>0?`Dipulangkan. Denda RM ${Number(res.data.denda||0).toFixed(2)}.`:'Bahan dipulangkan.','ok');if(window._pg==='pulang')pgPulang();else if(window._pg==='pinjam')pgPinjam()}catch(e){toast(e.message,'er')}};
 
   window.bukuAktifPelupusan=function(){return (D.buku||[]).filter(b=>!isDisposed(b))};
-  window.loadDisposalData=async function(){return true};
   window.filtCadangUsang=function(){
     const q=(document.getElementById('lp-book-q')?.value||'').trim(),body=document.getElementById('lp-book-list'),info=document.getElementById('lp-book-info');
     if(q.length<2){window._lpSearchResults=[];if(info)info.textContent='Taip sekurang-kurangnya 2 aksara untuk mencari.';if(body)body.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--mu)">Taip sekurang-kurangnya 2 aksara untuk mencari.</td></tr>';return}
@@ -5029,11 +5108,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
     if(info)info.textContent=rows.length?`${rows.length} bahan dijumpai`:'Tiada bahan dijumpai.';if(body)body.innerHTML=rowsCadangUsang(rows);
   };
   window.searchDisposalBooks=function(q){const input=document.getElementById('lp-book-q');if(input)input.value=q;window.filtCadangUsang()};
-  window.pilihBukuUsang=function(id){const book=(D.buku||[]).find(b=>String(b.id)===String(id));if(!book){toast('Rekod buku tidak dijumpai.','er');return}const active=(D.bahan_usang_rosak||[]).find(r=>String(r.buku_id)===String(id)&&LP_STATUS_AKTIF.includes(r.status));if(active){toast('Bahan ini telah berada dalam Senarai Bahan Usang / Rosak.','wa');return}window._lpPicked=book;const box=document.getElementById('lp-picked');if(box){box.style.display='block';box.innerHTML=`<strong>${escapeHtml(book.judul||'-')}</strong><div style="font-size:10.5px;color:var(--mu);margin-top:3px">No. Perolehan: ${escapeHtml(book.no_perolehan||'-')} · No. Panggilan: ${escapeHtml(book.no_panggilan||'-')}</div>`}};
-  window.simpanCadanganUsang=async function(){if(!window._lpPicked){toast('Sila pilih bahan daripada Rekod Perolehan.','er');return}const reason=document.getElementById('lp-sebab')?.value.trim()||'';if(!reason){toast('Sila isi sebab bahan dicadangkan.','er');return}const cadangan=document.getElementById('bur-cadangan-pelupusan').value;if(!['Jualan','Pembakaran','Penanaman'].includes(cadangan)){toast('Sila pilih cadangan pelupusan.','er');return}const data={cadangan_pelupusan:cadangan,buku_id:window._lpPicked.id,keadaan_bahan:document.getElementById('lp-keadaan')?.value||'Rosak',sebab_dicadang:reason,catatan_semakan:document.getElementById('lp-catatan')?.value.trim()||'',tarikh_cadang:today(),dicadang_oleh:window._me?.nama||'Sistem'};try{const res=await api({action:'cadang_bahan_usang',data},0);if(!res?.ok)throw new Error(res?.error||'Gagal menyimpan cadangan.');D.bahan_usang_rosak.push(res.data.item||{id:res.data.id,status:'Untuk Semakan',...window._lpPicked,...data});window._lpPicked=null;renderLpPanel();toast('Bahan dimasukkan ke Senarai Usang / Rosak untuk semakan.','ok')}catch(e){toast(e.message,'er')}};
-  window.ubahStatusUsang=async function(id,status){if(!confirm(status==='Diluluskan Untuk Pelupusan'?'Luluskan bahan ini untuk proses pelupusan?':`Tukar status kepada ${status}?`))return;try{const res=await api({action:'status_bahan_usang',id,status,data:{tarikh_semak:today(),disemak_oleh:window._me?.nama||'Pentadbir'}},0);if(!res?.ok)throw new Error(res?.error||'Gagal mengemas kini status.');const i=(D.bahan_usang_rosak||[]).findIndex(r=>String(r.id)===String(id));if(i>=0)D.bahan_usang_rosak[i]={...D.bahan_usang_rosak[i],...(res.data.item||{}),status};renderLpPanel();toast(status==='Diluluskan Untuk Pelupusan'?'Bahan diluluskan untuk proses pelupusan.':'Status dikemas kini.','ok')}catch(e){toast(e.message,'er')}};
-  window.padamCadanganUsang=async function(id){if(!confirm('Padam cadangan ini? Rekod buku asal tidak akan dipadam.'))return;const res=await api({action:'padam',sheet:'bahan_usang_rosak',id},0);if(!res?.ok){toast(res?.error||'Gagal padam cadangan.','er');return}D.bahan_usang_rosak=(D.bahan_usang_rosak||[]).filter(r=>String(r.id)!==String(id));renderLpPanel();toast('Cadangan dipadam.','ok')};
-  window.sahkanPelupusanAkhir=async function(){const id=document.getElementById('ls-id')?.value,officer=document.getElementById('ls-pegawai')?.value.trim();if(!officer){toast('Sila isi pegawai bertanggungjawab.','er');return}if(!confirm('Sahkan bahan ini telah dilupuskan?'))return;const data={tarikh_lupus:document.getElementById('ls-tarikh')?.value||today(),kaedah:document.getElementById('ls-kaedah')?.value,no_rujukan:document.getElementById('ls-rujukan')?.value.trim(),pegawai:officer,catatan:document.getElementById('ls-catatan')?.value.trim(),dilupus_oleh:window._me?.nama||'Pentadbir'};const res=await api({action:'sahkan_pelupusan',id,data},0);if(!res?.ok){toast(res?.error||'Gagal mengesahkan pelupusan.','er');return}if(res.data.pelupusan)D.pelupusan.push(res.data.pelupusan);const ui=(D.bahan_usang_rosak||[]).findIndex(r=>String(r.id)===String(id));if(ui>=0)D.bahan_usang_rosak[ui]={...D.bahan_usang_rosak[ui],...(res.data.bahan_usang||{}),status:'Telah Dilupuskan'};const bi=(D.buku||[]).findIndex(b=>String(b.id)===String(res.data.buku_id));if(bi>=0)D.buku[bi]={...D.buku[bi],...(res.data.buku||{}),status:'Dilupuskan'};closeM('m-sah-lupus');renderLpPanel();toast('Bahan telah disahkan dilupuskan dan direkodkan.','ok')};
+  window.pilihBukuUsang=function(id){const book=(D.buku||[]).find(b=>String(b.id)===String(id));if(!book){toast('Rekod buku tidak dijumpai.','er');return}const active=(D.bahan_usang_rosak||[]).find(r=>String(r.buku_id)===String(id)&&LP_STATUS_AKTIF.includes(r.status));if(active){toast('Bahan ini telah berada dalam Senarai Bahan Usang / Rosak.','wa');return}_lpPicked=book;const box=document.getElementById('lp-picked');if(box){box.style.display='block';box.innerHTML=`<strong>${escapeHtml(book.judul||'-')}</strong><div style="font-size:10.5px;color:var(--mu);margin-top:3px">No. Perolehan: ${escapeHtml(book.no_perolehan||'-')} · No. Panggilan: ${escapeHtml(book.no_panggilan||'-')}</div>`}};
 
   window.prosesISBNAtauBarcode=async function(code){
     const clean=typeof cleanBarcode==='function'?cleanBarcode(code):String(code||'').trim();
