@@ -284,22 +284,6 @@ body.dk .bg-re{background:#3b0a0a;color:#fca5a5}body.dk .bg-am{background:#3d1a0
 @media(max-width:640px){.tv-shell{position:fixed}.tv-header{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:13px}.tv-brand{justify-content:center;text-align:left}.tv-clock{min-width:0}.tv-time{font-size:36px}.tv-actions{justify-content:center}.tv-content{padding:14px}.tv-main-grid{grid-template-columns:1fr;gap:14px}.tv-main-grid>.tv-panel:last-child{grid-column:auto}.tv-panel{padding:15px}.tv-panel-title{font-size:20px}.tv-stats{grid-template-columns:1fr 1fr}.tv-stat-value{font-size:32px}.tv-loan{grid-template-columns:38px minmax(0,1fr)}.tv-loan-date{grid-column:2;text-align:left}.tv-loan-name{font-size:16px}.tv-loan-book{font-size:14px}.tv-latest-books{margin-top:14px}.tv-books-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tv-book-media{height:190px}.tv-book-title{font-size:15px}.tv-school{font-size:12px}}
 @media(max-width:640px) and (orientation:portrait){.tv-rotate-hint{display:block}}
 @media(max-width:390px){.tv-books-grid{grid-template-columns:1fr}.tv-book-media{height:230px}.tv-stats{grid-template-columns:1fr}}
-.member-card-print-grid{display:grid;grid-template-columns:repeat(3,var(--kad-w));gap:.35cm;padding:.6cm;justify-content:center;align-content:start;align-items:start}
-.member-card-print{width:var(--kad-w);height:var(--kad-h);border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#dff8f3 0%,#7be0c9 45%,#11b98e 100%);border:1.5px solid rgba(0,0,0,.08);box-shadow:0 4px 12px rgba(0,0,0,.12);display:flex;flex-direction:column;justify-content:space-between;color:#123;font-family:'Plus Jakarta Sans',Arial,sans-serif;break-inside:avoid;page-break-inside:avoid;position:relative}
-.member-card-header{text-align:center;padding:8px 7px 5px}
-.member-card-logo{width:40px;height:40px;object-fit:contain;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.74);color:#0b7f65;font-size:21px;font-weight:900}
-.member-card-logo img{width:100%;height:100%;object-fit:contain;display:block}
-.member-card-system{font-size:8.8pt;font-weight:800;color:#0b7f65;letter-spacing:.2px}
-.member-card-school{font-size:5.8pt;line-height:1.22;font-weight:700;color:#234;margin-top:2px}
-.member-card-body{padding:6px 8px 5px;text-align:center}
-.member-card-type{font-size:8.5pt;font-weight:800;text-transform:uppercase;color:#fff;margin-bottom:5px;letter-spacing:.35px;text-shadow:0 1px 2px rgba(0,0,0,.18)}
-.member-card-name,.kad-nama{background:#fff;color:#111827;font-size:8.5pt;font-weight:800;border-radius:8px;padding:5px 7px;line-height:1.15;margin-bottom:5px;min-height:27px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
-.member-card-meta,.kad-info{font-size:5.8pt;line-height:1.25;color:#0f172a;font-weight:700}
-.kad-email{font-size:5.2pt;font-weight:600;line-height:1.15;word-break:break-all;max-width:100%;opacity:.95;text-align:center}
-.member-card-footer{background:#fff;padding:4px 7px 6px;text-align:center}
-.member-card-barcode{width:100%;height:38px;display:block;background:#fff}
-.member-card-code{margin-top:2px;font-size:6pt;font-weight:700;color:#111;font-family:var(--mono)}
-.member-card-copy{margin-top:3px;font-size:5.5px;color:#64748b}
 #scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;min-height:320px;background:#000;border-radius:16px;overflow:hidden;position:relative}
 #scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{width:100%!important;height:100%!important;min-height:320px!important;object-fit:cover!important;display:block!important;opacity:1!important;visibility:visible!important;background:#000!important}
 #scan-reader canvas,#register-isbn-reader canvas,#pinjam-scan-reader canvas{display:block!important}
@@ -405,6 +389,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 @media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.fr.c2,.fr.c3{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){#sb{position:fixed;z-index:100;transform:translateX(-100%)}#sb.open{transform:translateX(0)}#burger{display:block}.sg{grid-template-columns:1fr 1fr}.tb-chip{display:none}.srch{width:130px}.pnt-g{grid-template-columns:repeat(2,1fr)}#scan-reader,#register-isbn-reader,#pinjam-scan-reader{width:100%;height:58vh;min-height:360px;max-height:520px}.book-cover-upload-box{width:92px;height:128px}.cover-preview-wrap{width:100px;height:136px}.cover-actions .btn{flex:1;justify-content:center;min-height:40px}.bsk{overflow-x:auto;-webkit-overflow-scrolling:touch}.modal{width:94vw;max-height:88vh}#scan-reader video,#register-isbn-reader video,#pinjam-scan-reader video{height:58vh!important;min-height:360px!important;max-height:520px!important}.isbn-row{grid-template-columns:42px 42px auto;gap:6px}.isbn-edit-row{align-items:stretch}.isbn-edit-row input{width:100%;flex-basis:100%}.isbn-edit-row .btn{min-height:40px}.icon-btn{width:42px;height:42px;min-width:42px;font-size:17px}.scan-action-row{gap:6px}.scan-fallback-actions .btn{flex:1;justify-content:center;min-height:40px}.borang-preview-shell{padding:6px}.borang-arkib-page{transform-origin:top left}.lp-actions .btn{flex:1}.lp-usang-search{width:100%;min-width:0;flex-basis:100%}.lp-select-col{width:40px;min-width:40px}}
 .borang-rekod-table{table-layout:fixed;background:#fff;color:#000;font-family:"Times New Roman",serif;font-size:10.5pt;border-radius:0;box-shadow:none}.borang-rekod-table th,.borang-rekod-table td{padding:4px 5px;white-space:normal;overflow-wrap:anywhere;word-break:normal;background:#fff;color:#000;line-height:1.2}.borang-rekod-table th{height:15mm;vertical-align:middle;font-size:9pt;font-weight:bold;line-height:1.15;text-align:center}.borang-rekod-table tbody tr{height:22mm}.borang-rekod-table tr{break-inside:avoid;page-break-inside:avoid}.borang-rekod-table thead{display:table-header-group}.borang-rekod-table tfoot{display:table-footer-group}.borang-rekod-table .arkib-catatan{font-size:9.5pt;line-height:1.25}.borang-info-table{table-layout:fixed;background:#fff;color:#000}.borang-info-table td{background:#fff;color:#000}.borang-footer{break-inside:avoid}</style>
+<link id="smartlib-member-card-css" rel="stylesheet" href="./member-card.css">
 </head>
 <body>
 <div id="sb-overlay" onclick="closeSidebar()"></div>
@@ -1888,22 +1873,23 @@ function bukaTVMode(){ return pgTV(); }
 // KAD AHLI
 // ════════════════════════════════════════════════════
 function pgKadAhli(){
-  const murid=D.murid||[],guru=D.guru||[];
-  const semua=semuaAhliKad();
+  const semua=semuaAhliKad(true);
+  const [murid,guru,staf]=['murid','guru','staf'].map(jenis=>semua.filter(a=>a.jenis_pengguna===jenis));
+  const ahliOptions=rows=>rows.map(a=>`<option value="${escapeHtml(a.jenis_pengguna+'|'+a.id)}">${escapeHtml(a.nama||'Nama Ahli')} (${escapeHtml(a.tingkatan||a.jawatan||'–')})</option>`).join('');
   const sch=AP.sekolah||AP.nama||'PSS';
-  const sah='31 Disember '+new Date().getFullYear();
   document.getElementById('content').innerHTML=`
   <div class="g2" style="margin-bottom:12px">
     <div class="card">
       <div class="ct">🪪 Tetapan Kad Ahli</div>
-      <div class="fg"><label>Nama Sekolah / PSS pada Kad</label><input id="kad-sch" type="text" value="${sch}" oninput="prevKad()"></div>
-      <div class="fg"><label>Tarikh Sah Hingga</label><input id="kad-sah" type="text" value="${sah}" oninput="prevKad()"></div>
-      <div class="fg"><label>Logo Sekolah pada Kad</label><div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><div id="kad-logo-pv" style="width:44px;height:44px;border-radius:10px;background:var(--bg2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="${AP.logo||DEFAULT_SMARTLIB_LOGO}" style="width:100%;height:100%;object-fit:contain" alt="Logo SMARTLIB"></div><input type="file" id="kad-logo-file" accept="image/*" style="display:none" onchange="hdlKadLogo(event)"><button class="btn b-gh b-sm" onclick="document.getElementById('kad-logo-file').click()">🖼️ Upload Logo</button>${AP.logo?`<button class="btn b-re b-sm" onclick="padamKadLogo()">🗑️ Buang</button>`:''}</div><small style="color:var(--mu)">Logo ini juga digunakan pada paparan SMARTLIB.</small></div>
+      <div class="fg"><label>Nama Sekolah / PSS pada Kad</label><input id="kad-sch" type="text" value="${escapeHtml(sch)}" oninput="prevKad()"></div>
+      <div class="fg"><label>Tarikh Sah Hingga</label><input id="kad-sah" type="text" placeholder="Tarikh pilihan jika tiada dalam rekod" oninput="prevKad()"></div>
+      <div class="fg"><label>Logo Sekolah SMARTLIB</label><div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><div id="kad-logo-pv" style="width:44px;height:44px;border-radius:10px;background:var(--bg2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="${AP.logo||DEFAULT_SMARTLIB_LOGO}" style="width:100%;height:100%;object-fit:contain" alt="Logo SMARTLIB"></div><input type="file" id="kad-logo-file" accept="image/*" style="display:none" onchange="hdlKadLogo(event)"><button class="btn b-gh b-sm" onclick="document.getElementById('kad-logo-file').click()">🖼️ Upload Logo</button>${AP.logo?`<button class="btn b-re b-sm" onclick="padamKadLogo()">🗑️ Buang</button>`:''}</div><small style="color:var(--mu)">Kad ahli menggunakan logo rasmi SMARTLIB. Tetapan ini kekal untuk paparan sistem.</small></div>
       <div class="fg"><label>Pilih Ahli (cetak satu)</label>
         <select id="kad-sel" onchange="prevKad()">
           <option value="">– Pilih Ahli –</option>
-          <optgroup label="Murid">${murid.map(m=>`<option value="murid|${m.id}">${m.nama} (${m.tingkatan||'–'})</option>`).join('')}</optgroup>
-          <optgroup label="Guru">${guru.map(g=>`<option value="guru|${g.id}">${g.nama} (${g.jawatan||'–'})</option>`).join('')}</optgroup>
+          <optgroup label="Murid">${ahliOptions(murid)}</optgroup>
+          <optgroup label="Guru">${ahliOptions(guru)}</optgroup>
+          ${staf.length?`<optgroup label="Staf">${ahliOptions(staf)}</optgroup>`:''}
         </select>
       </div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
@@ -1916,7 +1902,7 @@ function pgKadAhli(){
     <div class="card">
       <div class="ct">👁️ Preview Kad</div>
       <div style="display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:14px" id="kad-prev-wrap">
-        ${genKadHTML({nama:'Nama Ahli',nokad:'050101-01-5001',tingkatan:'Tahun 1 PKD',id:'0001'},'murid',sch,sah)}
+        Pilih ahli untuk melihat kad.
       </div>
       <div style="text-align:center;font-size:10px;color:var(--mu)">5.5cm × 8.5cm — Portrait</div>
     </div>
@@ -1927,20 +1913,21 @@ function pgKadAhli(){
       <th><input type="checkbox" onchange="document.querySelectorAll('.kad-chk').forEach(c=>c.checked=this.checked)"></th>
       <th>Nama</th><th>Jenis</th><th>NO. AHLI</th><th>Kelas/Jawatan</th><th>Status</th><th>Cetak</th>
     </tr></thead><tbody>${semua.map(a=>{const ak=a.aktif!==false&&a.aktif!=='FALSE';return`<tr>
-      <td><input type="checkbox" class="kad-chk" value="${a.jenis_pengguna}|${a.id}"></td>
+      <td><input type="checkbox" class="kad-chk" value="${escapeHtml(a.jenis_pengguna+'|'+a.id)}"></td>
       <td><div style="display:flex;align-items:center;gap:7px"><div style="width:26px;height:26px;border-radius:50%;background:${avCol(a.nama)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${ini(a.nama)}</div><strong style="font-size:12px">${a.nama}</strong></div></td>
       <td><span class="bdg ${a.jenis_pengguna==='murid'?'bg-cy':'bg-pu'}">${a.jenis_pengguna}</span></td>
-      <td><code style="font-size:11px">${a.nokad||'–'}</code></td>
+      <td><code style="font-size:11px">${escapeHtml(memberCardNumber(a,a.jenis_pengguna)||'–')}</code></td>
       <td>${a.jenis_pengguna==='murid'?(a.tingkatan||'–'):(a.jawatan||'–')}</td>
       <td><span class="bdg ${ak?'bg-em':'bg-re'}">${ak?'Aktif':'Tidak Aktif'}</span></td>
-      <td><button class="btn b-cy b-xs" onclick="cetakKadTerus('${a.jenis_pengguna}',${a.id})">🖨️</button></td>
+      <td><button class="btn b-cy b-xs" data-ahli="${escapeHtml(a.jenis_pengguna+'|'+a.id)}" onclick="cetakKadTerus(this.dataset.ahli)">🖨️</button></td>
     </tr>`}).join('')}</tbody></table></div>
   </div>`;prevKad();
 }
-function semuaAhliKad(){
+function semuaAhliKad(termasukStaf=false){
   return [
     ...(D.murid||[]).map(m=>({...m,jenis_pengguna:'murid'})),
-    ...(D.guru||[]).map(g=>({...g,jenis_pengguna:'guru'}))
+    ...(D.guru||[]).map(g=>({...g,jenis_pengguna:'guru'})),
+    ...(termasukStaf?D.staf||[]:[]).filter(s=>!(D.guru||[]).some(g=>String(g.id)===String(s.id))).map(s=>({...s,jenis_pengguna:'staf'}))
   ];
 }
 function isStafPSS(ahli){
@@ -1956,12 +1943,6 @@ function isStafPSS(ahli){
     jawatan.includes('pembersihan')||
     jawatan.includes('swasta');
 }
-function bolehPaparEmailKad(ahli){
-  const jenis=String(ahli?.jenis_pengguna||ahli?.jenis||'').toLowerCase();
-  if(jenis==='murid')return true;
-  if(jenis==='guru')return !isStafPSS(ahli);
-  return false;
-}
 function formatIdKadAhli(jenis,a){
   const pref=jenis==='guru'?'G':'M';
   const pad=2;
@@ -1971,6 +1952,10 @@ function formatIdKadAhli(jenis,a){
 }
 function getAhliKadByValue(value){
   const [jenis,id]=String(value||'').split('|');
+  if(jenis==='staf'){
+    const s=(D.staf||[]).find(x=>String(x.id)===String(id));
+    return s?{...s,jenis_pengguna:'staf'}:null;
+  }
   if(jenis==='guru'){
     const g=(D.guru||[]).find(x=>String(x.id)===String(id));
     return g?{...g,jenis_pengguna:'guru'}:null;
@@ -2005,28 +1990,59 @@ function getBarcodeAhliValue(ahli){
     ''
   ).trim();
 }
-function memberCardPrintCss(){return `
-:root{--kad-w:5.5cm;--kad-h:8.5cm}
-@page{size:A4 portrait;margin:.6cm}
-.member-card-print,.member-card-print *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-.member-card-print-grid{display:grid;grid-template-columns:repeat(3,5.5cm);gap:.35cm;padding:.6cm;justify-content:center;align-content:start;align-items:start}
-.member-card-print{width:5.5cm;height:8.5cm;border-radius:12px;overflow:hidden;background-color:#7be0c9!important;background-image:linear-gradient(180deg,#dff8f3 0%,#7be0c9 45%,#11b98e 100%)!important;border:1.5px solid rgba(0,0,0,.08);box-shadow:0 4px 12px rgba(0,0,0,.12);display:flex;flex-direction:column;justify-content:space-between;color:#123;font-family:'Plus Jakarta Sans',Arial,sans-serif;break-inside:avoid;page-break-inside:avoid;position:relative;box-sizing:border-box}
- .member-card-header{text-align:center;padding:8px 7px 5px}.member-card-logo{width:40px;height:40px;object-fit:contain;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.74);color:#0b7f65;font-size:21px;font-weight:900}.member-card-logo img{width:100%;height:100%;object-fit:contain;display:block}.member-card-system{font-size:8.8pt;font-weight:800;color:#0b7f65;letter-spacing:.2px}.member-card-school{font-size:5.8pt;line-height:1.22;font-weight:700;color:#234;margin-top:2px}.member-card-body{padding:6px 8px 5px;text-align:center}.member-card-type{font-size:8.5pt;font-weight:800;text-transform:uppercase;color:#fff;margin-bottom:5px;letter-spacing:.35px;text-shadow:0 1px 2px rgba(0,0,0,.18)}.member-card-name,.kad-nama{background:#fff;color:#111827;font-size:8.5pt;font-weight:800;border-radius:8px;padding:5px 7px;line-height:1.15;margin-bottom:5px;min-height:27px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}.member-card-meta,.kad-info{font-size:5.8pt;line-height:1.25;color:#0f172a;font-weight:700}.kad-email{font-size:5.2pt;font-weight:600;line-height:1.15;word-break:break-all;max-width:100%;opacity:.95;text-align:center}.member-card-footer{background:#fff;padding:4px 7px 6px;text-align:center}.member-card-barcode{width:100%;height:38px;display:block;background:#fff}.member-card-code{margin-top:1px;font-size:6pt;font-weight:700;color:#111;font-family:Arial,monospace}.member-card-copy{margin-top:2px;font-size:5.5px;color:#64748b}
-@media print{html,body,.pc,.member-card-print-grid,.member-card-print,.member-card-print *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{background:#fff}.member-card-print-grid{display:grid;grid-template-columns:repeat(3,5.5cm);gap:.35cm;justify-content:center;padding:0}.member-card-print{width:5.5cm!important;height:8.5cm!important;background-color:#7be0c9!important;background-image:linear-gradient(180deg,#dff8f3 0%,#7be0c9 45%,#11b98e 100%)!important;box-shadow:none;break-inside:avoid;page-break-inside:avoid}.member-card-logo{background-color:rgba(255,255,255,.74)!important}.member-card-name,.member-card-footer{background-color:#fff!important}}`}
+function memberCardNumber(a,jenis){
+  const no=String(a.no_ahli??'').trim(),kp=String(a.nokad??'').trim();
+  if(no&&normAhliLogin(no)!==normAhliLogin(kp)&&!/^\d{12}$/.test(no.replace(/[\s-]/g,'')))return no;
+  if(!String(a.id??'').trim()||/^\d{12}$/.test(String(a.id).replace(/[\s-]/g,'')))return '';
+  return formatIdKadAhli(jenis==='murid'?'murid':'guru',a);
+}
+function memberCardExpiry(a,fallback){
+  const value=String(a.sah_hingga||a.tarikh_sah_hingga||a.valid_until||fallback||'').trim();
+  const iso=/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/.exec(value);
+  if(!iso)return value;
+  const month=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'][Number(iso[2])-1];
+  return month?Number(iso[3])+' '+month+' '+iso[1]:value;
+}
 function genKadPrintHTML(a,jenis,sch,sah,isPreview=false){
-  jenis=jenis||a.jenis_pengguna||a.jenis||'murid';
-  const no=formatIdKadAhli(jenis,a);
-  const kelas=jenis==='murid'?(a.tingkatan||'–'):(a.jawatan||'–');
-  const code=getBarcodeAhliValue(a)||no;
-  const jenisLabel=jenis==='murid'?'PELAJAR':(String(kelas).toLowerCase().includes('staf')?'STAF':'GURU / STAF');
-  const emailAhli=String(a.email||'').trim();
-  const paparEmail=emailAhli&&bolehPaparEmailKad({...a,jenis_pengguna:jenis});
-  const emailHtml=paparEmail?`<div class="kad-email">Email: ${escapeHtml(emailAhli)}</div>`:'';
-  const logo=`<img src="${AP.logo||DEFAULT_SMARTLIB_LOGO}" alt="Logo SMARTLIB">`;
-  return `<div class="member-card-print${isPreview?' member-card-preview':''}"><div class="member-card-header"><div class="member-card-logo">${logo}</div><div class="member-card-system">${AP.nama||'SMARTLIB'}</div><div class="member-card-school">${sch||'Sekolah Kebangsaan Pendidikan Khas Taiping'}</div></div><div class="member-card-body"><div class="member-card-type">${jenisLabel}</div><div class="member-card-name">${a.nama||'Nama Ahli'}</div><div class="member-card-meta"><div>ID: ${no}</div><div>No. Kad/Ahli: ${a.nokad||a.no_ahli||'–'}</div><div>${jenis==='murid'?'Kelas':'Jawatan'}: ${kelas||'–'}</div>${emailHtml}<div>Sah Hingga: ${sah||'–'}</div></div></div><div class="member-card-footer"><svg class="member-card-barcode" data-bc="${code}"></svg><div class="member-card-code">${code}</div><div class="member-card-copy">© 2026 SMARTLIB |Syahida Suffian</div></div></div>`;
+  jenis=jenis||a.jenis_pengguna||'murid';
+  const no=memberCardNumber(a,jenis),expiry=memberCardExpiry(a,sah);
+  const label=jenis==='murid'?'PELAJAR':(jenis==='staf'||isStafPSS(a)?'STAF':'GURU');
+  const field=(key,value)=>`<dt>${key}</dt><dd>${escapeHtml(value||'–')}</dd>`;
+  const meta=field('No. Ahli',no)+(jenis==='murid'?field('Kelas',a.tingkatan||a.kelas):field('Kategori',label==='GURU'?'Guru':'Staf'))+(expiry?field('Sah Hingga',expiry):'');
+  return `<article class="smartlib-member-card${isPreview?' member-card-preview':''}">
+    <header class="member-card-header"><img class="member-card-logo" src="./smartlib-logo-official.png" alt="Logo rasmi SMARTLIB"><div class="member-card-school"><span>${escapeHtml(sch||'')}</span></div></header>
+    <div class="member-card-body"><div class="member-card-type">${label}</div><div class="member-card-name"><span>${escapeHtml(a.nama||'Nama Ahli')}</span></div><dl class="member-card-meta">${meta}</dl></div>
+    <div class="member-card-scan"><svg class="member-card-barcode" data-bc="${escapeHtml(no)}" role="img" aria-label="Barcode No. Ahli"></svg><div class="member-card-code">${escapeHtml(no||'–')}</div></div>
+    <footer class="member-card-footer">© 2026 SMARTLIB |Syahida Suffian</footer>
+  </article>`;
 }
 function renderKadBarcodes(scope=document){
-  setTimeout(()=>{scope.querySelectorAll('.member-card-barcode[data-bc]').forEach(svg=>{try{JsBarcode(svg,svg.getAttribute('data-bc'),{format:'CODE128',width:1.5,height:38,displayValue:false,margin:8,background:'#ffffff',lineColor:'#000000'})}catch(e){console.warn(e)}})},60);
+  let failed=0;
+  scope.querySelectorAll('.member-card-barcode[data-bc]').forEach(svg=>{
+    try{
+      const code=svg.dataset.bc;
+      if(!code)throw new Error('No. Ahli tiada.');
+      // One SVG unit per CODE128 module, with 12 modules of white quiet zone per side.
+      JsBarcode(svg,code,{format:'CODE128',width:1,height:30,displayValue:false,margin:0,marginLeft:12,marginRight:12,background:'#fff',lineColor:'#000'});
+      const modules=parseFloat(svg.getAttribute('width'));
+      if(!modules||47/modules<.19)throw new Error('No. Ahli terlalu panjang untuk barcode 55 mm.');
+      svg.setAttribute('viewBox','0 0 '+modules+' 30');
+      svg.setAttribute('preserveAspectRatio','none');
+      svg.style.width=Math.min(47,modules*.43)+'mm';
+    }catch(e){svg.replaceChildren();failed++;console.warn('Barcode kad ahli:',e.message)}
+  });
+  return failed;
+}
+function fitMemberCardNames(scope=document){
+  scope.querySelectorAll('.member-card-name,.member-card-school').forEach(box=>{
+    const text=box.firstElementChild;if(!text)return;
+    const school=box.classList.contains('member-card-school');
+    let size=school?5.5:11.5;
+    text.style.fontSize=size+'pt';
+    while(size>(school?4.5:4)&&text.getBoundingClientRect().height>parseFloat(box.ownerDocument.defaultView.getComputedStyle(text).lineHeight)*(school?2:3)+.5){
+      size-=.25;text.style.fontSize=size+'pt';
+    }
+  });
 }
 async function hdlKadLogo(e){
   const f=e.target.files[0];if(!f)return;
@@ -2037,46 +2053,65 @@ async function hdlKadLogo(e){
 }
 function padamKadLogo(){AP.logo='';pendingLogoUpload=null;applyAP();saveSetting('logo_url','');toast('Logo dibuang. Logo default SMARTLIB digunakan.','ok');pgKadAhli()}
 function prevKad(){
-  const sel=document.getElementById('kad-sel')?.value||'';
-  const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
-  const sah=document.getElementById('kad-sah')?.value||'';
   const wrap=document.getElementById('kad-prev-wrap');if(!wrap)return;
-  if(!sel){wrap.innerHTML=genKadHTML({nama:'Nama Ahli',nokad:'050101-01-5001',tingkatan:'–',id:'0001'},'murid',sch,sah);renderKadBarcodes(wrap);return}
-  const a=getAhliKadByValue(sel);
-  if(!a)return;wrap.innerHTML=genKadHTML(a,a.jenis_pengguna,sch,sah);renderKadBarcodes(wrap);
+  const a=getAhliKadByValue(document.getElementById('kad-sel')?.value);
+  if(!a){wrap.textContent='Pilih ahli untuk melihat kad.';return}
+  const {sch,sah}=memberCardSettings();
+  wrap.innerHTML=genKadHTML(a,a.jenis_pengguna,sch,sah);
+  fitMemberCardNames(wrap);renderKadBarcodes(wrap);
+}
+function memberCardSettings(){
+  return {sch:document.getElementById('kad-sch')?.value.trim()||AP.sekolah||'PSS',sah:document.getElementById('kad-sah')?.value.trim()||''};
+}
+let memberCardLogoData;
+function getMemberCardLogoData(){
+  if(!memberCardLogoData)memberCardLogoData=fetch('./smartlib-logo-official.png').then(res=>{
+    if(!res.ok)throw new Error('Logo rasmi SMARTLIB gagal dimuatkan.');
+    return res.blob();
+  }).then(blob=>new Promise((resolve,reject)=>{
+    const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);
+  })).catch(error=>{memberCardLogoData=null;throw error});
+  return memberCardLogoData;
+}
+function openMemberCardPrint(ahli){
+  if(!ahli.length){toast('Sila pilih ahli untuk dicetak.','wa');return}
+  const sheet=document.getElementById('smartlib-member-card-css')?.sheet;
+  if(!sheet){toast('Gaya kad belum dimuatkan. Cuba lagi.','wa');return}
+  const win=window.open('','_blank','width=900,height=760,scrollbars=yes,resizable=yes');
+  if(!win){toast('Benarkan tetingkap pop-up untuk pratonton kad.','wa');return}
+  const {sch,sah}=memberCardSettings(),sheets=[];
+  for(let i=0;i<ahli.length;i+=9){
+    sheets.push(`<section class="member-card-print-grid">${ahli.slice(i,i+9).map(a=>genKadPrintHTML(a,a.jenis_pengguna,sch,sah)).join('')}</section>`);
+  }
+  win.document.open();
+  const css=[...sheet.cssRules].map(rule=>rule.cssText).join('\n');
+  win.document.write(`<!doctype html><html lang="ms"><head><meta charset="utf-8"><title>Kad Ahli SMARTLIB</title><style>${css}@page{size:A4 portrait;margin:9mm}</style></head><body class="member-card-print-page"><div class="member-card-print-controls"><span id="card-print-instructions">A4 Potret · 100% / Actual Size · Matikan header dan footer pencetak</span><button type="button" id="card-print-now" disabled>Cetak Kad</button></div>${sheets.join('').replaceAll('src="./smartlib-logo-official.png"','')}</body></html>`);
+  win.document.close();
+  getMemberCardLogoData().then(async src=>{
+    if(win.closed)return;
+    await Promise.all([...win.document.querySelectorAll('.member-card-logo')].map(img=>{img.src=src;return img.decode()}));
+    if(win.closed)return;
+    fitMemberCardNames(win.document);
+    const failed=renderKadBarcodes(win.document);
+    if(failed)throw new Error(`${failed} barcode gagal dijana. Semak No. Ahli atau muat semula SMARTLIB.`);
+    const button=win.document.getElementById('card-print-now');
+    button.disabled=false;button.onclick=()=>{win.focus();win.print()};
+  }).catch(error=>{
+    if(!win.closed)win.document.getElementById('card-print-instructions').textContent=error.message||'Pratonton gagal dimuatkan.';
+  });
 }
 function cetakSatuKad(){
-  const sel=document.getElementById('kad-sel')?.value||'';if(!sel){toast('Sila pilih ahli untuk dicetak.','wa');return}
-  const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
-  const sah=document.getElementById('kad-sah')?.value||'';
-  const a=getAhliKadByValue(sel);
-  if(!a){toast('Ahli tidak dijumpai','er');return}
-  openPrintWindow('Kad Ahli — '+a.nama,`<div class="member-card-print-grid">${genKadPrintHTML(a,a.jenis_pengguna,sch,sah)}</div>`,memberCardPrintCss());
-  toast('🪪 Tetingkap cetak dibuka!','ok');
+  const a=getAhliKadByValue(document.getElementById('kad-sel')?.value);
+  openMemberCardPrint(a?[a]:[]);
 }
-function cetakSemuaKad(){
-  const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
-  const sah=document.getElementById('kad-sah')?.value||'';
-  const semua=semuaAhliKad();
-  if(!semua.length){toast('Tiada ahli untuk dicetak.','wa');return}
-  openPrintWindow('Kad Ahli Semua',`<div class="member-card-print-grid">${semua.map(a=>genKadPrintHTML(a,a.jenis_pengguna,sch,sah)).join('')}</div>`,memberCardPrintCss());
-  toast(`🖨️ ${semua.length} kad siap dicetak!`,'ok');
-}
+function cetakSemuaKad(){openMemberCardPrint(semuaAhliKad(true))}
 function cetakBatchKad(){
-  const sel=[...document.querySelectorAll('.kad-chk:checked')].map(c=>c.value);
-  if(!sel.length){toast('Sila pilih ahli untuk dicetak.','wa');return}
-  const sch=document.getElementById('kad-sch')?.value||AP.sekolah||'PSS';
-  const sah=document.getElementById('kad-sah')?.value||'';
-  const kads=sel.map(s=>{const a=getAhliKadByValue(s);return a?genKadPrintHTML(a,a.jenis_pengguna,sch,sah):''}).join('');
-  openPrintWindow(`Kad Ahli (${sel.length})`,`<div class="member-card-print-grid">${kads}</div>`,memberCardPrintCss());
-  toast(`🖨️ ${sel.length} kad dicetak!`,'ok');
+  const ahli=[...document.querySelectorAll('.kad-chk:checked')].map(c=>getAhliKadByValue(c.value)).filter(Boolean);
+  openMemberCardPrint(ahli);
 }
 function cetakKadTerus(jenis,id){
-  const a=getAhliKadByValue(jenis+'|'+id);
-  if(!a){toast('Ahli tidak dijumpai','er');return}
-  const sch=AP.sekolah||AP.nama||'PSS';const sah='31 Dis '+new Date().getFullYear();
-  openPrintWindow('Kad — '+a.nama,`<div class="member-card-print-grid">${genKadPrintHTML(a,a.jenis_pengguna,sch,sah)}</div>`,memberCardPrintCss());
-  toast('🪪 Kad '+a.nama,'ok');
+  const a=getAhliKadByValue(id===undefined?jenis:jenis+'|'+id);
+  openMemberCardPrint(a?[a]:[]);
 }
 // ════════════════════════════════════════════════════
 // TEMPAHAN

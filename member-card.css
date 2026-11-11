@@ -1,0 +1,140 @@
+.smartlib-member-card {
+  --card-gold: linear-gradient(110deg,#9b6810,#ffd54a 19%,#fff2a5 31%,#d4af37 47%,#ab7911 62%,#ffe47a 84%,#b88614);
+  --card-emerald: radial-gradient(ellipse at 48% 18%,#007f60,#004d3b 64%,#003d30);
+  width: 55mm;
+  height: 85mm;
+  flex: 0 0 55mm;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: .55mm solid transparent;
+  border-radius: 3mm;
+  background: linear-gradient(#fff,#fff) padding-box,var(--card-gold) border-box;
+  color: #101c2a;
+  font: 8pt/1.2 Arial,sans-serif;
+  text-align: center;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.smartlib-member-card,.smartlib-member-card * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.smartlib-member-card .member-card-header {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 29mm;
+  isolation: isolate;
+  color: #fff;
+}
+.smartlib-member-card .member-card-header::before,
+.smartlib-member-card .member-card-header::after {
+  content: '';
+  position: absolute;
+  inset: -9mm -9mm 0;
+  z-index: -1;
+  border-radius: 0 0 50% 50% / 0 0 35% 35%;
+  background: var(--card-gold);
+}
+.smartlib-member-card .member-card-header::after {
+  bottom: .9mm;
+  border-bottom: .65mm solid #00896a;
+  background: var(--card-emerald);
+}
+.smartlib-member-card .member-card-logo {
+  display: block;
+  width: 22mm;
+  height: 22mm;
+  margin: 1.8mm auto 0;
+  object-fit: contain;
+}
+.smartlib-member-card .member-card-school {
+  margin: 0 auto;
+  max-width: 44mm;
+  font-size: 5.5pt;
+  font-weight: 700;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+.smartlib-member-card .member-card-body { position: absolute; inset: 29.9mm 4mm auto; }
+.smartlib-member-card .member-card-type {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26mm;
+  height: 5.3mm;
+  padding: 0 2mm;
+  box-sizing: border-box;
+  border: .35mm solid transparent;
+  border-radius: 4mm;
+  background: var(--card-emerald) padding-box,var(--card-gold) border-box;
+  color: #fff;
+  font-size: 9pt;
+  font-weight: 800;
+  letter-spacing: .075em;
+}
+.smartlib-member-card .member-card-name {
+  display: grid;
+  align-content: center;
+  height: 12.4mm;
+  margin: .9mm 0 0;
+  border-bottom: .35mm solid #d4af37;
+  box-sizing: border-box;
+  font-size: 11.5pt;
+  line-height: 1.06;
+  font-weight: 800;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.smartlib-member-card .member-card-meta {
+  display: grid;
+  grid-template-columns: 16.5mm minmax(0,1fr);
+  gap: .45mm 1.5mm;
+  align-content: center;
+  min-height: 12mm;
+  margin: 1mm 0 0;
+  text-align: left;
+  font-size: 7.3pt;
+  line-height: 1.12;
+}
+.smartlib-member-card .member-card-meta dt { font-weight: 800; color: #003d30; }
+.smartlib-member-card .member-card-meta dd { margin: 0; overflow-wrap: anywhere; }
+.smartlib-member-card .member-card-scan { position: absolute; inset: auto 2.8mm 10.1mm; background: #fff; }
+.smartlib-member-card .member-card-barcode { display: block; height: 7.8mm; max-width: 100%; margin: 0 auto; background: #fff; }
+.smartlib-member-card .member-card-code { margin-top: .5mm; color: #000; font-size: 7.8pt; font-weight: 800; overflow-wrap: anywhere; }
+.smartlib-member-card .member-card-footer {
+  position: absolute;
+  inset: auto -2mm 0;
+  height: 8.3mm;
+  border-radius: 50% 50% 0 0 / 40% 40% 0 0;
+  border-top: .55mm solid #d4af37;
+  background: var(--card-emerald);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding-top: .8mm;
+  font-size: 6pt;
+  font-weight: 700;
+}
+
+/* A4 print preview uses the same card CSS at actual size. */
+.member-card-print-page { margin: 0; background: #eaf0ed; color: #101c2a; font: 14px Arial,sans-serif; }
+.member-card-print-controls { padding: 14px; text-align: center; }
+.member-card-print-controls button { margin-left: 8px; }
+.member-card-print-grid {
+  display: grid;
+  grid-template-columns: repeat(3,55mm);
+  grid-auto-rows: 85mm;
+  gap: 5mm;
+  justify-content: center;
+  align-content: start;
+  box-sizing: border-box;
+  break-inside: avoid;
+}
+@media screen {
+  .member-card-print-page .member-card-print-grid { width: 210mm; min-height: 297mm; padding: 9mm; margin: 0 auto 5mm; background: #fff; }
+}
+@media print {
+  .member-card-print-page { background: #fff; }
+  .member-card-print-page .member-card-print-controls { display: none; }
+  .member-card-print-page .member-card-print-grid:not(:last-child) { break-after: page; page-break-after: always; }
+}
