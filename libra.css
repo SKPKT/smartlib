@@ -1,0 +1,21 @@
+#libra-launcher{position:fixed;inset:auto 16px 16px auto;z-index:1400;display:grid;justify-items:center;gap:2px;padding:3px 6px 5px;color:#fff;background:#004d3b;border:2px solid #d4af37;border-radius:19px;box-shadow:0 4px 15px #003d3055;font:700 11px/1.2 system-ui;cursor:pointer}
+#libra-launcher img{width:49px;height:49px;object-fit:cover;border-radius:13px}
+.libra-panel{position:fixed;inset:auto 16px 16px auto;margin:0;width:min(460px,calc(100% - 32px));max-height:min(80vh,720px);padding:0;border:1px solid #d4af37;border-radius:16px;color:var(--tx,#101c2a);background:var(--card,#fff);font:14px/1.45 system-ui;box-shadow:0 14px 45px #003d3066;overflow:hidden}
+.libra-panel::backdrop{background:#001c1855}
+.libra-panel header{display:flex;gap:10px;align-items:center;padding:10px 13px;color:white;background:#004d3b}
+.libra-panel header img{width:48px;height:48px;border-radius:10px}
+.libra-panel header strong,.libra-panel header small{display:block}
+.libra-panel header button{margin-left:auto;background:transparent;color:white;font-size:24px;border:0}
+.libra-scroll{max-height:calc(min(80vh,720px) - 69px);overflow:auto;padding:12px 14px}
+.libra-panel label{display:block;font-weight:650;margin:6px 0}
+.libra-panel input,.libra-panel select{width:100%;display:block;padding:7px;margin:3px 0;background:var(--inp,#fff);color:var(--tx,#101c2a);border:1px solid var(--bd,#b8cdc4);border-radius:7px;font:inherit}
+.libra-panel button{cursor:pointer;border:1px solid #0a755d;border-radius:7px;padding:5px 8px;background:#004d3b;color:#fff;font:inherit}
+.libra-panel button:disabled{opacity:.55;cursor:default}
+.libra-actions,.libra-panel [data-books]{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.libra-panel h3{font-size:15px;margin:10px 0 4px}
+.libra-panel p{margin:6px 0;overflow-wrap:anywhere}
+.libra-panel dl{display:grid;grid-template-columns:minmax(100px,35%) minmax(0,1fr);gap:4px 7px;margin:7px 0}
+.libra-panel dt{font-weight:650}
+.libra-panel dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.libra-panel section:not(:empty){margin-top:12px;padding-top:4px;border-top:1px solid var(--bd,#b8cdc4)}
+.libra-panel [hidden]{display:none!important}
