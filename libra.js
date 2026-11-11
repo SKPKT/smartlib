@@ -1,3 +1,5 @@
+import {plannerForm,renderPlanner} from './libra-planner.js';
+
 const blank = 'Tiada padanan yang mencukupi dalam katalog rujukan.';
 const e = (tag, text, className) => { const node=document.createElement(tag); if(text!=null)node.textContent=String(text);if(className)node.className=className;return node; };
 
@@ -12,12 +14,12 @@ export function createLibra(request, launcher) {
     <label>Judul buku SMARTLIB <input name="book_query" maxlength="100" placeholder="Cari dan pilih rekod untuk semakan GPM"></label>
     <div data-books></div><p data-selected></p>
     <div class="libra-actions"><button type="button" data-find-book>Cari Buku</button><button type="button" data-search>Cari Rujukan</button><button type="submit">Cadangkan DDC</button></div></form>
-    <form data-planner hidden><label>Kelas utama Dewey <select name="class_code"><option value="000">000 — Karya Am</option><option value="100">100 — Falsafah</option><option value="200">200 — Agama</option><option value="300">300 — Sains Kemasyarakatan</option><option value="400">400 — Bahasa</option><option value="500" selected>500 — Sains dan STEM</option><option value="600">600 — Teknologi</option><option value="700">700 — Kesenian dan Sukan</option><option value="800">800 — Kesusasteraan</option><option value="900">900 — Sejarah dan Geografi</option></select></label><button type="submit">Cadangkan Program</button></form>
+    <form data-planner hidden>${plannerForm}</form>
     <section data-result aria-live="polite"></section><section data-ref aria-live="polite"></section></div>`;
   document.body.append(dialog);
   const $=selector=>dialog.querySelector(selector);
   const status=$('[data-status]'), result=$('[data-result]'), refs=$('[data-ref]'), advisor=$('[data-advisor]'), planner=$('[data-planner]');
-  let selected=null, pending=null, ready=false;
+  let selected=null, pending=null, ready=false, capabilities=null;
   const say=text=>{status.textContent=text;};
   const button=(label,handler,disabled=false)=>{const node=e('button',label);node.type='button';node.disabled=disabled;node.onclick=handler;return node;};
   function append(parent,tag,text) { const node=e(tag,text);parent.append(node);return node; }
@@ -25,11 +27,11 @@ export function createLibra(request, launcher) {
     const list=append(parent,'dl');
     for(const [label,text] of entries) {append(list,'dt',label);append(list,'dd',text||'—');}
   }
-  async function run(action, payload, display) {
+  async function run(action, payload, display, perform=request) {
     if (pending) return;
     const work=new AbortController();pending=work;say('Sedang memuatkan…');
     dialog.setAttribute('aria-busy','true');
-    try { const data=await request(action,payload,work.signal);if(!work.signal.aborted && dialog.open){say('');display(data);} }
+    try { const data=await perform(action,payload,work.signal);if(!work.signal.aborted && dialog.open){say('');display(data);} }
     catch(error) { if(!work.signal.aborted && dialog.open) say(action==='libra_status'?'Backend LIBRA belum tersedia atau sesi tidak dibenarkan. Semak deployment Apps Script.':error.message||'Permintaan gagal.'); }
     finally { if(pending===work){pending=null;dialog.removeAttribute('aria-busy');} }
   }
@@ -81,17 +83,27 @@ export function createLibra(request, launcher) {
     } else if(!data.message) append(result,'p',blank);
     if(data.candidates?.length){append(result,'h3','Calon dalam katalog');for(const c of data.candidates){const item=append(result,'p',`${c.nombor_ddc} — ${c.subjek} · hlm. ${c.halaman_pdf} · ${c.status_semakan} `);item.append(button('Lihat Rujukan',()=>showRef(c)));}}
   }
-  function showPlan(data) {
-    result.replaceChildren();refs.replaceChildren();append(result,'h3','Cadangan Program PSS');
-    if(data.message)append(result,'p',data.message);
-    fields(result,[['Kelas utama',data.kelas],['Rekod buku aktif',data.koleksi_aktif],['Aktif dalam kelas ini',data.kelas_aktif],['Tersedia dalam kelas ini',data.boleh_dipinjam],['Fiksyen tempatan (berasingan)',data.fiksyen_tempatan],['Rekod pinjaman',data.rekod_pinjaman??'Tiada data'],['Cadangan program',data.program],['Semakan kesesuaian',data.semakan]].map(([label,value])=>[label,value==null?'':String(value)]));
-    if(data.buku?.length){append(result,'h3','Judul SMARTLIB tersedia');const list=append(result,'ul');for(const b of data.buku)append(list,'li',`${b.judul} · ${b.nombor_ddc} · ${b.pinjaman_direkod} pinjaman direkodkan`);}
+  const viewport=window.visualViewport;
+  function resizePlanner() {
+    if(!dialog.open||planner.hidden||!viewport)return;
+    const gap=Math.max(0,window.innerHeight-viewport.height-viewport.offsetTop);
+    dialog.style.setProperty('--libra-vvh',`${viewport.height}px`);
+    dialog.style.setProperty('--libra-vv-gap',`${gap}px`);
+    const focus=document.activeElement;
+    if(gap>60&&focus?.matches('input,textarea,select')&&dialog.contains(focus))focus.scrollIntoView({block:'nearest'});
   }
-  function close() { pending?.abort();pending=null;dialog.removeAttribute('aria-busy');result.replaceChildren();refs.replaceChildren();if(dialog.open)dialog.close(); }
+  function cancel() {pending?.abort();pending=null;dialog.removeAttribute('aria-busy');}
+  function close() {cancel();viewport?.removeEventListener('resize',resizePlanner);viewport?.removeEventListener('scroll',resizePlanner);result.replaceChildren();refs.replaceChildren();if(dialog.open)dialog.close();}
+  function showModeStatus() {
+    if(!capabilities)return;
+    if(!planner.hidden)say(capabilities.ai?'Program Planner sedia menjana draf.':'Program Planner sedia menggunakan templat umum. Gemini belum dikonfigurasi.');
+    else say(!capabilities.ready?'Katalog persendirian belum dikonfigurasi.':capabilities.ai?'Katalog dan konfigurasi Gemini tersedia.':'Katalog tersedia. Gemini belum dikonfigurasi.');
+  }
+  function loadStatus() {run('libra_status',{},data=>{capabilities=data;ready=data.ready;showModeStatus();});}
   $('[data-close]').onclick=close;
   dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   dialog.addEventListener('close',()=>launcher.focus());
-  $('[data-mode]').onchange=event=>{const plan=event.target.value==='planner';advisor.hidden=plan;planner.hidden=!plan;result.replaceChildren();refs.replaceChildren();};
+  $('[data-mode]').onchange=event=>{const plan=event.target.value==='planner';cancel();advisor.hidden=plan;planner.hidden=!plan;dialog.classList.toggle('libra-planning',plan);result.replaceChildren();refs.replaceChildren();resizePlanner();if(capabilities)showModeStatus();else loadStatus();};
   $('[data-search]').onclick=()=>{if(ready)search(advisor.elements.query.value.trim());};
   $('[data-find-book]').onclick=()=>{
     if(!ready)return;
@@ -103,6 +115,18 @@ export function createLibra(request, launcher) {
     });
   };
   advisor.onsubmit=event=>{event.preventDefault();if(!ready)return;const {query,isbn}=advisor.elements;if(!query.value.trim()&&!isbn.value.trim()&&!selected){say('Masukkan subjek atau ISBN, atau pilih buku SMARTLIB.');return;}run('libra_advice',{query:query.value,isbn: isbn.value,book_id:selected?.id||''},showAdvice);};
-  planner.onsubmit=event=>{event.preventDefault();if(ready)run('libra_plan',{class_code:planner.elements.class_code.value},showPlan);};
-  return {show(){if(dialog.open)return;dialog.showModal();ready=false;run('libra_status',{},data=>{ready=data.ready;say(!data.ready?'Katalog persendirian belum dikonfigurasi.':data.ai?'Katalog dan konfigurasi Gemini tersedia.':'Katalog tersedia. Gemini belum dikonfigurasi.');});},close(){close();dialog.remove();}};
+  planner.elements.budget.onchange=()=>{const fixed=planner.elements.budget.value==='Bajet Ditetapkan', limit=planner.elements.budget_limit; $('[data-budget-limit]').hidden=!fixed;limit.disabled=!fixed;limit.required=fixed;};
+  async function planRequest(action,payload,signal) {
+    try {return await request(action,payload,signal);}
+    catch(error){
+      // A pre-upgrade backend rejects the missing legacy class before reading collection data.
+      if(signal.aborted||!String(error?.message||'').includes('Pilih kelas utama Dewey yang sah.'))throw error;
+      const {makeCompatiblePlan}=await import('./libra-planner-template.js');
+      return makeCompatiblePlan(payload);
+    }
+  }
+  planner.onsubmit=event=>{event.preventDefault();if(!capabilities)return;
+    run('libra_plan',Object.fromEntries(new FormData(planner)),data=>{refs.replaceChildren();renderPlanner(result,data,say);result.scrollIntoView({block:'start'});},planRequest);
+  };
+  return {show(){if(dialog.open)return;dialog.showModal();ready=false;capabilities=null;viewport?.addEventListener('resize',resizePlanner);viewport?.addEventListener('scroll',resizePlanner);resizePlanner();loadStatus();},close(){close();dialog.remove();}};
 }

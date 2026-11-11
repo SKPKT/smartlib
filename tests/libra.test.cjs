@@ -3,15 +3,18 @@ const fs=require('node:fs');
 const path=require('node:path');
 const http=require('node:http');
 const vm=require('node:vm');
+const {execFileSync}=require('node:child_process');
 const {test}=require('node:test');
 const root=path.join(__dirname,'..');
 const backend=fs.readFileSync(path.join(root,'apps-script/Libra.gs'),'utf8');
+const plannerBackend=fs.readFileSync(path.join(root,'apps-script/LibraPlanner.gs'),'utf8');
 const row=(id,ddc,subjek,page,status='Disahkan',notes='')=>({id,nombor_ddc:ddc,kelas_utama:ddc[0]+'00',subjek,halaman_pdf:String(page),nama_sumber:'Ujian',status_semakan:status,nota_pengkelasan:notes});
 const refs=[row('school','027.8','Perpustakaan Sekolah',5),row('law','130','Undang-undang',14,'Konflik'),row('psy','130','Psikologi',2),row('herbs','635','Tanaman kebun',28,'Disahkan','Termasuk herba'),row('plants','580','Sains tumbuhan',22),row('story','899.283','Fiksyen',38),row('malay','899.28','Kesusasteraan Melayu',38)];
 function context(extra={}) {
-  const ctx=vm.createContext({...extra});vm.runInContext(backend,ctx);return ctx;
+  const ctx=vm.createContext({...extra});vm.runInContext(backend+'\n'+plannerBackend,ctx);return ctx;
 }
 const emptyProps={getProperty:()=>''};
+const plan={program_type:'Galakan Membaca',audience:'Semua Murid',needs:'Umum',duration:'Seminggu',budget:'Tiada Kos',count:'3'};
 
 test('authorisation, exact string codes, retrieval terms and conflict handling',()=>{
   const c=context({jErr:error=>({error})});c.libraCatalog=()=>refs;
@@ -67,6 +70,57 @@ test('planner counts stock and lends only actual available titles, with no membe
   assert.equal(result.buku[0].judul,'Buku STEM');assert.doesNotMatch(JSON.stringify(result),/private|Buku dipinjam|Telah lupus/);
 });
 
+test('new planner provides distinct accessible programs, all sections and no default stock read',()=>{
+  const c=context({bacaSheetRaw(){assert.fail('default planner read stock');}});
+  for(const [n,request] of [[3,'tiga'],[5,'5'],[10,'sepuluh']]) {
+    const data=c.libraPlanPrograms({...plan,instructions:`Cadangkan ${request} program untuk murid masalah pendengaran Tahun 1–3, tema komik.`},emptyProps);
+    assert.equal(data.programs.length,n);assert.equal(new Set(data.programs.map(x=>x.name)).size,n);
+    assert.equal(new Set(data.programs.map(x=>x.activities[1])).size,n);
+    assert.equal(data.method,'template');assert.match(data.message,/tidak berdasarkan analisis data/);
+    for(const p of data.programs){assert.equal(p.audience,'Tahun 1–3');assert.equal(p.needs,'Masalah Pendengaran');assert.equal(p.duration,'Seminggu');assert.ok(p.rationale&&p.objectives.length&&p.activities.length>=3&&p.resources.length&&p.indicators.length&&p.evaluation.length);assert.equal(p.budgetItems[0].amount,0);assert.match(p.activities.join(' '),/bahasa isyarat|sari kata/i);}
+    assert.doesNotMatch(JSON.stringify(data),/Dewey|DDC|Fiksyen tempatan|rekod_pinjaman|koleksi_aktif/i);
+  }
+  assert.throws(()=>c.libraPlanPrograms({...plan,count:11},emptyProps),/1 hingga 10/);
+  assert.throws(()=>c.libraPlanPrograms({...plan,budget:'Bajet Ditetapkan'},emptyProps),/had bajet/);
+  const fixed=c.libraPlanPrograms({...plan,budget:'Bajet Ditetapkan',budget_limit:'7.30'},emptyProps);
+  assert.ok(fixed.programs.every(p=>p.budgetItems[0].amount<=7.30));
+});
+
+test('planner uses its own Gemini prompt, excludes raw instructions and validates structured output',()=>{
+  const c=context({bacaSheetRaw(){assert.fail('Gemini planner read stock');}});let sent, variant='ok';
+  c.libraGemini=(props,instruction,evidence,schema)=>{
+    sent={instruction,evidence,schema};
+    const programs=Array.from({length:evidence.count},(_,i)=>({name:variant==='duplicate'?'Program sama':`Program inovatif ${i+1}`,rationale:variant==='ddc'?'Rujuk 025.55':'Aktiviti mesra MBPK',
+      objectives:['Menjelaskan idea melalui gambar'],activities:[`Stesen visual ${i+1}`,'Bincang hasil dengan rakan'],resources:['Kad sedia ada'],budgetItems:[{item:'Kad',amount:variant==='expensive'?500:0}],indicators:['Sasaran 80% peserta selesai'],evaluation:['Senarai semak']}));
+    return {programs:variant==='short'?programs.slice(1):programs};
+  };
+  const request={...plan,instructions:'Cadangkan lima program inovatif, komik dan bahasa isyarat.\nNama: Murid Rahsia\ne-mel: private@example.invalid'};
+  assert.equal(c.libraPlanPrograms(request,emptyProps).method,'gemini');
+  assert.equal(sent.evidence.count,5);assert.match(sent.instruction,/Anda perancang program Pusat Sumber Sekolah/);
+  assert.match(JSON.stringify(sent.evidence),/komik|bahasa isyarat/);assert.doesNotMatch(JSON.stringify(sent.evidence),/Rahsia|example|Nama|buku|pinjam/);
+  assert.equal(sent.schema.programs.minItems,5);
+  for(variant of ['duplicate','ddc','expensive','short'])assert.equal(c.libraPlanPrograms(request,emptyProps).method,'template',variant);
+});
+
+test('Dewey counts appear in a separate payload only when analysis is explicitly requested',()=>{
+  let reads=0;
+  const c=context({bacaSheetRaw(){reads++;return [{no_panggilan:'500/ABC'},{no_panggilan:'500/DEF',status:'Dilupuskan'},{no_panggilan:'FM/ABC'}];},isBukuAktifUntukStok:b=>b.status!=='Dilupuskan'});
+  assert.equal(c.libraPlanPrograms({...plan,instructions:'Jangan sertakan analisis Dewey'},emptyProps).analysis,undefined);assert.equal(reads,0);
+  const data=c.libraPlanPrograms({...plan,instructions:'Sertakan analisis Dewey'},emptyProps);
+  assert.equal(reads,1);assert.equal(JSON.stringify(data.analysis),'[{"code":"500","active":1}]');assert.doesNotMatch(JSON.stringify(data.programs),/Dewey|DDC|500/);
+});
+
+test('legacy compatibility module matches the Apps Script templates',async()=>{
+  execFileSync(process.execPath,[path.join(root,'tools/build-libra-planner-template.cjs'),'--check']);
+  const js=fs.readFileSync(path.join(root,'libra-planner-template.js'),'utf8');
+  const {makeCompatiblePlan}=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+  const input={...plan,instructions:'Sepuluh program inklusif. Sertakan analisis Dewey.'};
+  const local=makeCompatiblePlan(input), hosted=context().libraPlanPrograms(input,emptyProps);
+  assert.equal(JSON.stringify(local.programs),JSON.stringify(hosted.programs));
+  assert.match(local.message,/Backend Planner baharu belum aktif/);
+  assert.equal(local.analysis,undefined);assert.match(local.analysisMessage,/tidak tersedia/);
+});
+
 test('local PDF catalog: eight exact codes, all pages, no duplicate IDs and flagged source errors',{skip:!process.env.LIBRA_LOCAL_CATALOG},()=>{
   const local=JSON.parse(fs.readFileSync(process.env.LIBRA_LOCAL_CATALOG,'utf8'));
   const catalog=local.rows.map(r=>Object.fromEntries(local.columns.map((k,i)=>[k,r[i]])));
@@ -84,14 +138,16 @@ test('local PDF catalog: eight exact codes, all pages, no duplicate IDs and flag
 
 test('browser: launcher is private, lazy, and links advice, catalogue details and planner',{skip:!process.env.LIBRA_BROWSER_QA,timeout:45000},async()=>{
   const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
-  const types={'/libra-launcher.js':'text/javascript','/libra.js':'text/javascript','/libra.css':'text/css','/libra-robot.webp':'image/webp'};
-  const hits=[], actions=[];
+  const types={'/libra-launcher.js':'text/javascript','/libra.js':'text/javascript','/libra-planner.js':'text/javascript','/libra-planner-template.js':'text/javascript','/libra.css':'text/css','/libra-robot.webp':'image/webp'};
+  const hits=[], actions=[];let catalogue=true, legacy=false;
+  const planner=context();
   const server=http.createServer((req,res)=>{
     if(req.url==='/'){res.setHeader('content-type','text/html');return res.end('<!doctype html><meta charset="utf-8"><div id="lw">Login</div><script>const GAS="/gas",D={buku:[]};function toast(){};window._mR="opac";window._tok=null;</script><script defer src="/libra-launcher.js"></script>');}
     if(types[req.url]){hits.push(req.url);res.setHeader('content-type',types[req.url]);return res.end(fs.readFileSync(path.join(root,req.url.slice(1))));}
     if(req.url!=='/gas'){res.writeHead(404);return res.end();}
     let body='';req.on('data',b=>body+=b);req.on('end',()=>{const p=JSON.parse(body);actions.push(p.action);
-      const data=({libra_status:{ready:true,ai:false},libra_advice:{recommendation:refs[0],book:null,candidates:[],reason:'Ujian',status:'CADANGAN AI — PERLU PENGESAHAN GPM',confidence:'Sederhana'},libra_search:{reference:refs[0]},libra_plan:{kelas:'500',koleksi_aktif:1,kelas_aktif:1,boleh_dipinjam:1,buku:[{judul:'Buku STEM',nombor_ddc:'500',pinjaman_direkod:0}]}})[p.action];
+      if(p.action==='libra_plan'&&legacy){res.setHeader('content-type','application/json');return res.end(JSON.stringify({ok:false,error:'Ralat: Pilih kelas utama Dewey yang sah.'}));}
+      const data=p.action==='libra_plan'?planner.libraPlanPrograms(p,emptyProps):({libra_status:{ready:catalogue,ai:false},libra_advice:{recommendation:refs[0],book:null,candidates:[],reason:'Ujian',status:'CADANGAN AI — PERLU PENGESAHAN GPM',confidence:'Sederhana'},libra_search:{reference:refs[0]}})[p.action];
       res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:!!data,data}));});
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
@@ -107,11 +163,41 @@ test('browser: launcher is private, lazy, and links advice, catalogue details an
     await page.locator('[name=query]').fill('027.8');await page.getByRole('button',{name:'Cadangkan DDC'}).click();
     await page.getByText('Ujian, halaman 5').waitFor();await page.getByRole('button',{name:'Lihat Rujukan'}).click();
     await page.getByRole('heading',{name:'Rujukan Katalog',exact:true}).waitFor();
-    await page.locator('[data-mode]').selectOption('planner');await page.getByRole('button',{name:'Cadangkan Program'}).click();
-    await page.getByText('Buku STEM · 500').waitFor();
+    await page.getByRole('button',{name:'Tutup LIBRA'}).click();catalogue=false;
+    await page.locator('#libra-launcher').click();await page.getByText('Katalog persendirian belum dikonfigurasi.').waitFor();
+    await page.locator('[data-mode]').selectOption('planner');await page.getByText('Program Planner sedia menggunakan templat umum.',{exact:false}).waitFor();
+    assert.equal(await page.locator('[data-planner] [name=class_code]').count(),0);
+    await page.locator('[name=needs]').selectOption('Masalah Pendengaran');
+    await page.locator('[name=instructions]').fill('Cadangkan lima program inovatif.');
+    await page.getByRole('button',{name:'Jana Program PSS'}).click();
+    await page.locator('.libra-program-card').first().waitFor();
+    assert.equal(await page.locator('.libra-program-card').count(),5);
+    assert.doesNotMatch(await page.locator('[data-result]').textContent(),/DDC|Dewey|Kelas utama|Rekod buku/i);
+    const first=page.locator('.libra-program-card').first(), second=page.locator('.libra-program-card').nth(1);
+    await second.locator('summary').click();
+    await second.getByRole('button',{name:'Jana Kertas Kerja'}).click();
+    const draft=second.locator('.libra-draft textarea');const draftText=await draft.inputValue();
+    assert.match(draftText,/KERTAS KERJA PROGRAM PSS|Studio Cerita Visual/);assert.doesNotMatch(draftText,/Jejak Misi/);
+    for(const kind of ['Tentatif','Anggaran Bajet','KPI Program']){await second.getByRole('button',{name:'Jana '+kind}).click();assert.match(await draft.inputValue(),new RegExp(kind,'i'));}
+    await second.getByRole('button',{name:'Jana Kertas Kerja'}).click();await draft.fill(draftText+'\nUjian pindaan penyelaras');
+    const printEvent=page.waitForEvent('popup');await second.getByRole('button',{name:'Cetak Draf / PDF'}).click();
+    const popup=await printEvent;assert.match(await popup.locator('pre').textContent(),/Ujian pindaan penyelaras/);await popup.close();
+    assert.match(await first.locator('summary').textContent(),/Program 1/);
+    for(const viewport of [{width:360,height:740},{width:393,height:430},{width:1280,height:800}]) {
+      await page.setViewportSize(viewport);
+      const dimensions=await page.locator('.libra-panel').evaluate(x=>{const b=x.getBoundingClientRect();const sc=x.querySelector('.libra-scroll');return {top:b.top,bottom:b.bottom,right:b.right,sw:sc.scrollWidth,cw:sc.clientWidth};});
+      assert.ok(dimensions.top>=0&&dimensions.bottom<=viewport.height&&dimensions.right<=viewport.width&&dimensions.sw<=dimensions.cw+1,JSON.stringify({viewport,dimensions}));
+    }
+    assert.ok(!hits.includes('/libra-planner-template.js'));
+    legacy=true;
+    await page.locator('[name=instructions]').fill('Cadangkan tiga program mesra MBPK.');
+    await page.getByRole('button',{name:'Jana Program PSS'}).click();
+    await page.getByText(/Backend Planner baharu belum aktif/).waitFor();
+    assert.equal(await page.locator('.libra-program-card').count(),3);
+    assert.ok(hits.includes('/libra-planner-template.js'));
     await page.getByRole('button',{name:'Tutup LIBRA'}).click();
     await page.evaluate(()=>{window._tok=null;window._mR='opac';document.getElementById('lw').style.display='block';});
     await page.locator('#libra-launcher').waitFor({state:'detached'});
-    assert.deepEqual(actions,['libra_status','libra_advice','libra_search','libra_plan']);assert.deepEqual(errors,[]);
+    assert.deepEqual(actions,['libra_status','libra_advice','libra_search','libra_status','libra_plan','libra_plan']);assert.deepEqual(errors,[]);
   } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
 });

@@ -1,11 +1,11 @@
 # LIBRA AI untuk SMARTLIB
 
-LIBRA dibuka melalui robot terapung untuk sesi Admin/GPM. Kod paparan dimuatkan apabila panel dibuka. Katalog penuh kekal dalam Google Sheet persendirian; jangan letakkannya dalam fail perolehan yang dikongsi atau GitHub Pages.
+LIBRA dibuka melalui robot terapung untuk sesi Admin/GPM. Kod paparan dimuatkan apabila panel dibuka. Katalog penuh kekal dalam Google Sheet persendirian; jangan letakkannya dalam fail perolehan yang dikongsi atau GitHub Pages. Dewey Advisor menggunakan katalog; Program Planner boleh berfungsi tanpanya.
 
 ## Aktifkan Apps Script
 
 1. Buka **projek Apps Script sedia ada** dan semak **Deploy → Manage deployments**. Pastikan URL deployment `/exec` ialah URL `GAS` dalam `index.html`. Kekalkan kod dan deployment asal.
-2. Tambah fail skrip bernama `Libra` dan salin kandungan [`apps-script/Libra.gs`](../apps-script/Libra.gs). Dalam `prosesPermintaan(p)` di `Code.gs`, tambah baris berikut di dalam blok `try`, sejurus sebelum `switch(action)`, **selepas** pemeriksaan sesi. Jangan tambah mana-mana `libra_*` kepada `PUBLIC_ACTIONS` atau senarai guru.
+2. Tambah fail skrip bernama `Libra` dan salin kandungan [`apps-script/Libra.gs`](../apps-script/Libra.gs). Tambah fail skrip bernama `LibraPlanner` menggunakan [`apps-script/LibraPlanner.gs`](../apps-script/LibraPlanner.gs). Dalam `prosesPermintaan(p)` di `Code.gs`, tambah baris berikut di dalam blok `try`, sejurus sebelum `switch(action)`, **selepas** pemeriksaan sesi. Jangan tambah mana-mana `libra_*` kepada `PUBLIC_ACTIONS` atau senarai guru.
 
    ```js
    if (action.startsWith('libra_')) return libraDispatch(action, p, sessionInfo);
@@ -20,7 +20,20 @@ LIBRA dibuka melalui robot terapung untuk sesi Admin/GPM. Kod paparan dimuatkan 
 - `Disahkan` bermaksud sepadan dengan sumber PDF dan tiada isu dikesan pada entri itu semasa import; ia bukan pengesahan edisi DDC terkini. Semua cadangan kekal tertakluk kepada GPM.
 - `nilai_asal` menyimpan setiap kejadian bersama halamannya. `cadangan_pembetulan` berasingan daripada nilai asal. Konflik dan rujukan tidak lengkap boleh dilihat tetapi tidak boleh diterima sebagai perubahan rekod.
 - Kod `FM`, `FI`, `FC`, dan `FT` tidak ditukar oleh LIBRA. Untuk kod angka, hanya awalan DDC berubah; tanda pemisah, kod pengarang, tahun dan jilid kekal. Setiap pengesahan direkodkan dalam `audit_dewey` dalam fail persendirian. Semakan ditolak tidak mengubah rekod buku.
-- Planner menggunakan tajuk tersedia dan statistik yang diperoleh daripada rekod buku dan pinjaman. Data kesesuaian individu tidak dihantar kepada Gemini; GPM menilai bahan untuk murid sebenar.
+- Planner menggunakan pilihan jenis, sasaran, keperluan peserta, tempoh, bajet, bilangan dan tema program. Ia tidak memerlukan Dewey dan tidak membaca koleksi secara lalai. Hanya jika arahan meminta “sertakan analisis Dewey”, laporan berasingan memaparkan kiraan kelas aktif. Analisis itu tidak dihantar kepada Gemini.
+- Teks bebas tidak dihantar kepada Gemini. Sistem mengambil bilangan program dan istilah program yang dikenali, serta menyesuaikan kategori peserta yang diketahui jika pilihan lalai digunakan. Kertas kerja, tentatif, bajet dan KPI ialah draf bagi kad yang dipilih; draf boleh diedit sebelum disalin, dimuat turun atau dicetak. Gunakan “Simpan sebagai PDF” dalam dialog cetak pelayar.
+
+## Naik taraf Planner pada projek sedia ada
+
+Tambah `LibraPlanner.gs`. Dalam `Libra.gs` sedia ada, ubah **satu baris** untuk `libra_plan` kepada:
+
+```js
+if (action === 'libra_plan') return jOut(p.program_type ? libraPlanPrograms(p, props) : libraPlan(p, props));
+```
+
+Laluan lama disimpan untuk klien yang masih menggunakan borang lama. Tiada perubahan diperlukan pada `Code.gs`, tetapan Gemini, katalog, akses atau URL. Terbitkan versi baharu pada deployment Apps Script yang sama.
+
+Jika borang baharu dibuka sebelum Apps Script dikemas kini, Planner menggunakan templat umum daripada modul keserasian. Label pada draf menyatakan bahawa Gemini dan analisis sebenar belum digunakan. Bina semula modul dengan `node tools/build-libra-planner-template.cjs` apabila templat Apps Script berubah.
 
 ## Import semula
 

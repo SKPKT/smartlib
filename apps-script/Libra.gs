@@ -18,7 +18,7 @@ function libraDispatch(action, p, session) {
   if (action === 'libra_status') return jOut({ready: !!props.getProperty('LIBRA_DEWEY_SHEET_ID'), ai: libraAiConfigured(props)});
   if (action === 'libra_search') return jOut(libraSearch(p, props));
   if (action === 'libra_advice') return jOut(libraAdvice(p, props));
-  if (action === 'libra_plan') return jOut(libraPlan(p, props));
+  if (action === 'libra_plan') return jOut(p.program_type ? libraPlanPrograms(p, props) : libraPlan(p, props));
   return jOut(libraReview(p, session, props));
 }
 
