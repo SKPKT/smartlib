@@ -97,6 +97,23 @@
 }
 .smartlib-member-card .member-card-meta dt { font-weight: 800; color: #003d30; }
 .smartlib-member-card .member-card-meta dd { margin: 0; overflow-wrap: anywhere; }
+.smartlib-member-card.member-card-with-email .member-card-name { height: 10mm; }
+.smartlib-member-card.member-card-with-email .member-card-meta {
+  grid-template-columns: minmax(0,1fr);
+  gap: .25mm;
+  min-height: 0;
+  margin-top: .65mm;
+  font-size: 7pt;
+  line-height: 1.05;
+}
+.smartlib-member-card .member-card-meta-row {
+  display: grid;
+  grid-template-columns: 16.5mm minmax(0,1fr);
+  column-gap: 1.5mm;
+}
+.smartlib-member-card .member-card-email-row { font-size: 6.25pt; line-height: 1; }
+.smartlib-member-card .member-card-email-row dt { display: inline-block; width: 18mm; }
+.smartlib-member-card .member-card-email-row dd { display: inline; word-break: break-all; }
 .smartlib-member-card .member-card-scan { position: absolute; inset: auto 2.8mm 10.1mm; background: #fff; }
 .smartlib-member-card .member-card-barcode { display: block; height: 7.8mm; max-width: 100%; margin: 0 auto; background: #fff; }
 .smartlib-member-card .member-card-code { margin-top: .5mm; color: #000; font-size: 7.8pt; font-weight: 800; overflow-wrap: anywhere; }

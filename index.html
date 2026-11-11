@@ -2006,10 +2006,13 @@ function memberCardExpiry(a,fallback){
 function genKadPrintHTML(a,jenis,sch,sah,isPreview=false){
   jenis=jenis||a.jenis_pengguna||'murid';
   const no=memberCardNumber(a,jenis),expiry=memberCardExpiry(a,sah);
+  const email=jenis==='murid'&&_tok&&_mR&&_mR!=='opac'&&_mR!=='ahli'&&typeof a.email==='string'?a.email.trim():'';
   const label=jenis==='murid'?'PELAJAR':(jenis==='staf'||isStafPSS(a)?'STAF':'GURU');
   const field=(key,value)=>`<dt>${key}</dt><dd>${escapeHtml(value||'–')}</dd>`;
-  const meta=field('No. Ahli',no)+(jenis==='murid'?field('Kelas',a.tingkatan||a.kelas):field('Kategori',label==='GURU'?'Guru':'Staf'))+(expiry?field('Sah Hingga',expiry):'');
-  return `<article class="smartlib-member-card${isPreview?' member-card-preview':''}">
+  const row=(key,value)=>email?`<div class="member-card-meta-row">${field(key,value)}</div>`:field(key,value);
+  const emailRow=email?`<div class="member-card-email-row"><dt>E-mel</dt><dd class="member-card-email">${escapeHtml(email)}</dd></div>`:'';
+  const meta=row('No. Ahli',no)+(jenis==='murid'?row('Kelas',a.tingkatan||a.kelas):row('Kategori',label==='GURU'?'Guru':'Staf'))+emailRow+(expiry?row('Sah Hingga',expiry):'');
+  return `<article class="smartlib-member-card${isPreview?' member-card-preview':''}${email?' member-card-with-email':''}">
     <header class="member-card-header"><img class="member-card-logo" src="./smartlib-logo-official.png" alt="Logo rasmi SMARTLIB"><div class="member-card-school"><span>${escapeHtml(sch||'')}</span></div></header>
     <div class="member-card-body"><div class="member-card-type">${label}</div><div class="member-card-name"><span>${escapeHtml(a.nama||'Nama Ahli')}</span></div><dl class="member-card-meta">${meta}</dl></div>
     <div class="member-card-scan"><svg class="member-card-barcode" data-bc="${escapeHtml(no)}" role="img" aria-label="Barcode No. Ahli"></svg><div class="member-card-code">${escapeHtml(no||'–')}</div></div>
@@ -2039,7 +2042,8 @@ function fitMemberCardNames(scope=document){
     const school=box.classList.contains('member-card-school');
     let size=school?5.5:11.5;
     text.style.fontSize=size+'pt';
-    while(size>(school?4.5:4)&&text.getBoundingClientRect().height>parseFloat(box.ownerDocument.defaultView.getComputedStyle(text).lineHeight)*(school?2:3)+.5){
+    const heightLimit=box.matches('.member-card-with-email .member-card-name')?box.clientHeight:Infinity;
+    while(size>(school?4.5:4)&&text.getBoundingClientRect().height>Math.min(heightLimit,parseFloat(box.ownerDocument.defaultView.getComputedStyle(text).lineHeight)*(school?2:3))+.5){
       size-=.25;text.style.fontSize=size+'pt';
     }
   });
