@@ -7,7 +7,7 @@ export function createLibra(request, launcher) {
   const dialog=e('dialog',null,'libra-panel');
   dialog.setAttribute('aria-labelledby','libra-heading');
   dialog.innerHTML=`<header><img src="./libra-robot.webp" alt=""><div><strong id="libra-heading">LIBRA AI</strong><small>Pembantu Pusat Sumber Sekolah</small></div><button type="button" data-close aria-label="Tutup LIBRA">×</button></header>
-    <div class="libra-scroll"><p data-status role="status" aria-live="polite"></p>
+    <div class="libra-scroll"><p data-status role="status" aria-live="polite"></p><div class="libra-actions"><button type="button" data-check-gemini hidden>Uji sambungan Gemini</button></div>
     <label>Fungsi <select data-mode><option value="advisor">LIBRA Dewey Advisor</option><option value="planner">LIBRA PSS Program Planner</option></select></label>
     <form data-advisor><label>Subjek, judul atau kod DDC <input name="query" maxlength="240" placeholder="Contoh: penanaman herba"></label>
     <label>ISBN (pilihan) <input name="isbn" maxlength="25" inputmode="numeric"></label>
@@ -32,7 +32,7 @@ export function createLibra(request, launcher) {
     const work=new AbortController();pending=work;say('Sedang memuatkan…');
     dialog.setAttribute('aria-busy','true');
     try { const data=await perform(action,payload,work.signal);if(!work.signal.aborted && dialog.open){say('');display(data);} }
-    catch(error) { if(!work.signal.aborted && dialog.open) say(action==='libra_status'?'Backend LIBRA belum tersedia atau sesi tidak dibenarkan. Semak deployment Apps Script.':error.message||'Permintaan gagal.'); }
+    catch(error) { if(!work.signal.aborted && dialog.open) say(error.message||'Permintaan LIBRA gagal.'); }
     finally { if(pending===work){pending=null;dialog.removeAttribute('aria-busy');} }
   }
   function showRef(ref) {
@@ -96,14 +96,21 @@ export function createLibra(request, launcher) {
   function close() {cancel();viewport?.removeEventListener('resize',resizePlanner);viewport?.removeEventListener('scroll',resizePlanner);result.replaceChildren();refs.replaceChildren();if(dialog.open)dialog.close();}
   function showModeStatus() {
     if(!capabilities)return;
-    if(!planner.hidden)say(capabilities.ai?'Program Planner sedia menjana draf.':'Program Planner sedia menggunakan templat umum. Gemini belum dikonfigurasi.');
-    else say(!capabilities.ready?'Katalog persendirian belum dikonfigurasi.':capabilities.ai?'Katalog dan konfigurasi Gemini tersedia.':'Katalog tersedia. Gemini belum dikonfigurasi.');
+    const ai=capabilities.gemini, catalogue=planner.hidden?(ready?'Katalog Dewey tersedia. ':'Katalog persendirian belum dikonfigurasi. '):'';
+    const model=ai?.model?' ('+ai.model+')':'';
+    $('[data-check-gemini]').hidden=!ai?.configured;
+    if(!ai) say(catalogue+'Backend Apps Script LIBRA versi lama; status sambungan Gemini belum dapat disahkan.');
+    else if(ai.state==='connected')say(catalogue+'Gemini AI tersedia'+model+'.');
+    else if(ai.state==='configured')say(catalogue+'Gemini dikonfigurasi'+model+' — sambungan belum disahkan.');
+    else say(catalogue+'Gemini tidak tersedia'+model+' — '+ai.message+(ai.code==='MODEL_UNAVAILABLE'?' Model cadangan: '+ai.suggestedModel+'.':''));
   }
-  function loadStatus() {run('libra_status',{},data=>{capabilities=data;ready=data.ready;showModeStatus();});}
+  function loadStatus(check=false) {run('libra_status',check?{check_gemini:true}:{},data=>{capabilities=data;ready=data.ready;showModeStatus();});}
+  function updateGemini(data) { if(data.gemini&&capabilities){capabilities.gemini=data.gemini;showModeStatus();} }
+  $('[data-check-gemini]').onclick=()=>loadStatus(true);
   $('[data-close]').onclick=close;
   dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   dialog.addEventListener('close',()=>launcher.focus());
-  $('[data-mode]').onchange=event=>{const plan=event.target.value==='planner';cancel();advisor.hidden=plan;planner.hidden=!plan;dialog.classList.toggle('libra-planning',plan);result.replaceChildren();refs.replaceChildren();resizePlanner();if(capabilities)showModeStatus();else loadStatus();};
+  $('[data-mode]').onchange=event=>{const plan=event.target.value==='planner';if(capabilities)cancel();advisor.hidden=plan;planner.hidden=!plan;dialog.classList.toggle('libra-planning',plan);result.replaceChildren();refs.replaceChildren();resizePlanner();if(capabilities)showModeStatus();else loadStatus();};
   $('[data-search]').onclick=()=>{if(ready)search(advisor.elements.query.value.trim());};
   $('[data-find-book]').onclick=()=>{
     if(!ready)return;
@@ -114,7 +121,7 @@ export function createLibra(request, launcher) {
       if(!list.children.length)append(list,'p','Tiada buku yang sepadan.');
     });
   };
-  advisor.onsubmit=event=>{event.preventDefault();if(!ready)return;const {query,isbn}=advisor.elements;if(!query.value.trim()&&!isbn.value.trim()&&!selected){say('Masukkan subjek atau ISBN, atau pilih buku SMARTLIB.');return;}run('libra_advice',{query:query.value,isbn: isbn.value,book_id:selected?.id||''},showAdvice);};
+  advisor.onsubmit=event=>{event.preventDefault();if(!ready)return;const {query,isbn}=advisor.elements;if(!query.value.trim()&&!isbn.value.trim()&&!selected){say('Masukkan subjek atau ISBN, atau pilih buku SMARTLIB.');return;}run('libra_advice',{query:query.value,isbn: isbn.value,book_id:selected?.id||''},data=>{updateGemini(data);showAdvice(data);});};
   planner.elements.budget.onchange=()=>{const fixed=planner.elements.budget.value==='Bajet Ditetapkan', limit=planner.elements.budget_limit; $('[data-budget-limit]').hidden=!fixed;limit.disabled=!fixed;limit.required=fixed;};
   async function planRequest(action,payload,signal) {
     try {return await request(action,payload,signal);}
@@ -126,7 +133,7 @@ export function createLibra(request, launcher) {
     }
   }
   planner.onsubmit=event=>{event.preventDefault();if(!capabilities)return;
-    run('libra_plan',Object.fromEntries(new FormData(planner)),data=>{refs.replaceChildren();renderPlanner(result,data,say);result.scrollIntoView({block:'start'});},planRequest);
+    run('libra_plan',Object.fromEntries(new FormData(planner)),data=>{updateGemini(data);refs.replaceChildren();renderPlanner(result,data,say);result.scrollIntoView({block:'start'});},planRequest);
   };
   return {show(){if(dialog.open)return;dialog.showModal();ready=false;capabilities=null;viewport?.addEventListener('resize',resizePlanner);viewport?.addEventListener('scroll',resizePlanner);resizePlanner();loadStatus();},close(){close();dialog.remove();}};
 }

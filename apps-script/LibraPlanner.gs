@@ -97,11 +97,16 @@ function libraPlannerFallback(o) {
 function libraPlannerGemini(o, props) {
   const str={type:'STRING'}, list={type:'ARRAY',items:str,minItems:1,maxItems:4};
   const item={type:'OBJECT',properties:{item:str,amount:{type:'NUMBER'}},required:['item','amount']};
-  const fields={name:str,rationale:str,objectives:list,activities:list,resources:list,budgetItems:{type:'ARRAY',items:item,minItems:1,maxItems:4},indicators:list,evaluation:list};
+  const fields={name:str,rationale:str,objectives:list,activities:{...list,minItems:2},resources:list,budgetItems:{type:'ARRAY',items:item,minItems:1,maxItems:4},indicators:list,evaluation:list};
   const schema={programs:{type:'ARRAY',minItems:o.count,maxItems:o.count,items:{type:'OBJECT',properties:fields,required:Object.keys(fields)}}};
   const instruction='Anda perancang program Pusat Sumber Sekolah dalam Bahasa Melayu formal. Pakar dalam galakan membaca, NILAM, literasi maklumat, literasi digital, STEM dan program mesra MBPK. Jana tepat bilangan program yang diminta. Setiap program mesti berbeza dari segi nama dan pendekatan; bukan satu program dengan beberapa aktiviti. Ikut sasaran, keperluan peserta, tempoh dan had anggaran bajet setiap program. Beri objektif boleh dinilai, langkah yang jelas, akses yang sesuai, dan KPI sebagai sasaran masa depan. Jangan nyatakan bilangan peserta, statistik, pencapaian atau judul katalog sebenar. Jangan masukkan kod DDC, analisis Dewey atau klasifikasi buku. Untuk tiada kos, nyatakan penggunaan kemudahan sedia ada dengan nilai 0. Setiap medan hendaklah ringkas, satu hingga dua ayat setiap butir.';
   const {analysis,...safeOptions} = o;
-  const generated = libraGemini(props,instruction,safeOptions,schema);
+  return libraGeminiAttempt(props,instruction,safeOptions,schema,{
+    tokens:2048+o.count*960,retry:true,validate:generated=>libraPlannerValidate(generated,o)
+  });
+}
+
+function libraPlannerValidate(generated, o) {
   if (!Array.isArray(generated?.programs) || generated.programs.length!==o.count) return null;
   const output = [], names = new Set(), methods = new Set();
   const text = (value,max) => typeof value==='string' ? libraSafeText(value,max) : '';
@@ -132,10 +137,11 @@ function libraPlannerDeweyAnalysis() {
 
 function libraPlanPrograms(p, props) {
   const options=libraPlannerOptions(p);
-  const generated=libraPlannerGemini(options,props);
+  const attempt=libraPlannerGemini(options,props), generated=attempt.value;
   const programs=generated || libraPlannerFallback(options);
-  const message=(generated?'Draf dijana oleh Gemini. Semak kesesuaian sebelum digunakan.':'Draf templat umum. Gemini tidak digunakan atau responsnya tidak lengkap.')+' Cadangan program ini tidak berdasarkan analisis data koleksi sebenar.';
-  const reply={programs,message,method:generated?'gemini':'template'};
+  const message=(generated?'Program berjaya dijana menggunakan Gemini AI. Semak kesesuaian sebelum digunakan.':
+    'Mod Templat — Gemini AI tidak digunakan. '+attempt.ai.message)+' Cadangan program ini tidak berdasarkan analisis data koleksi sebenar.';
+  const reply={programs,message,gemini:attempt.ai,method:generated?'gemini':'template'};
   if(options.analysis){try{reply.analysis=libraPlannerDeweyAnalysis();}catch(error){reply.analysisMessage='Data sebenar untuk analisis Dewey tidak tersedia.';}}
   return reply;
 }

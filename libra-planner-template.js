@@ -100,7 +100,7 @@ function libraPlannerFallback(o) {
 
 export function makeCompatiblePlan(payload) {
   const options=libraPlannerOptions(payload);
-  const data={programs:libraPlannerFallback(options),method:'template',message:'Draf templat umum. Backend Planner baharu belum aktif; Gemini dan analisis data sebenar tidak digunakan.'};
+  const data={programs:libraPlannerFallback(options),method:'template',message:'Mod Templat — Gemini AI tidak digunakan. Backend Planner baharu belum aktif.'};
   if(options.analysis)data.analysisMessage='Analisis Dewey tidak tersedia sehingga backend Planner dikemas kini.';
   return data;
 }

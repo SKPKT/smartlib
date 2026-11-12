@@ -8,12 +8,16 @@ const {test}=require('node:test');
 const root=path.join(__dirname,'..');
 const backend=fs.readFileSync(path.join(root,'apps-script/Libra.gs'),'utf8');
 const plannerBackend=fs.readFileSync(path.join(root,'apps-script/LibraPlanner.gs'),'utf8');
+const geminiBackend=fs.readFileSync(path.join(root,'apps-script/LibraGemini.gs'),'utf8');
 const row=(id,ddc,subjek,page,status='Disahkan',notes='')=>({id,nombor_ddc:ddc,kelas_utama:ddc[0]+'00',subjek,halaman_pdf:String(page),nama_sumber:'Ujian',status_semakan:status,nota_pengkelasan:notes});
 const refs=[row('school','027.8','Perpustakaan Sekolah',5),row('law','130','Undang-undang',14,'Konflik'),row('psy','130','Psikologi',2),row('herbs','635','Tanaman kebun',28,'Disahkan','Termasuk herba'),row('plants','580','Sains tumbuhan',22),row('story','899.283','Fiksyen',38),row('malay','899.28','Kesusasteraan Melayu',38)];
 function context(extra={}) {
-  const ctx=vm.createContext({...extra});vm.runInContext(backend+'\n'+plannerBackend,ctx);return ctx;
+  const ctx=vm.createContext({...extra});vm.runInContext(backend+'\n'+plannerBackend+'\n'+geminiBackend,ctx);return ctx;
 }
 const emptyProps={getProperty:()=>''};
+const aiProps={getProperty:k=>({GEMINI_API_KEY:'test-key',LIBRA_GEMINI_MODEL:'gemini-3.5-flash-lite'})[k]};
+const response=(http,body)=>({getResponseCode:()=>http,getContentText:()=>typeof body==='string'?body:JSON.stringify(body)});
+const output=value=>({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(value)}]}}]});
 const plan={program_type:'Galakan Membaca',audience:'Semua Murid',needs:'Umum',duration:'Seminggu',budget:'Tiada Kos',count:'3'};
 
 test('authorisation, exact string codes, retrieval terms and conflict handling',()=>{
@@ -32,8 +36,10 @@ test('Gemini receives only relevant evidence and its selected reference is valid
   let sent, id='school';
   const c=context({UrlFetchApp:{fetch:(url,opts)=>{
     assert.ok(url.startsWith('https://generativelanguage.googleapis.com/'));
-    assert.equal(opts.headers['x-goog-api-key'],'test-key');sent=JSON.parse(opts.payload);
-    return {getResponseCode:()=>200,getContentText:()=>JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({id,alasan:'Cadangan ujian',keyakinan:'Tinggi',halaman:999})}]}}]})};
+    assert.equal(opts.headers['x-goog-api-key'],'test-key');
+    if(opts.method==='get')return response(200,{supportedGenerationMethods:['generateContent'],outputTokenLimit:65000});
+    sent=JSON.parse(opts.payload);
+    return response(200,output({id,alasan:'Cadangan ujian',keyakinan:'Tinggi',halaman:999}));
   }}});
   c.libraCatalog=()=>refs;
   const props={getProperty:k=>({GEMINI_API_KEY:'test-key',LIBRA_GEMINI_MODEL:'gemini-test'})[k]};
@@ -95,11 +101,73 @@ test('planner uses its own Gemini prompt, excludes raw instructions and validate
     return {programs:variant==='short'?programs.slice(1):programs};
   };
   const request={...plan,instructions:'Cadangkan lima program inovatif, komik dan bahasa isyarat.\nNama: Murid Rahsia\ne-mel: private@example.invalid'};
-  assert.equal(c.libraPlanPrograms(request,emptyProps).method,'gemini');
+  assert.equal(c.libraPlanPrograms(request,aiProps).method,'gemini');
   assert.equal(sent.evidence.count,5);assert.match(sent.instruction,/Anda perancang program Pusat Sumber Sekolah/);
   assert.match(JSON.stringify(sent.evidence),/komik|bahasa isyarat/);assert.doesNotMatch(JSON.stringify(sent.evidence),/Rahsia|example|Nama|buku|pinjam/);
   assert.equal(sent.schema.programs.minItems,5);
-  for(variant of ['duplicate','ddc','expensive','short'])assert.equal(c.libraPlanPrograms(request,emptyProps).method,'template',variant);
+  for(variant of ['duplicate','ddc','expensive','short']){
+    const result=c.libraPlanPrograms(request,aiProps);assert.equal(result.method,'template',variant);assert.equal(result.gemini.code,'SCHEMA');assert.match(result.message,/Mod Templat/);
+  }
+});
+
+test('status is passive, an explicit Admin probe verifies structured generation, and cache is tied to the key and model',()=>{
+  let calls=0;
+  const cached=new Map();
+  const c=context({jOut:data=>({data}),jErr:error=>({error}),PropertiesService:{getScriptProperties:()=>aiProps},
+    CacheService:{getScriptCache:()=>({get:k=>cached.get(k),put:(k,v,ttl)=>{assert.ok(ttl<=600);cached.set(k,v);}})},
+    Utilities:{DigestAlgorithm:{SHA_256:0},computeDigest:(_,x)=>require('node:crypto').createHash('sha256').update(x).digest(),base64EncodeWebSafe:b=>b.toString('base64url')},
+    UrlFetchApp:{fetch:(url,opts)=>{
+      calls++;assert(!url.includes('test-key'));
+      return opts.method==='get'?response(200,{supportedGenerationMethods:['generateContent']}):response(200,output({status:'ok'}));
+    }}
+  });
+  c.libraRate=(_,action)=>assert.ok(['libra_status','libra_advice'].includes(action));
+  assert.match(c.libraDispatch('libra_status',{check_gemini:true},null).error,/Admin\/GPM/);
+  assert.equal(c.libraDispatch('libra_status',{}, {peranan:'admin'}).data.gemini.state,'configured');
+  assert.equal(calls,0);
+  const verified=c.libraDispatch('libra_status',{check_gemini:true},{peranan:'gpm'}).data;
+  assert.equal(verified.gemini.state,'connected');assert(verified.planner);assert(!JSON.stringify(verified).includes('test-key'));
+  assert.equal(c.libraGeminiStatus(aiProps,true).state,'connected');assert.equal(calls,2);
+  assert.equal(c.libraGeminiStatus({getProperty:k=>k==='GEMINI_API_KEY'?'another-key':aiProps.getProperty(k)},false).state,'configured');
+  assert.equal(c.libraGeminiStatus(emptyProps,true).code,'MISSING_KEY');
+  assert.equal(c.libraGeminiStatus({getProperty:k=>k==='GEMINI_API_KEY'?'test-key':''},true).code,'MISSING_MODEL');
+});
+
+test('provider errors are classified and sanitized; malformed output alone gets a bounded retry',()=>{
+  const cases=[
+    [400,{error:{details:[{reason:'API_KEY_INVALID'}]}},'INVALID_KEY'],[400,{},'BAD_REQUEST'],
+    [401,{},'ACCESS_DENIED'],[403,{},'ACCESS_DENIED'],[404,{},'MODEL_UNAVAILABLE'],
+    [429,{error:{message:'RequestsPerMinute test-key'}},'RATE_LIMIT'],[429,{},'QUOTA'],
+    [500,{},'SERVICE_UNAVAILABLE'],[503,{},'SERVICE_UNAVAILABLE'],[504,{},'TIMEOUT'],
+    [200,'not JSON test-key','INVALID_JSON'],[200,{candidates:[{finishReason:'MAX_TOKENS'}]},'RESPONSE_INCOMPLETE'],
+    [200,{promptFeedback:{blockReason:'SAFETY'}},'RESPONSE_BLOCKED'],[200,output({other:1}),'SCHEMA']
+  ];
+  for(const [http,body,code] of cases){
+    let calls=0;
+    const c=context({UrlFetchApp:{fetch:(_,options)=>options.method==='get'
+      ? response(200,{supportedGenerationMethods:['generateContent']}) : (calls++,response(http,body))}});
+    const result=c.libraGeminiAttempt(aiProps,'Ujian',{}, {status:{type:'STRING'}},{retry:true});
+    assert.equal(result.ai.code,code);assert.equal(result.ai.state,'error');assert(!JSON.stringify(result).includes('test-key'));
+    assert.equal(calls,['INVALID_JSON','RESPONSE_INCOMPLETE','SCHEMA'].includes(code)?2:1);
+  }
+  const timed=context({UrlFetchApp:{fetch(){throw Error('Request timed out test-key');}}});
+  assert.equal(timed.libraGeminiStatus(aiProps,true).code,'TIMEOUT');
+});
+
+test('planner generates exactly 1–10 validated programs with the real transport contract',()=>{
+  const c=context({UrlFetchApp:{fetch:(url,options)=>{
+    if(options.method==='get')return response(200,{supportedGenerationMethods:['generateContent'],outputTokenLimit:65000});
+    assert(url.endsWith(':generateContent'));
+    const body=JSON.parse(options.payload), evidence=JSON.parse(body.contents[0].parts[0].text);
+    assert.equal(body.generationConfig.responseMimeType,'application/json');
+    assert.equal(body.generationConfig.responseSchema.properties.programs.type,'ARRAY');
+    assert.equal(body.generationConfig.responseSchema.properties.programs.minItems,undefined);
+    return response(200,output({programs:Array.from({length:evidence.count},(_,i)=>({name:'Program '+i,rationale:'Bacaan bersama',objectives:['Baca petikan'],activities:['Misi '+i,'Bincang dengan rakan'],resources:['Buku'],budgetItems:[{item:'Bahan tersedia',amount:0}],indicators:['Sasaran penyertaan'],evaluation:['Senarai semak']}))}));
+  }}});
+  for(let count=1;count<=10;count++){
+    const result=c.libraPlanPrograms({...plan,count},aiProps);
+    assert.equal(result.method,'gemini');assert.equal(result.programs.length,count);assert.equal(result.gemini.state,'connected');
+  }
 });
 
 test('Dewey counts appear in a separate payload only when analysis is explicitly requested',()=>{
@@ -147,7 +215,8 @@ test('browser: launcher is private, lazy, and links advice, catalogue details an
     if(req.url!=='/gas'){res.writeHead(404);return res.end();}
     let body='';req.on('data',b=>body+=b);req.on('end',()=>{const p=JSON.parse(body);actions.push(p.action);
       if(p.action==='libra_plan'&&legacy){res.setHeader('content-type','application/json');return res.end(JSON.stringify({ok:false,error:'Ralat: Pilih kelas utama Dewey yang sah.'}));}
-      const data=p.action==='libra_plan'?planner.libraPlanPrograms(p,emptyProps):({libra_status:{ready:catalogue,ai:false},libra_advice:{recommendation:refs[0],book:null,candidates:[],reason:'Ujian',status:'CADANGAN AI — PERLU PENGESAHAN GPM',confidence:'Sederhana'},libra_search:{reference:refs[0]}})[p.action];
+      const gemini={configured:true,model:'gemini-3.5-flash-lite',state:p.check_gemini?'connected':'configured'};
+      const data=p.action==='libra_plan'?planner.libraPlanPrograms(p,emptyProps):({libra_status:{ready:catalogue,gemini},libra_advice:{recommendation:refs[0],book:null,candidates:[],reason:'Ujian',status:'CADANGAN AI — PERLU PENGESAHAN GPM',confidence:'Sederhana'},libra_search:{reference:refs[0]}})[p.action];
       res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:!!data,data}));});
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
@@ -159,19 +228,22 @@ test('browser: launcher is private, lazy, and links advice, catalogue details an
     await page.evaluate(()=>{window._tok='test';window._mR='admin';document.getElementById('lw').style.display='none';});
     await page.locator('#libra-launcher').waitFor();assert.ok(!hits.includes('/libra.js'));
     await page.locator('#libra-launcher').click();
-    await page.getByText('Katalog tersedia. Gemini belum dikonfigurasi.').waitFor();
+    await page.getByText(/Gemini dikonfigurasi.*sambungan belum disahkan/).waitFor();
+    await page.getByRole('button',{name:'Uji sambungan Gemini'}).click();
+    await page.getByText(/Gemini AI tersedia/).waitFor();
     await page.locator('[name=query]').fill('027.8');await page.getByRole('button',{name:'Cadangkan DDC'}).click();
     await page.getByText('Ujian, halaman 5').waitFor();await page.getByRole('button',{name:'Lihat Rujukan'}).click();
     await page.getByRole('heading',{name:'Rujukan Katalog',exact:true}).waitFor();
     await page.getByRole('button',{name:'Tutup LIBRA'}).click();catalogue=false;
-    await page.locator('#libra-launcher').click();await page.getByText('Katalog persendirian belum dikonfigurasi.').waitFor();
-    await page.locator('[data-mode]').selectOption('planner');await page.getByText('Program Planner sedia menggunakan templat umum.',{exact:false}).waitFor();
+    await page.locator('#libra-launcher').click();await page.getByText(/Katalog persendirian belum dikonfigurasi/).waitFor();
+    await page.locator('[data-mode]').selectOption('planner');await page.getByText(/Gemini dikonfigurasi.*sambungan belum disahkan/).waitFor();
     assert.equal(await page.locator('[data-planner] [name=class_code]').count(),0);
     await page.locator('[name=needs]').selectOption('Masalah Pendengaran');
     await page.locator('[name=instructions]').fill('Cadangkan lima program inovatif.');
     await page.getByRole('button',{name:'Jana Program PSS'}).click();
     await page.locator('.libra-program-card').first().waitFor();
     assert.equal(await page.locator('.libra-program-card').count(),5);
+    assert.match(await page.locator('[data-result]').textContent(),/Mod Templat.*GEMINI_API_KEY/);
     assert.doesNotMatch(await page.locator('[data-result]').textContent(),/DDC|Dewey|Kelas utama|Rekod buku/i);
     const first=page.locator('.libra-program-card').first(), second=page.locator('.libra-program-card').nth(1);
     await second.locator('summary').click();
@@ -198,6 +270,6 @@ test('browser: launcher is private, lazy, and links advice, catalogue details an
     await page.getByRole('button',{name:'Tutup LIBRA'}).click();
     await page.evaluate(()=>{window._tok=null;window._mR='opac';document.getElementById('lw').style.display='block';});
     await page.locator('#libra-launcher').waitFor({state:'detached'});
-    assert.deepEqual(actions,['libra_status','libra_advice','libra_search','libra_status','libra_plan','libra_plan']);assert.deepEqual(errors,[]);
+    assert.deepEqual(actions,['libra_status','libra_status','libra_advice','libra_search','libra_status','libra_plan','libra_plan']);assert.deepEqual(errors,[]);
   } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
 });

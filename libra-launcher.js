@@ -9,7 +9,7 @@
       const controller = new AbortController(), abort = () => controller.abort();
       if (signal?.aborted) abort();
       signal?.addEventListener('abort', abort, {once:true});
-      const timer = setTimeout(abort, 50000);
+      const timer = setTimeout(abort, ['libra_advice','libra_plan'].includes(action)?110000:50000);
       const token = window._tok;
       try {
         const res = await fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,action,sessionToken:token}),signal:controller.signal});
@@ -22,6 +22,10 @@
           if(book){book.no_panggilan=json.data.no_panggilan;window.upsertBookIndex?.(book);}
         }
         return json.data;
+      } catch(error) {
+        if(controller.signal.aborted&&!signal?.aborted) throw new Error('Permintaan LIBRA tamat masa. Cuba lagi.');
+        if(error instanceof TypeError) throw new Error('Sambungan ke backend SMARTLIB gagal. Cuba lagi.');
+        throw error;
       } finally { clearTimeout(timer); signal?.removeEventListener('abort',abort); }
     }
     function sync() {
