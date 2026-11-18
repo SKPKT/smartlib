@@ -107,6 +107,10 @@ body.dk .tr{background:var(--em)}body.dk .th{left:12px}
 .l-tabs{display:flex;gap:3px;background:rgba(255,255,255,.05);border-radius:8px;padding:3px;margin:16px 0 14px}
 .ltab{flex:1;padding:6px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--fn);transition:.15s}
 .ltab.on{background:var(--em);color:#fff}
+#login-nilam-link{display:flex;align-items:center;justify-content:center;color:#a1f5cf;text-decoration:none}
+#login-nilam-link:hover,#login-nilam-link:focus-visible{background:rgba(16,185,129,.18)}
+.l-tabs:has(#login-nilam-link) .ltab{min-width:0;min-height:44px;overflow-wrap:anywhere}
+@media(max-width:420px){.lc:has(#login-nilam-link){padding-inline:clamp(12px,4.5vw,20px)}.l-tabs:has(#login-nilam-link) .ltab{padding-inline:3px}}
 .lfg{margin-bottom:10px;text-align:left}
 .lfg label{display:block;font-size:9px;font-weight:700;margin-bottom:4px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.07em}
 .lfg input{width:100%;padding:9px 12px;border:1.5px solid rgba(16,185,129,.2);border-radius:var(--rs);font-size:13px;font-family:var(--fn);background:rgba(255,255,255,.06);color:#fff;transition:.15s}
@@ -4329,7 +4333,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   function patchLoginTempahan(){
     if($('login-tempahan-btn'))return;
     const tabs=document.querySelector('.l-tabs');
-    if(tabs)tabs.insertAdjacentHTML('beforeend',`<button class="ltab" id="login-tempahan-btn" onclick="bukaTempahanAwam()">🔖 Tempahan PSS</button>`);
+    if(tabs)tabs.insertAdjacentHTML('beforeend',`<button class="ltab" id="login-tempahan-btn" onclick="bukaTempahanAwam()">🔖 Tempahan PSS</button><a class="ltab" id="login-nilam-link" href="./nilam-digital/" target="_blank" rel="noopener">📚 NILAM Digital</a>`);
   }
   window.bukaTempahanAwam=function(){window._tok=null;window._me={id:'public-reservation',nama:'Awam',peranan:'opac'};window._mR='opac';const lw=$('lw');if(lw)lw.style.display='none';return bukaLaluanTempahanAwam()};
   document.addEventListener('DOMContentLoaded',()=>setTimeout(patchLoginTempahan,0),{once:true});
