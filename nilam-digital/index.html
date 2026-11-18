@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Bahan bacaan digital dan galeri cerita Bahasa Isyarat PSS Hellen Keller, SK Pendidikan Khas Taiping.">
+<title>NILAM Digital · SK Pendidikan Khas Taiping</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1d16;--panel:#132c22;--line:#305446;--mint:#79efbd;--ink:#f1fff8;--muted:#b9d3c7}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.6 system-ui,sans-serif}
+a{color:var(--mint)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #f9d988;outline-offset:4px}
+.shell{width:min(100% - 2rem,68rem);margin-inline:auto}
+header{border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:4.5rem;padding-block:.65rem}
+.brand{display:flex;align-items:center;gap:.65rem;font-weight:750}
+.brand img{border-radius:.6rem}
+.back{min-height:44px;display:inline-flex;align-items:center;text-align:right}
+.hero{margin:1.5rem 0 2.4rem;padding:clamp(1.25rem,6vw,4rem);background:radial-gradient(ellipse at 90% 0%,#226954,transparent 65%),#16382a;border:1px solid var(--line);border-radius:1.3rem}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(2.3rem,9vw,5rem);line-height:1.05;letter-spacing:-.04em;margin-block:.3rem .75rem}
+h2{font-size:clamp(1.45rem,4.5vw,2rem);line-height:1.25;margin-bottom:.8rem}
+h3{font-size:1.25rem;line-height:1.35}
+.school{color:var(--mint);font-weight:700}
+.hero p+p{margin-top:1rem}
+.hero nav{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1.35rem}
+.action,button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.45rem .85rem;background:var(--mint);color:#0b2317;border:1px solid transparent;border-radius:.65rem;font:inherit;font-weight:750;text-decoration:none;cursor:pointer}
+.action.secondary{background:#112b21;color:var(--ink);border-color:#52806c}
+section{margin-bottom:2rem;scroll-margin-top:1rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:1rem;align-items:start}
+details,.empty,.video-card{background:var(--panel);border:1px solid var(--line);border-radius:1rem;overflow:hidden}
+summary{cursor:pointer;padding:1rem}
+summary::marker{color:var(--mint)}
+summary strong{font-size:1.12rem}
+summary small{display:block;color:var(--muted);font-size:.9rem;padding-left:1rem}
+.reading,.empty,.video-card{padding:1rem}
+.reading{border-top:1px solid var(--line)}
+.reading p+p,.video-card p,.reading button{margin-top:.7rem}
+.empty,footer{color:var(--muted)}
+video{display:block;width:100%;max-height:34rem;background:#07150f;border-radius:.6rem;margin-top:.65rem}
+footer{border-top:1px solid var(--line);padding:1rem 0 1.5rem;font-size:.9rem}
+.feedback{min-height:1.6em;margin-top:.6rem;color:var(--mint)}
+</style>
+</head>
+<body>
+<header><div class="shell top">
+  <div class="brand"><img src="../icon-192.png" width="40" height="40" alt="">PSS Hellen Keller</div>
+  <a class="back" href="../">Kembali ke SMARTLIB</a>
+</div></header>
+<main class="shell">
+  <div class="hero">
+    <p class="school">SK Pendidikan Khas Taiping</p>
+    <h1>NILAM Digital</h1>
+    <p>Pilih cerita untuk dibaca atau tonton murid bercerita dalam Bahasa Isyarat.</p>
+    <nav aria-label="Bahagian NILAM">
+      <a class="action" href="#bacaan">Baca cerita</a>
+      <a class="action secondary" href="#isyarat">Cerita Bahasa Isyarat</a>
+    </nav>
+  </div>
+
+  <section id="bacaan" aria-labelledby="bacaan-title">
+    <h2 id="bacaan-title">Bahan Bacaan</h2>
+    <div class="cards">
+      <details>
+        <summary><strong>Buku Pilihan Hana</strong><small>Cerita pendek · Bacaan mudah</small></summary>
+        <div class="reading">
+          <p>Hana masuk ke Pusat Sumber. Dia melihat sebuah buku tentang kucing.</p>
+          <p>Hana duduk di atas tikar. Dia membuka buku dan melihat gambar anak kucing berwarna jingga. Hana tersenyum.</p>
+          <p>Sebelum pulang, Hana membawa buku itu ke kaunter untuk dipinjam.</p>
+          <p><strong>Fikir dan jawab.</strong> Apakah warna anak kucing dalam buku Hana?</p>
+          <button type="button" data-read="buku-hana" aria-pressed="false">Tanda sudah baca</button>
+        </div>
+      </details>
+      <details>
+        <summary><strong>Benih Kecil Amir</strong><small>Cerita pendek · Bacaan mudah</small></summary>
+        <div class="reading">
+          <p>Amir meletakkan sebiji benih kacang hijau di atas kapas basah. Dia meletakkan bekas itu di tepi tingkap.</p>
+          <p>Setiap pagi Amir memeriksa kapasnya. Jika kapas hampir kering, dia menambah sedikit air.</p>
+          <p>Beberapa hari kemudian, Amir nampak akar putih dan pucuk hijau. Dia melukis apa yang dilihat dalam buku catatannya.</p>
+          <p><strong>Fikir dan jawab.</strong> Apakah yang Amir buat apabila kapas hampir kering?</p>
+          <button type="button" data-read="benih-amir" aria-pressed="false">Tanda sudah baca</button>
+        </div>
+      </details>
+      <details>
+        <summary><strong>Selepas Hujan</strong><small>Cerita pendek · Bacaan sederhana</small></summary>
+        <div class="reading">
+          <p>Hujan berhenti ketika loceng rehat berbunyi. Mei dan Farah berjalan ke kebun sekolah. Di hujung sehelai daun, mereka nampak titisan air yang berkilat.</p>
+          <p>Di bawah pokok, ada seekor siput bergerak perlahan. Farah mahu memegang siput itu, tetapi Mei mengajaknya memerhati dari tepi laluan.</p>
+          <p>Sebelum masuk ke kelas, mereka melukis siput dan daun. Farah menambah satu pelangi kecil pada lukisannya.</p>
+          <p><strong>Fikir dan jawab.</strong> Bagaimanakah Mei dan Farah memerhati siput itu?</p>
+          <button type="button" data-read="selepas-hujan" aria-pressed="false">Tanda sudah baca</button>
+        </div>
+      </details>
+    </div>
+    <p class="feedback" id="reading-status" role="status"></p>
+  </section>
+
+  <section id="isyarat" aria-labelledby="isyarat-title">
+    <h2 id="isyarat-title">Cerita Bahasa Isyarat</h2>
+    <p class="empty" id="video-empty">Video bercerita murid akan dipaparkan di sini apabila tersedia.</p>
+    <div class="cards" id="video-list"></div>
+  </section>
+</main>
+<footer><div class="shell">© 2026 SMARTLIB | Developed by Syahida Suffian</div></footer>
+
+<script>
+const readingButtons = [...document.querySelectorAll('[data-read]')];
+const readingStatus = document.querySelector('#reading-status');
+const storageKey = 'smartlib-nilam-digital-bacaan';
+let completed = [];
+
+try {
+  const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  if (Array.isArray(saved)) completed = saved.filter(id => readingButtons.some(button => button.dataset.read === id));
+} catch {
+  // Bahan bacaan masih boleh dibuka jika storan peranti tidak tersedia.
+}
+
+function updateReadingStatus(message) {
+  for (const button of readingButtons) {
+    const done = completed.includes(button.dataset.read);
+    button.setAttribute('aria-pressed', String(done));
+    button.textContent = done ? 'Sudah baca · Nyah tanda' : 'Tanda sudah baca';
+  }
+  readingStatus.textContent = message ?? (completed.length
+    ? completed.length + ' bacaan ditanda pada pelayar ini.'
+    : 'Tanda bacaan disimpan pada pelayar ini.');
+}
+
+for (const button of readingButtons) {
+  button.addEventListener('click', () => {
+    const id = button.dataset.read;
+    const next = completed.includes(id) ? completed.filter(item => item !== id) : [...completed, id];
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      completed = next;
+      updateReadingStatus();
+    } catch {
+      updateReadingStatus('Tanda bacaan tidak dapat disimpan pada pelayar ini.');
+    }
+  });
+}
+updateReadingStatus();
+
+// Senaraikan hanya rakaman untuk tontonan awam.
+// Setiap item menerima title, summary, src (video MP4) dan captions (sari kata WebVTT).
+const stories = [];
+
+if (stories.length) {
+  document.querySelector('#video-empty').hidden = true;
+  const list = document.querySelector('#video-list');
+  for (const story of stories) {
+    const card = document.createElement('article');
+    card.className = 'video-card';
+    const title = document.createElement('h3');
+    title.textContent = story.title;
+    const summary = document.createElement('p');
+    summary.textContent = story.summary;
+    const video = document.createElement('video');
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = 'none';
+    video.src = story.src;
+    video.setAttribute('aria-label', story.title);
+    if (story.captions) {
+      const track = document.createElement('track');
+      track.kind = 'captions';
+      track.src = story.captions;
+      track.srclang = 'ms';
+      track.label = 'Bahasa Melayu';
+      video.append(track);
+    }
+    card.append(title, video, summary);
+    list.append(card);
+  }
+}
+</script>
+</body>
+</html>
