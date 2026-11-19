@@ -12,7 +12,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SMARTLib">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="./gateway.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -29,7 +32,7 @@ window.addEventListener('load',function(){
 });
 </script>
 <style>
-:root{--em:#10b981;--emh:#059669;--eml:#d1fae5;--emd:#064e3b;--cy:#06b6d4;--cyl:#cffafe;--bg:#f0fdf4;--bg2:#ecfdf5;--card:#fff;--card2:#f0fdf4;--sb:#0c1a14;--tx:#0f172a;--tx2:#334155;--mu:#64748b;--bd:#e2e8f0;--bd2:#cbd5e1;--th:#f8fafc;--tri:#f0fdf4;--inp:#fff;--red:#ef4444;--redl:#fee2e2;--am:#f59e0b;--aml:#fef3c7;--pu:#8b5cf6;--pul:#ede9fe;--bl:#3b82f6;--bll:#dbeafe;--r:14px;--rs:9px;--rxs:5px;--fn:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'JetBrains Mono',Consolas,monospace;--font-label:'Century Gothic','Trebuchet MS',Arial,sans-serif;--kad-w:5.5cm;--kad-h:8.5cm;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);--shl:0 8px 32px rgba(0,0,0,.1)}
+:root{--em:#10b981;--emh:#059669;--eml:#d1fae5;--emd:#064e3b;--cy:#06b6d4;--cyl:#cffafe;--bg:#f0fdf4;--bg2:#ecfdf5;--card:#fff;--card2:#f0fdf4;--sb:#0c1a14;--tx:#0f172a;--tx2:#334155;--mu:#64748b;--bd:#e2e8f0;--bd2:#cbd5e1;--th:#f8fafc;--tri:#f0fdf4;--inp:#fff;--red:#ef4444;--redl:#fee2e2;--am:#f59e0b;--aml:#fef3c7;--pu:#8b5cf6;--pul:#ede9fe;--bl:#3b82f6;--bll:#dbeafe;--r:14px;--rs:9px;--rxs:5px;--fn:'Urbanist',system-ui,sans-serif;--mono:'JetBrains Mono',Consolas,monospace;--font-label:'Century Gothic','Trebuchet MS',Arial,sans-serif;--kad-w:5.5cm;--kad-h:8.5cm;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);--shl:0 8px 32px rgba(0,0,0,.1)}
 body.dk{--bg:#030f09;--bg2:#071410;--card:#0a1a10;--card2:#0f2318;--sb:#040d07;--tx:#f0fdf4;--tx2:#d1fae5;--mu:#6ee7b7;--bd:#1a3a24;--bd2:#2d5a3a;--th:#0a1a10;--tri:#0f2318;--inp:#0a1a10;--redl:#3b0a0a;--aml:#3d1a00;--pul:#2e1065;--bll:#1e3a5f}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px}
@@ -408,58 +411,60 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 <div id="lo"><div class="lo-ring"></div><div class="lo-nm">📚 SMARTLIB</div><div class="lo-sub" id="lo-sub">Menyambung ke Google Sheets...</div></div>
 
 <!-- LOGIN -->
-<div class="lw" id="lw">
-  <div class="lc">
-    <div class="l-logo" id="l-logo"><span id="l-em" style="display:none">📚</span><img id="l-img" src="./icon-192.png" alt="Ikon SMARTLIB" style="display:block;width:100%;height:100%;object-fit:cover;border-radius:14px"></div>
-    <div class="l-nm" id="l-nm">SMARTLIB</div>
-    <div class="l-tag" id="l-tag">✦ SISTEM PENGURUSAN PUSAT SUMBER SEKOLAH ✦</div>
-    <div class="l-sch" id="l-sch"></div>
-    <div class="l-tabs">
-      <button class="ltab on" id="login-admin-tab" onclick="swLogin('admin',this)">👤 Admin/Guru</button>
-      <button class="ltab" onclick="swLogin('ahli',this)">🎓 Ahli PSS</button>
-      <button class="ltab" onclick="swLogin('opac',this)">🔍 OPAC</button>
+
+<div class="lw gateway" id="lw" aria-label="SMARTLIB Digital Gateway v2">
+  <h1 class="gateway-sr">SMARTLIB — Portal Dunia Ilmu</h1>
+  <picture class="gateway-hero">
+    <source media="(max-width: 767px)" srcset="./assets/hero/smartlib-gateway-mobile.webp" width="1080" height="1350">
+    <img class="gateway-hero-image" src="./assets/hero/smartlib-gateway-desktop.webp" alt="SMARTLIB — Portal Dunia Ilmu" width="1920" height="1080" fetchpriority="high" decoding="async">
+  </picture>
+  <div class="gateway-content">
+    <p class="gateway-context">SK Pendidikan Khas Taiping<span>PSS Hellen Keller</span></p>
+    <nav class="gateway-access" id="gateway-access" aria-label="Akses SMARTLIB">
+      <button class="gateway-card" id="login-admin-tab" type="button" data-gateway-action="admin" aria-controls="l-admin">
+        <span class="gateway-icon" aria-hidden="true">♙</span><strong>Admin / Guru</strong><small>Pengurusan PSS</small><span class="gateway-arrow" aria-hidden="true">↗</span>
+      </button>
+      <button class="gateway-card" id="gateway-member" type="button" data-gateway-action="ahli" aria-controls="l-ahli">
+        <span class="gateway-icon" aria-hidden="true">🎓</span><strong>Ahli PSS</strong><small>Portal Ahli</small><span class="gateway-arrow" aria-hidden="true">↗</span>
+      </button>
+      <button class="gateway-card" type="button" data-gateway-action="opac">
+        <span class="gateway-icon" aria-hidden="true">⌕</span><strong>OPAC</strong><small>Cari Katalog Buku</small><span class="gateway-arrow" aria-hidden="true">↗</span>
+      </button>
+      <button class="gateway-card" id="login-tempahan-btn" type="button" data-gateway-action="tempahan">
+        <span class="gateway-icon" aria-hidden="true">▦</span><strong>Tempahan PSS</strong><small>Tempahan Ruang PSS</small><span class="gateway-arrow" aria-hidden="true">↗</span>
+      </button>
+      <a class="gateway-card gateway-verse" href="./smartlibverse/">
+        <div class="gateway-verse-title"><span class="gateway-icon" aria-hidden="true">🎮</span><div><strong>SMARTLIBverse</strong><small>Jelajah Perpustakaan Maya</small></div></div>
+        <span class="gateway-verse-cta">MULA PENGEMBARAAN <span aria-hidden="true">→</span></span>
+      </a>
+    </nav>
+    <div class="lc" id="gateway-forms" hidden>
+      <form id="l-admin" hidden>
+        <h2>Login Admin/Guru</h2>
+        <div class="l-err" id="l-err-a" role="alert"></div>
+        <div class="lfg"><label for="lu">Nama Pengguna</label><input id="lu" name="username" type="text" placeholder="Nama pengguna" autocomplete="username" required></div>
+        <div class="lfg"><label for="lp">Kata Laluan</label><div class="gateway-password"><input id="lp" name="password" type="password" placeholder="Kata laluan" autocomplete="current-password" required><button type="button" data-password-toggle="lp" aria-controls="lp" aria-pressed="false" aria-label="Papar kata laluan">Papar</button></div></div>
+        <button class="l-btn" type="submit" id="l-btn-a">Log Masuk</button>
+        <p class="l-hint">Sila log masuk menggunakan akaun yang diberikan oleh pentadbir.</p>
+        <button class="gateway-back" type="button" data-gateway-back>← Kembali ke Gateway</button>
+      </form>
+      <form id="l-ahli" hidden>
+        <h2>Login Ahli PSS</h2>
+        <div class="l-err" id="l-err-b" role="alert"></div>
+        <div class="lfg"><label for="l-nokad">ID Ahli</label><input id="l-nokad" name="member-id" type="text" placeholder="ID ahli" autocomplete="username" required></div>
+        <div class="lfg"><label for="l-ahli-p">Kata Laluan</label><div class="gateway-password"><input id="l-ahli-p" name="member-password" type="password" placeholder="Kata laluan" autocomplete="current-password" required><button type="button" data-password-toggle="l-ahli-p" aria-controls="l-ahli-p" aria-pressed="false" aria-label="Papar kata laluan">Papar</button></div></div>
+        <button class="l-btn cy" type="submit">Log Masuk Ahli</button>
+        <button class="gateway-back" type="button" data-gateway-back>← Kembali ke Gateway</button>
+      </form>
     </div>
-    <div id="l-admin">
-      <div class="l-err" id="l-err-a"></div>
-      <div class="lfg"><label>Nama Pengguna</label><input id="lu" type="text" placeholder="Nama pengguna" autocomplete="username"></div>
-      <div class="lfg"><label>Kata Laluan</label><input id="lp" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"></div>
-      <button class="l-btn" onclick="doLogin('admin')" id="l-btn-a">✨ Log Masuk</button>
-      <div class="l-hint">Sila log masuk menggunakan akaun yang diberikan oleh pentadbir.</div>
-    </div>
-    <div id="l-ahli" style="display:none">
-      <div class="l-err" id="l-err-b"></div>
-      <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);border-radius:7px;padding:8px 11px;margin-bottom:10px;font-size:10.5px;color:rgba(255,255,255,.6)">🎓 Pengawas PSS — log masuk untuk rekod pinjaman anda.</div>
-      <div class="lfg"><label>ID Ahli</label><input id="l-nokad" type="text" placeholder="cth: 1 / 2 / 3"></div>
-      <div class="lfg"><label>Kata Laluan (No. Kad Ahli)</label><input id="l-ahli-p" type="password" placeholder="cth: M-01 / G-02"></div>
-      <button class="l-btn cy" onclick="doLogin('ahli')">🔍 Log Masuk Ahli</button>
-    </div>
-    <div id="l-opac" style="display:none">
-      <div style="text-align:center;padding:14px 0">
-        <div style="font-size:28px;margin-bottom:8px">🔍</div>
-        <div style="color:rgba(255,255,255,.5);font-size:11px;margin-bottom:12px;line-height:1.7">OPAC tersedia tanpa login.<br>Cari dan lihat katalog buku.</div>
-        <button class="l-btn cy" onclick="masukOPAC()">🚀 Buka OPAC Awam</button>
-      </div>
-    </div>
+    <button class="login-libra" type="button" aria-label="LIBRA AI. Log masuk sebagai Admin atau GPM" aria-controls="l-admin" data-gateway-action="admin">
+      <img src="./libra-robot.webp" alt="" width="86" height="86">
+      <span>Hai, boleh LIBRA bantu?</span>
+    </button>
+    <footer class="gateway-footer">© 2026 SMARTLIB |Syahida Suffian</footer>
   </div>
-  <button class="login-libra" type="button" aria-label="LIBRA AI. Log masuk sebagai Admin atau GPM" aria-controls="l-admin" onclick="swLogin('admin',document.getElementById('login-admin-tab'));document.getElementById('lu').focus()">
-    <span>Hai, boleh LIBRA bantu?</span>
-    <img src="./libra-robot.webp" alt="" width="86" height="86">
-  </button>
-  <svg style="position:absolute;bottom:0;left:14px;width:180px;opacity:.09;pointer-events:none" viewBox="0 0 180 160" fill="none">
-    <rect x="22" y="118" width="80" height="5" rx="2" fill="#10b981"/>
-    <rect x="30" y="80" width="13" height="38" rx="2" fill="#10b981" opacity=".6"/>
-    <rect x="46" y="86" width="11" height="32" rx="2" fill="#06b6d4" opacity=".6"/>
-    <rect x="59" y="74" width="13" height="44" rx="2" fill="#f59e0b" opacity=".6"/>
-    <circle cx="140" cy="55" r="17" fill="#f59e0b" opacity=".6"/>
-    <path d="M123 53Q140 43 157 53" stroke="#78350f" stroke-width="2.5" fill="none"/>
-    <rect x="124" y="70" width="32" height="24" rx="9" fill="#10b981" opacity=".65"/>
-    <rect x="114" y="83" width="52" height="20" rx="6" fill="#064e3b" opacity=".45"/>
-    <line x1="140" y1="83" x2="140" y2="103" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>
-    <rect x="126" y="101" width="10" height="18" rx="4" fill="#064e3b" opacity=".5"/>
-    <rect x="148" y="101" width="10" height="18" rx="4" fill="#064e3b" opacity=".5"/>
-    <text x="160" y="35" font-size="12" fill="#10b981" opacity=".7">✦</text>
-  </svg>
 </div>
+
 
 <!-- NOTIF -->
 <div class="notif-dd" id="notif-dd">
@@ -897,7 +902,7 @@ async function doLogout(skipConfirm=false){
   if(_rfT)clearInterval(_rfT);if(_sq){try{_sq.stop().catch(()=>{})}catch{}}_sq=null;
   if(_tok){try{await api({action:'logout'})}catch{}}_tok=null;_me=null;_mR='';killCh();showLogin();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('lw')?.style.display!=='none'){doLogin((document.getElementById('l-admin')?.style.display||'')!=='none'?'admin':'ahli')}if(e.key==='Escape')document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'))});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'))});
 
 // ═══════════════════════════════════════════════
 // NAVIGASI
@@ -4340,15 +4345,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   window.masukOpac=function(){window._tok=null;window._me={id:'public',nama:'Awam',peranan:'opac'};window._mR='opac';const lw=$('lw');if(lw)lw.style.display='none';window.applyRoleUI();window.loadBookIndex(false);window.nav('opac')};
   window.masukOPAC=window.masukOpac;
 
-  function patchLoginTempahan(){
-    if($('login-tempahan-btn'))return;
-    const tabs=document.querySelector('.l-tabs');
-    if(tabs)tabs.insertAdjacentHTML('beforeend',`<button class="ltab" id="login-tempahan-btn" onclick="bukaTempahanAwam()">🔖 Tempahan PSS</button><a class="ltab" id="login-nilam-link" href="./nilam-digital/" target="_blank" rel="noopener">📚 NILAM Digital</a>`);
-  }
   window.bukaTempahanAwam=function(){window._tok=null;window._me={id:'public-reservation',nama:'Awam',peranan:'opac'};window._mR='opac';const lw=$('lw');if(lw)lw.style.display='none';return bukaLaluanTempahanAwam()};
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(patchLoginTempahan,0),{once:true});
-  const oldShowLogin=window.showLogin;
-  window.showLogin=function(){if(typeof oldShowLogin==='function')oldShowLogin();setTimeout(patchLoginTempahan,0)};
 
   window.pgDash=function(){
     const s=state.dashboard||{};
@@ -5183,6 +5180,7 @@ document.addEventListener('DOMContentLoaded',()=>boot(),{once:true});
   };
 })();
 </script>
+<script src="./gateway.js" defer></script>
 <script src="./libra-launcher.js" defer></script>
 </body>
 </html>
