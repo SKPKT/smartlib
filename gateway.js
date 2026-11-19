@@ -11,7 +11,7 @@
   const panels = {admin:document.getElementById('l-admin'), ahli:document.getElementById('l-ahli')};
   if (!root || !access || !forms || root.dataset.gatewayBound) return;
   root.dataset.gatewayBound = 'true';
-  let active = '';
+  let active = 'admin';
   let trigger = null;
 
   function resetErrors() {
@@ -22,11 +22,7 @@
   }
 
   function showGateway(restoreFocus) {
-    active = '';
-    forms.hidden = true;
-    access.hidden = false;
-    root.classList.remove('gateway-login-open');
-    Object.values(panels).forEach(panel=>{panel.hidden=true;panel.style.display='none';});
+    showForm('admin',null,false);
     ['lp','l-ahli-p'].forEach(id=>{
       const input=document.getElementById(id);
       input.value='';
@@ -41,20 +37,27 @@
     if (restoreFocus && trigger) trigger.focus();
   }
 
-  function showForm(kind, button) {
+  function showForm(kind, button, focus = true) {
     if (!panels[kind]) return;
     trigger = button || document.getElementById(kind==='admin'?'login-admin-tab':'gateway-member');
     active = kind;
-    access.hidden = true;
+    access.hidden = false;
     forms.hidden = false;
     root.classList.add('gateway-login-open');
     Object.entries(panels).forEach(([name,panel])=>{
       panel.hidden=name!==kind;
       panel.style.display=name===kind?'':'none';
     });
+    access.querySelectorAll('[data-gateway-action]').forEach(tab=>{
+      const selected=tab.dataset.gatewayAction===kind;
+      tab.setAttribute('aria-selected',String(selected));
+      tab.setAttribute('tabindex',selected?'0':'-1');
+    });
     resetErrors();
-    panels[kind].querySelector('input').focus({preventScroll:true});
-    forms.scrollIntoView({block:'nearest',behavior:'instant'});
+    if (focus) {
+      panels[kind].querySelector('input').focus({preventScroll:true});
+      forms.scrollIntoView({block:'nearest',behavior:'instant'});
+    }
   }
 
   // Legacy callers, including the existing LIBRA robot, use this same navigation.
@@ -95,6 +98,12 @@
     });
   });
   root.addEventListener('keydown', event=>{
+    if (event.target.getAttribute('role')==='tab' && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
+      event.preventDefault();
+      const kind=event.key==='Home'?'admin':event.key==='End'?'ahli':active==='admin'?'ahli':'admin';
+      showForm(kind,null,false);
+      access.querySelector('[data-gateway-action="'+kind+'"]').focus();
+    }
     if (event.key==='Escape' && active) {event.preventDefault();showGateway(true);}
   });
   showGateway(false);

@@ -412,59 +412,73 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
 
 <!-- LOGIN -->
 
-<div class="lw gateway" id="lw" aria-label="SMARTLIB Digital Gateway v2">
-  <h1 class="gateway-sr">SMARTLIB — Portal Dunia Ilmu</h1>
-  <picture class="gateway-hero">
-    <source media="(max-width: 767px)" srcset="./assets/hero/smartlib-gateway-mobile.webp" width="1122" height="1402">
-    <img class="gateway-hero-image" src="./assets/hero/smartlib-gateway-desktop.webp" alt="SMARTLIB — Portal Dunia Ilmu" width="1672" height="941" fetchpriority="high" decoding="async">
+
+<div class="lw gateway" id="lw" aria-label="SMARTLIB Digital Gateway">
+  <picture class="gateway-background" aria-hidden="true">
+    <source media="(max-width: 700px)" srcset="./assets/hero/smartlib-gateway-mobile.webp">
+    <img src="./assets/hero/smartlib-gateway-desktop.webp" alt="" width="1672" height="941" fetchpriority="high" decoding="async">
   </picture>
   <div class="gateway-content">
-    <p class="gateway-context">SK Pendidikan Khas Taiping<span>PSS Hellen Keller</span></p>
-    <nav class="gateway-access" id="gateway-access" aria-label="Akses SMARTLIB">
-      <button class="gateway-card" id="login-admin-tab" type="button" data-gateway-action="admin" aria-controls="l-admin">
-        <span class="gateway-icon" aria-hidden="true">🛡</span><strong>Admin / Guru</strong><small>Pengurusan PSS</small><span class="gateway-arrow" aria-hidden="true">↗</span>
-      </button>
-      <button class="gateway-card" id="gateway-member" type="button" data-gateway-action="ahli" aria-controls="l-ahli">
-        <span class="gateway-icon" aria-hidden="true">🎓</span><strong>Ahli PSS</strong><small>Portal Ahli</small><span class="gateway-arrow" aria-hidden="true">↗</span>
-      </button>
-      <button class="gateway-card" type="button" data-gateway-action="opac">
-        <span class="gateway-icon" aria-hidden="true">⌕</span><strong>OPAC</strong><small>Cari Katalog Buku</small><span class="gateway-arrow" aria-hidden="true">↗</span>
-      </button>
-      <button class="gateway-card" id="login-tempahan-btn" type="button" data-gateway-action="tempahan">
-        <span class="gateway-icon" aria-hidden="true">📅</span><strong>Tempahan PSS</strong><small>Tempahan Ruang PSS</small><span class="gateway-arrow" aria-hidden="true">↗</span>
-      </button>
-      <a class="gateway-card gateway-verse" href="./smartlibverse/">
-        <div class="gateway-verse-title"><span class="gateway-icon" aria-hidden="true">🎮</span><div><strong>SMARTLIBverse</strong><small>Jelajah Perpustakaan Maya</small></div></div>
-        <span class="gateway-verse-cta">MULA PENGEMBARAAN <span aria-hidden="true">→</span></span>
-      </a>
-    </nav>
-    <div class="lc" id="gateway-forms" hidden>
-      <form id="l-admin" hidden>
+    <header class="gateway-header">
+      <h1 class="gateway-sr">SMARTLIB — Portal Dunia Ilmu</h1>
+      <p class="gateway-pss">PSS HELLEN KELLER</p>
+      <p>Sekolah Kebangsaan Pendidikan Khas Taiping</p>
+    </header>
+    <div class="gateway-grid">
+      <section class="lc" aria-label="Log masuk SMARTLIB">
+        <div class="gateway-login-tabs" id="gateway-access" role="tablist" aria-label="Jenis log masuk">
+          <button id="login-admin-tab" type="button" role="tab" aria-selected="true" data-gateway-action="admin" aria-controls="l-admin">Admin/Guru</button>
+          <button id="gateway-member" type="button" role="tab" aria-selected="false" tabindex="-1" data-gateway-action="ahli" aria-controls="l-ahli">Ahli PSS</button>
+        </div>
+        <div id="gateway-forms">
+      <form id="l-admin" role="tabpanel" aria-labelledby="login-admin-tab" onsubmit="return false">
         <h2>Login Admin/Guru</h2>
         <div class="l-err" id="l-err-a" role="alert"></div>
         <div class="lfg"><label for="lu">Nama Pengguna</label><input id="lu" name="username" type="text" placeholder="Nama pengguna" autocomplete="username" required></div>
         <div class="lfg"><label for="lp">Kata Laluan</label><div class="gateway-password"><input id="lp" name="password" type="password" placeholder="Kata laluan" autocomplete="current-password" required><button type="button" data-password-toggle="lp" aria-controls="lp" aria-pressed="false" aria-label="Papar kata laluan">Papar</button></div></div>
         <button class="l-btn" type="submit" id="l-btn-a">Log Masuk</button>
         <p class="l-hint">Sila log masuk menggunakan akaun yang diberikan oleh pentadbir.</p>
-        <button class="gateway-back" type="button" data-gateway-back>← Kembali ke Gateway</button>
       </form>
-      <form id="l-ahli" hidden>
+      <form id="l-ahli" role="tabpanel" aria-labelledby="gateway-member" onsubmit="return false" hidden>
         <h2>Login Ahli PSS</h2>
         <div class="l-err" id="l-err-b" role="alert"></div>
         <div class="lfg"><label for="l-nokad">ID Ahli</label><input id="l-nokad" name="member-id" type="text" placeholder="ID ahli" autocomplete="username" required></div>
         <div class="lfg"><label for="l-ahli-p">Kata Laluan</label><div class="gateway-password"><input id="l-ahli-p" name="member-password" type="password" placeholder="Kata laluan" autocomplete="current-password" required><button type="button" data-password-toggle="l-ahli-p" aria-controls="l-ahli-p" aria-pressed="false" aria-label="Papar kata laluan">Papar</button></div></div>
         <button class="l-btn cy" type="submit">Log Masuk Ahli</button>
-        <button class="gateway-back" type="button" data-gateway-back>← Kembali ke Gateway</button>
       </form>
+
+        </div>
+        <nav class="gateway-quick" aria-label="Akses pantas">
+          <h3>Akses Pantas</h3>
+          <div class="gateway-quick-grid">
+            <button type="button" data-gateway-action="opac"><span aria-hidden="true">⌕</span><span><strong>OPAC</strong><small>Cari Buku</small></span></button>
+            <button id="login-tempahan-btn" type="button" data-gateway-action="tempahan"><span aria-hidden="true">📅</span><span><strong>Tempahan PSS</strong><small>Tempah Ruang</small></span></button>
+          </div>
+        </nav>
+      </section>
+      <aside class="gateway-verse" aria-labelledby="gateway-verse-title">
+        <div class="gateway-verse-scene">
+          <div class="gateway-characters">
+            <img class="gateway-student" src="./assets/avatars/student-girl.webp" alt="Avatar murid perempuan" width="450" height="600" decoding="async">
+            <img class="gateway-guide" src="./libra-robot.webp" alt="LIBRA AI" width="106" height="106">
+            <img class="gateway-student" src="./assets/avatars/student-boy.webp" alt="Avatar murid lelaki" width="400" height="600" decoding="async">
+          </div>
+        </div>
+        <div class="gateway-verse-copy">
+          <span class="gateway-verse-label"><span aria-hidden="true">🎮</span> Demo Mode</span>
+          <h2 id="gateway-verse-title">SMARTLIBverse</h2>
+          <p>Jelajah Perpustakaan Maya</p>
+          <a class="gateway-verse-cta" href="https://skpkt.github.io/smartlibverse/">MULA PENGEMBARAAN <span aria-hidden="true">→</span></a>
+          <small class="gateway-demo-note">RPG demo tanpa login · kemajuan disimpan pada peranti</small>
+        </div>
+      </aside>
     </div>
     <button class="login-libra" type="button" aria-label="LIBRA AI. Log masuk sebagai Admin atau GPM" aria-controls="l-admin" data-gateway-action="admin">
-      <img src="./libra-robot.webp" alt="" width="86" height="86">
-      <span>Hai, boleh LIBRA bantu?</span>
+      <img src="./libra-robot.webp" alt="" width="50" height="50"><span>Hai, boleh LIBRA bantu?</span>
     </button>
     <footer class="gateway-footer">© 2026 SMARTLIB |Syahida Suffian</footer>
   </div>
 </div>
-
 
 <!-- NOTIF -->
 <div class="notif-dd" id="notif-dd">

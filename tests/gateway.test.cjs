@@ -40,7 +40,8 @@ test('Gateway navigation delegates once to existing public flows without startup
 
 test('Only chosen login form opens, submit retains the correct auth action and return clears passwords',()=>{
   const f=fixture();const {elements,window,calls}=f;
-  assert.equal(elements.get('gateway-forms').hidden,true);
+  assert.equal(elements.get('gateway-forms').hidden,false);
+  assert.equal(elements.get('l-admin').hidden,false);
   f.click('admin');
   assert.equal(elements.get('l-admin').hidden,false);
   assert.equal(elements.get('l-ahli').hidden,true);
@@ -51,17 +52,22 @@ test('Only chosen login form opens, submit retains the correct auth action and r
   elements.get('l-ahli').listeners.submit({preventDefault(){}});
   assert.equal(calls.filter(c=>c==='login:ahli').length,1);
   window.showLogin();
-  assert.equal(elements.get('gateway-forms').hidden,true);
+  assert.equal(elements.get('gateway-forms').hidden,false);
+  assert.equal(elements.get('l-admin').hidden,false);
   assert.equal(elements.get('gateway-access').hidden,false);
   assert.equal(elements.get('lp').value,'');
   assert.equal(elements.get('l-ahli-p').value,'');
 });
 
-test('Gateway has five routes, one logo-bearing picture and no legacy tab injection',()=>{
+test('Gateway separates two login tabs, quick access and the public demo without legacy tab injection',()=>{
   const gateway=html.slice(html.indexOf('<div class="lw gateway"'),html.indexOf('<!-- NOTIF -->'));
-  assert.equal((gateway.match(/class="gateway-card(?: gateway-verse)?"/g)||[]).length,5);
-  assert.match(gateway,/href="\.\/smartlibverse\/"/);
-  assert.match(gateway,/media="\(max-width: 767px\)"[^>]+mobile\.webp/);
+  assert.equal((gateway.match(/role="tab"/g)||[]).length,2);
+  assert.equal((gateway.match(/data-gateway-action="opac"/g)||[]).length,1);
+  assert.equal((gateway.match(/data-gateway-action="tempahan"/g)||[]).length,1);
+  assert.match(gateway,/href="https:\/\/skpkt.github.io\/smartlibverse\/"/);
+  assert.equal((gateway.match(/class="gateway-background"/g)||[]).length,1);
+  assert.match(gateway,/srcset="\.\/assets\/hero\/smartlib-gateway-mobile.webp"/);
+  assert.doesNotMatch(gateway,/src="\.\/smartlib-logo-official\.png"/);
   assert.doesNotMatch(gateway,/id="l-img"|class="l-tabs"/);
   assert.doesNotMatch(html,/function patchLoginTempahan|login-nilam-link" href/);
   const ids=[...html.matchAll(/\bid="([^"$\s{}<>]+)"/g)].map(m=>m[1]);
