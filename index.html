@@ -107,6 +107,14 @@ body.dk .tr{background:var(--em)}body.dk .th{left:12px}
 .l-tabs{display:flex;gap:3px;background:rgba(255,255,255,.05);border-radius:8px;padding:3px;margin:16px 0 14px}
 .ltab{flex:1;padding:6px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--fn);transition:.15s}
 .ltab.on{background:var(--em);color:#fff}
+.login-libra{display:flex;align-items:center;gap:9px;width:100%;min-height:48px;margin-bottom:12px;padding:7px 10px;border:1px solid #b49a47;border-radius:8px;background:#11392d;color:#fff;text-align:left;font:inherit;cursor:pointer}
+.login-libra img{flex:none;border-radius:7px;object-fit:cover}
+.login-libra strong,.login-libra small{display:block;line-height:1.35}
+.login-libra strong{font-size:13px}
+.login-libra small{color:#c4e2d4;font-size:11.5px}
+.login-libra:hover{background:#164a39}
+.login-libra:focus-visible{outline:2px solid #f0ce72;outline-offset:2px}
+@media(max-height:600px){.lw{align-items:flex-start;overflow-y:auto}.lc{margin-block:12px}}
 #login-nilam-link{display:flex;align-items:center;justify-content:center;color:#a1f5cf;text-decoration:none}
 #login-nilam-link:hover,#login-nilam-link:focus-visible{background:rgba(16,185,129,.18)}
 .l-tabs:has(#login-nilam-link) .ltab{min-width:0;min-height:44px;overflow-wrap:anywhere}
@@ -409,10 +417,14 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
     <div class="l-tag" id="l-tag">✦ SISTEM PENGURUSAN PUSAT SUMBER SEKOLAH ✦</div>
     <div class="l-sch" id="l-sch"></div>
     <div class="l-tabs">
-      <button class="ltab on" onclick="swLogin('admin',this)">👤 Admin/Guru</button>
+      <button class="ltab on" id="login-admin-tab" onclick="swLogin('admin',this)">👤 Admin/Guru</button>
       <button class="ltab" onclick="swLogin('ahli',this)">🎓 Ahli PSS</button>
       <button class="ltab" onclick="swLogin('opac',this)">🔍 OPAC</button>
     </div>
+    <button class="login-libra" type="button" aria-controls="l-admin" onclick="swLogin('admin',document.getElementById('login-admin-tab'));document.getElementById('lu').focus()">
+      <img src="./libra-robot.webp" alt="" width="32" height="32">
+      <span><strong>LIBRA AI</strong><small>Log masuk dengan akaun Admin/GPM</small></span>
+    </button>
     <div id="l-admin">
       <div class="l-err" id="l-err-a"></div>
       <div class="lfg"><label>Nama Pengguna</label><input id="lu" type="text" placeholder="Nama pengguna" autocomplete="username"></div>
