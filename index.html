@@ -107,6 +107,12 @@ body.dk .tr{background:var(--em)}body.dk .th{left:12px}
 .l-tabs{display:flex;gap:3px;background:rgba(255,255,255,.05);border-radius:8px;padding:3px;margin:16px 0 14px}
 .ltab{flex:1;padding:6px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,.4);border-radius:6px;font-family:var(--fn);transition:.15s}
 .ltab.on{background:var(--em);color:#fff}
+.login-libra{position:absolute;inset:auto max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) auto;display:grid;justify-items:end;gap:5px;width:max-content;max-width:calc(100% - 32px);padding:0;border:0;background:none;color:#08372a;font:inherit;cursor:pointer;z-index:1}
+.login-libra span{padding:7px 12px;border:2px solid #32c998;border-radius:999px;background:#f1fff9;font-size:13px;font-weight:700;text-align:center;box-shadow:0 3px 12px #001d17a0}
+.login-libra img{width:clamp(56px,9vw,86px);height:auto;border-radius:16px;margin-right:8px}
+.login-libra:hover span{background:#d4fae8}
+.login-libra:focus-visible{outline:2px solid #f0ce72;outline-offset:4px;border-radius:12px}
+@media(max-width:600px),(max-height:620px){.lw{overflow-y:auto;align-items:safe center;padding:12px 0 calc(118px + env(safe-area-inset-bottom))}.login-libra{position:fixed}.login-libra img{width:56px;margin-right:4px}}
 #login-nilam-link{display:flex;align-items:center;justify-content:center;color:#a1f5cf;text-decoration:none}
 #login-nilam-link:hover,#login-nilam-link:focus-visible{background:rgba(16,185,129,.18)}
 .l-tabs:has(#login-nilam-link) .ltab{min-width:0;min-height:44px;overflow-wrap:anywhere}
@@ -409,7 +415,7 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
     <div class="l-tag" id="l-tag">✦ SISTEM PENGURUSAN PUSAT SUMBER SEKOLAH ✦</div>
     <div class="l-sch" id="l-sch"></div>
     <div class="l-tabs">
-      <button class="ltab on" onclick="swLogin('admin',this)">👤 Admin/Guru</button>
+      <button class="ltab on" id="login-admin-tab" onclick="swLogin('admin',this)">👤 Admin/Guru</button>
       <button class="ltab" onclick="swLogin('ahli',this)">🎓 Ahli PSS</button>
       <button class="ltab" onclick="swLogin('opac',this)">🔍 OPAC</button>
     </div>
@@ -435,6 +441,10 @@ body.dk .smartlib-copyright{color:rgba(209,250,229,.45)}
       </div>
     </div>
   </div>
+  <button class="login-libra" type="button" aria-label="LIBRA AI. Log masuk sebagai Admin atau GPM" aria-controls="l-admin" onclick="swLogin('admin',document.getElementById('login-admin-tab'));document.getElementById('lu').focus()">
+    <span>Hai, boleh LIBRA bantu?</span>
+    <img src="./libra-robot.webp" alt="" width="86" height="86">
+  </button>
   <svg style="position:absolute;bottom:0;left:14px;width:180px;opacity:.09;pointer-events:none" viewBox="0 0 180 160" fill="none">
     <rect x="22" y="118" width="80" height="5" rx="2" fill="#10b981"/>
     <rect x="30" y="80" width="13" height="38" rx="2" fill="#10b981" opacity=".6"/>
